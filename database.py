@@ -7,8 +7,19 @@ from datetime import datetime
 import json
 
 class LoyverseDB:
-    def __init__(self, db_path="loyverse_data.db"):
-        self.db_path = db_path
+    def __init__(self, db_path=None):
+        # Use persistent disk path if available, otherwise local path
+        if db_path is None:
+            import os
+            persistent_path = "/app/data"
+            if os.path.exists(persistent_path):
+                # Create data directory if it doesn't exist
+                os.makedirs(persistent_path, exist_ok=True)
+                self.db_path = os.path.join(persistent_path, "loyverse_data.db")
+            else:
+                self.db_path = "loyverse_data.db"
+        else:
+            self.db_path = db_path
         self.init_database()
     
     def get_connection(self):
