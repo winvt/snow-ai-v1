@@ -11,12 +11,14 @@ class LoyverseDB:
         # Use persistent disk path if available, otherwise local path
         if db_path is None:
             import os
+            # Check for Render persistent disk path first
             persistent_path = "/app/data"
             if os.path.exists(persistent_path):
                 # Create data directory if it doesn't exist
                 os.makedirs(persistent_path, exist_ok=True)
                 self.db_path = os.path.join(persistent_path, "loyverse_data.db")
             else:
+                # Fallback to current directory (works on Render free tier)
                 self.db_path = "loyverse_data.db"
         else:
             self.db_path = db_path
@@ -170,6 +172,16 @@ class LoyverseDB:
                 cost REAL,
                 last_updated TEXT,
                 FOREIGN KEY (category_id) REFERENCES categories(category_id)
+            )
+        """)
+        
+        # Manual product categories table (user overrides)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS manual_product_categories (
+                product_name TEXT PRIMARY KEY,
+                category TEXT,
+                created_at TEXT,
+                updated_at TEXT
             )
         """)
         
@@ -662,6 +674,53 @@ class LoyverseDB:
         conn.commit()
         conn.close()
         return len(items)
+    
+    # ===== MANUAL PRODUCT CATEGORIES METHODS =====
+    
+    def save_manual_categories(self, manual_categories):
+        """Save manual product categories to database"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        current_time = datetime.now().isoformat()
+        
+        for product_name, category in manual_categories.items():
+            cursor.execute("""
+                INSERT OR REPLACE INTO manual_product_categories (
+                    product_name, category, created_at, updated_at
+                ) VALUES (?, ?, ?, ?)
+            """, (
+                product_name,
+                category,
+                current_time,  # created_at (will be updated if exists)
+                current_time   # updated_at
+            ))
+        
+        conn.commit()
+        conn.close()
+        return len(manual_categories)
+    
+    def get_manual_categories(self):
+        """Get all manual product categories from database"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT product_name, category FROM manual_product_categories")
+        
+        manual_categories = {}
+        for row in cursor.fetchall():
+            product_name, category = row
+            manual_categories[product_name] = category
+        
+        conn.close()
+        return manual_categories
+    
+    def clear_manual_categories(self):
+        """Clear all manual product categories"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM manual_product_categories")
+        conn.commit()
+        conn.close()
     
     def get_item_category_map(self):
         """Get item ID to category ID mapping"""

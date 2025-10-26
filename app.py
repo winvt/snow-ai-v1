@@ -25,7 +25,7 @@ st.set_page_config(page_title="❄️ Snowbomb Dashboard", layout="wide")
 
 # Initialize session state for selected tab
 if 'selected_tab' not in st.session_state:
-    st.session_state.selected_tab = "📅 Daily Sales"
+    st.session_state.selected_tab = "📅 Daily Sales"  # Will be updated after language is set
 
 # Initialize theme
 if 'theme_mode' not in st.session_state:
@@ -97,6 +97,8 @@ TRANSLATIONS = {
         "interactive_data": "📊 Interactive Data",
         "transaction_log": "📋 Transaction Log",
         "customer_invoice": "🧾 Customer Invoice",
+        "ice_forecast": "🧊 Ice Forecast",
+        "crm": "👥 CRM",
         "settings_preferences": "⚙️ Settings & Preferences",
         "date_range_selector": "Date Range Selector",
         "quick_shortcuts": "Quick Shortcuts:",
@@ -117,7 +119,17 @@ TRANSLATIONS = {
         "apply_range": "🔍 Apply Range",
         "current_selection": "Current Selection: {start_date} to {end_date} ({days} days)",
         "api_information": "ℹ️ API Information",
-        "viewing_data_from": "Viewing data from"
+        "viewing_data_from": "Viewing data from",
+        "daily_sales_analysis": "📅 Daily Sales Analysis",
+        "sales_by_location": "📍 Sales by Location (ประเภท)",
+        "product_analysis": "📈 Product Analysis",
+        "customer_analysis": "👥 Customer Analysis",
+        "credit_management": "💳 Credit Management Dashboard",
+        "interactive_data_explorer": "📊 Interactive Data Explorer",
+        "transaction_log": "📋 Transaction Log by Location",
+        "customer_invoice_generator": "🧾 Customer Invoice Generator",
+        "ice_forecast_dashboard": "🧊 Ice Forecast Dashboard",
+        "crm_dashboard": "👥 Customer Relationship Management"
     },
     "Thai": {
         "load_database": "💾 โหลดฐานข้อมูล",
@@ -132,6 +144,8 @@ TRANSLATIONS = {
         "interactive_data": "📊 ข้อมูลแบบโต้ตอบ",
         "transaction_log": "📋 บันทึกการทำรายการ",
         "customer_invoice": "🧾 ใบแจ้งหนี้ลูกค้า",
+        "ice_forecast": "🧊 พยากรณ์น้ำแข็ง",
+        "crm": "👥 CRM",
         "settings_preferences": "⚙️ การตั้งค่าและความชอบ",
         "date_range_selector": "ตัวเลือกช่วงวันที่",
         "quick_shortcuts": "ทางลัด:",
@@ -152,7 +166,17 @@ TRANSLATIONS = {
         "apply_range": "🔍 ใช้ช่วงวันที่",
         "current_selection": "การเลือกปัจจุบัน: {start_date} ถึง {end_date} ({days} วัน)",
         "api_information": "ℹ️ ข้อมูล API",
-        "viewing_data_from": "กำลังดูข้อมูลจาก"
+        "viewing_data_from": "กำลังดูข้อมูลจาก",
+        "daily_sales_analysis": "📅 การวิเคราะห์ยอดขายรายวัน",
+        "sales_by_location": "📍 ยอดขายแยกตามสถานที่ (ประเภท)",
+        "product_analysis": "📈 การวิเคราะห์สินค้า",
+        "customer_analysis": "👥 การวิเคราะห์ลูกค้า",
+        "credit_management": "💳 แดชบอร์ดการจัดการเครดิต",
+        "interactive_data_explorer": "📊 เครื่องมือสำรวจข้อมูลแบบโต้ตอบ",
+        "transaction_log": "📋 บันทึกการทำรายการแยกตามสถานที่",
+        "customer_invoice_generator": "🧾 เครื่องมือสร้างใบแจ้งหนี้ลูกค้า",
+        "ice_forecast_dashboard": "🧊 แดชบอร์ดพยากรณ์น้ำแข็ง",
+        "crm_dashboard": "👥 การจัดการความสัมพันธ์ลูกค้า"
     }
 }
 
@@ -161,6 +185,11 @@ def get_text(key, **kwargs):
     lang = st.session_state.get('language', 'English')
     template = TRANSLATIONS[lang].get(key, TRANSLATIONS['English'].get(key, key))
     return template.format(**kwargs) if kwargs else template
+
+def initialize_selected_tab():
+    """Initialize selected tab with proper translation"""
+    if st.session_state.get('selected_tab') in ["📅 Daily Sales", "📅 ยอดขายรายวัน"]:
+        st.session_state.selected_tab = get_text("daily_sales")
 
 # ===== FUNCTION DEFINITIONS (Must be before use) =====
 
@@ -378,6 +407,9 @@ if 'ref_data' not in st.session_state:
     st.session_state.ref_data = ReferenceData(db)
 ref_data = st.session_state.ref_data
 
+# Initialize selected tab with proper translation
+initialize_selected_tab()
+
 # ========== SIDEBAR NAVIGATION ==========
 st.sidebar.title("❄️ Snowbomb")
 
@@ -423,7 +455,9 @@ tabs = [
     get_text("credit"),
     get_text("interactive_data"),
     get_text("transaction_log"),
-    get_text("customer_invoice")
+    get_text("customer_invoice"),
+    get_text("ice_forecast"),
+    get_text("crm")
 ]
 
 for tab in tabs:
@@ -1432,8 +1466,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
         st.markdown("---")
 
         # --- Render selected tab content ---
-        if st.session_state.selected_tab == "📅 Daily Sales":
-            st.subheader("📅 Daily Sales Analysis")
+        if st.session_state.selected_tab == get_text("daily_sales"):
+            st.subheader(get_text("daily_sales_analysis"))
             
             # === ENHANCED KPI CARDS ===
             st.markdown("### 📊 Key Metrics")
@@ -1632,8 +1666,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             - Total days analyzed: {total_days} days
             """)
 
-        elif st.session_state.selected_tab == "📍 By Location":
-            st.subheader("📍 Sales by Location (ประเภท)")
+        elif st.session_state.selected_tab == get_text("by_location"):
+            st.subheader(get_text("sales_by_location"))
             
             if "location" in df.columns and not df["location"].isna().all():
                 # Location sales summary
@@ -1867,13 +1901,13 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             else:
                 st.warning("⚠️ No location data available in receipts")
 
-        elif st.session_state.selected_tab == "📦 By Product":
-            st.subheader("📈 Product Analysis")
+        elif st.session_state.selected_tab == get_text("by_product"):
+            st.subheader(get_text("product_analysis"))
             
             # === PRODUCT CATEGORIZATION ===
-            # Initialize manual categorizations in session state if not exists
+            # Initialize manual categorizations from database if not exists in session state
             if 'manual_categories' not in st.session_state:
-                st.session_state.manual_categories = {}
+                st.session_state.manual_categories = db.get_manual_categories()
             
             # Categorize products into 3 main types
             def categorize_product(product_name):
@@ -2077,14 +2111,18 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         with col_a:
                             if st.button("💾 Save Change", use_container_width=True):
                                 st.session_state.manual_categories[selected_product] = new_category
-                                st.success(f"✅ Updated!")
+                                # Save to database
+                                db.save_manual_categories(st.session_state.manual_categories)
+                                st.success(f"✅ Updated and saved to database!")
                                 st.rerun()
                         
                         with col_b:
                             if st.button("🔄 Reset", use_container_width=True):
                                 if selected_product in st.session_state.manual_categories:
                                     del st.session_state.manual_categories[selected_product]
-                                    st.success("✅ Reset to auto!")
+                                    # Save updated categories to database
+                                    db.save_manual_categories(st.session_state.manual_categories)
+                                    st.success("✅ Reset to auto and saved to database!")
                                     st.rerun()
                 
                 st.markdown("---")
@@ -2102,7 +2140,9 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     with col2:
                         if st.button("🗑️ Clear All Manual Categories"):
                             st.session_state.manual_categories = {}
-                            st.success("✅ All manual categories cleared!")
+                            # Clear from database
+                            db.clear_manual_categories()
+                            st.success("✅ All manual categories cleared from database!")
                             st.rerun()
                 
                 st.markdown("---")
@@ -2125,7 +2165,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     key='download-detailed-breakdown'
                 )
                 
-                # Export manual categorizations
+                # Export/Import manual categorizations
                 if st.session_state.manual_categories:
                     import json
                     manual_cat_json = json.dumps(st.session_state.manual_categories, ensure_ascii=False, indent=2)
@@ -2136,6 +2176,32 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         "application/json",
                         key='download-manual-categories'
                     )
+                
+                # Import manual categories
+                st.markdown("#### 📤 Import Manual Categories")
+                uploaded_file = st.file_uploader(
+                    "Upload JSON file with manual categories",
+                    type=['json'],
+                    key='import-manual-categories',
+                    help="Upload a JSON file with product categories in format: {'Product Name': 'Category'}"
+                )
+                
+                if uploaded_file is not None:
+                    try:
+                        import json
+                        imported_categories = json.load(uploaded_file)
+                        
+                        if isinstance(imported_categories, dict):
+                            # Merge with existing categories
+                            st.session_state.manual_categories.update(imported_categories)
+                            # Save to database
+                            db.save_manual_categories(st.session_state.manual_categories)
+                            st.success(f"✅ Imported {len(imported_categories)} manual categories!")
+                            st.rerun()
+                        else:
+                            st.error("❌ Invalid JSON format. Expected a dictionary.")
+                    except Exception as e:
+                        st.error(f"❌ Error importing file: {str(e)}")
             
             # === INSIGHTS ===
             st.info(f"""
@@ -2146,8 +2212,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             - Main 3 product categories account for **{(main_sales/total_sales_sum*100):.1f}%** of total revenue
             """)
 
-        elif st.session_state.selected_tab == "👥 By Customer":
-            st.subheader("👥 Customer Analysis")
+        elif st.session_state.selected_tab == get_text("by_customer"):
+            st.subheader(get_text("customer_analysis"))
             
             # Customer sorting options
             col1, col2 = st.columns([3, 1])
@@ -2233,8 +2299,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                                           color_discrete_sequence=["#636EFA"])
                     st.plotly_chart(fig_dist, use_container_width=True)
 
-        elif st.session_state.selected_tab == "💳 Credit":
-            st.subheader("💳 Credit Management Dashboard")
+        elif st.session_state.selected_tab == get_text("credit"):
+            st.subheader(get_text("credit_management"))
             
             # Filter for credit transactions
             if 'payment_name' in df.columns:
@@ -2463,8 +2529,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             else:
                 st.warning("⚠️ Payment type data not available. Click 'Sync All Metadata' first.")
 
-        elif st.session_state.selected_tab == "📊 Interactive Data":
-            st.subheader("📊 Interactive Data Explorer")
+        elif st.session_state.selected_tab == get_text("interactive_data"):
+            st.subheader(get_text("interactive_data_explorer"))
             
             # Interactive filtering options
             col1, col2, col3 = st.columns(3)
@@ -2534,8 +2600,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                                     color_continuous_scale="Rainbow")
             st.plotly_chart(fig_scatter, use_container_width=True)
 
-        elif st.session_state.selected_tab == "📋 Transaction Log":
-            st.subheader("📋 Transaction Log by Location")
+        elif st.session_state.selected_tab == get_text("transaction_log"):
+            st.subheader(get_text("transaction_log"))
             
             # CSV Upload for Manual Reconciliation
             st.markdown("### 📤 Manual Checklist Upload & Reconciliation")
@@ -2742,8 +2808,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             else:
                 st.warning("⚠️ No location data available in current dataset")
         
-        elif st.session_state.selected_tab == "🧾 Customer Invoice":
-            st.subheader("🧾 Customer Invoice Generator")
+        elif st.session_state.selected_tab == get_text("customer_invoice"):
+            st.subheader(get_text("customer_invoice_generator"))
             
             # Customer search and selection
             st.markdown("### 👤 Select Customer")
@@ -3068,6 +3134,490 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             
                             st.markdown("---")
                             st.info("💡 Use browser Print function (Ctrl+P or Cmd+P) to print this invoice. Consider printing to PDF for digital copy.")
+        
+        elif st.session_state.selected_tab == get_text("ice_forecast"):
+            st.subheader(get_text("ice_forecast_dashboard"))
+            
+            # Check if we have data
+            if df.empty:
+                st.warning("⚠️ No data available. Please load data first.")
+            else:
+                # === ICE PRODUCT CATEGORIZATION ===
+                def categorize_ice_product(product_name):
+                    """Categorize products into ice types"""
+                    if pd.isna(product_name):
+                        return "📦 อื่นๆ (Other)"
+                    
+                    product_str = str(product_name).lower()
+                    
+                    if "ป่น" in product_str:
+                        return "🧊 ป่น (Crushed Ice)"
+                    elif "หลอดเล็ก" in product_str or ("หลอด" in product_str and "เล็ก" in product_str):
+                        return "🧊 หลอดเล็ก (Small Tube)"
+                    elif "หลอดใหญ่" in product_str or ("หลอด" in product_str and "ใหญ่" in product_str):
+                        return "🧊 หลอดใหญ่ (Large Tube)"
+                    else:
+                        return "📦 อื่นๆ (Other)"
+                
+                # Apply categorization
+                df_ice = df.copy()
+                df_ice['ice_category'] = df_ice['item'].apply(categorize_ice_product)
+                
+                # === LOCATION TABLE WITH FORECASTS ===
+                st.markdown("### 📊 Ice Forecast by Location")
+                
+                # Get unique locations
+                locations = df_ice['location'].dropna().unique()
+                locations = sorted([loc for loc in locations if loc != "Uncategorized"])
+                
+                # Calculate 7-day moving averages for each location and ice type
+                forecast_data = []
+                
+                for location in locations:
+                    location_df = df_ice[df_ice['location'] == location].copy()
+                    location_df['day'] = pd.to_datetime(location_df['day'])
+                    location_df = location_df.sort_values('day')
+                    
+                    # Get unique ice categories for this location
+                    ice_categories = location_df['ice_category'].unique()
+                    
+                    location_forecast = {
+                        'Location': location,
+                        'Total Sales (7d avg)': 0,
+                        '🧊 ป่น (Crushed Ice)': 0,
+                        '🧊 หลอดเล็ก (Small Tube)': 0,
+                        '🧊 หลอดใหญ่ (Large Tube)': 0,
+                        '📦 อื่นๆ (Other)': 0
+                    }
+                    
+                    # Calculate 7-day moving average for each ice category
+                    for ice_type in ice_categories:
+                        ice_df = location_df[location_df['ice_category'] == ice_type]
+                        if not ice_df.empty:
+                            # Calculate daily totals for this ice type
+                            ice_daily = ice_df.groupby('day')['quantity'].sum().reset_index()
+                            
+                            if len(ice_daily) >= 7:
+                                # Calculate 7-day moving average
+                                ice_daily['ma_7d'] = ice_daily['quantity'].rolling(window=7, min_periods=1).mean()
+                                latest_forecast = ice_daily['ma_7d'].iloc[-1]
+                                location_forecast[ice_type] = round(latest_forecast, 1)
+                            else:
+                                # Use average if less than 7 days of data
+                                avg_quantity = ice_daily['quantity'].mean()
+                                location_forecast[ice_type] = round(avg_quantity, 1)
+                        else:
+                            location_forecast[ice_type] = 0.0
+                    
+                    # Calculate total sales 7-day average
+                    if len(location_df) >= 7:
+                        daily_sales = location_df.groupby('day')['total'].sum().reset_index()
+                        daily_sales['ma_7d'] = daily_sales['total'].rolling(window=7, min_periods=1).mean()
+                        location_forecast['Total Sales (7d avg)'] = round(daily_sales['ma_7d'].iloc[-1], 0)
+                    else:
+                        location_forecast['Total Sales (7d avg)'] = round(location_df['total'].mean(), 0)
+                    
+                    forecast_data.append(location_forecast)
+                
+                # Create forecast DataFrame
+                forecast_df = pd.DataFrame(forecast_data)
+                forecast_df = forecast_df.sort_values('Total Sales (7d avg)', ascending=False)
+                
+                # Display forecast table
+                st.dataframe(
+                    forecast_df,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Location": st.column_config.TextColumn("Location", width="medium"),
+                        "Total Sales (7d avg)": st.column_config.NumberColumn("Total Sales (7d avg)", format="฿%.0f"),
+                        "🧊 ป่น (Crushed Ice)": st.column_config.NumberColumn("🧊 ป่น (Crushed Ice)", format="%.1f"),
+                        "🧊 หลอดเล็ก (Small Tube)": st.column_config.NumberColumn("🧊 หลอดเล็ก (Small Tube)", format="%.1f"),
+                        "🧊 หลอดใหญ่ (Large Tube)": st.column_config.NumberColumn("🧊 หลอดใหญ่ (Large Tube)", format="%.1f"),
+                        "📦 อื่นๆ (Other)": st.column_config.NumberColumn("📦 อื่นๆ (Other)", format="%.1f")
+                    }
+                )
+                
+                st.markdown("---")
+                
+                # === LOCATION SELECTOR FOR DETAILED ANALYSIS ===
+                st.markdown("### 📍 Detailed Analysis by Location")
+                
+                selected_location = st.selectbox(
+                    "Select Location for Detailed Analysis:",
+                    locations,
+                    key="ice_forecast_location"
+                )
+                
+                if selected_location:
+                    st.markdown(f"#### 📊 Detailed Analysis: {selected_location}")
+                    
+                    # Filter data for selected location
+                    location_detail_df = df_ice[df_ice['location'] == selected_location].copy()
+                    location_detail_df['day'] = pd.to_datetime(location_detail_df['day'])
+                    location_detail_df = location_detail_df.sort_values('day')
+                    
+                    # Calculate 7-day moving averages for each ice type
+                    ice_types = ["🧊 ป่น (Crushed Ice)", "🧊 หลอดเล็ก (Small Tube)", "🧊 หลอดใหญ่ (Large Tube)", "📦 อื่นๆ (Other)"]
+                    
+                    # Create charts for each ice type
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        # Total orders trend
+                        daily_totals = location_detail_df.groupby('day')['total'].sum().reset_index()
+                        daily_totals['ma_7d'] = daily_totals['total'].rolling(window=7, min_periods=1).mean()
+                        
+                        fig_total = px.line(daily_totals, x='day', y=['total', 'ma_7d'],
+                                          title=f"Total Orders - {selected_location}",
+                                          labels={'value': 'Total Sales (THB)', 'day': 'Date'})
+                        fig_total.update_layout(legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        ))
+                        st.plotly_chart(fig_total, use_container_width=True)
+                    
+                    with col2:
+                        # Ice type breakdown
+                        ice_breakdown = location_detail_df.groupby(['day', 'ice_category'])['quantity'].sum().reset_index()
+                        ice_breakdown_pivot = ice_breakdown.pivot(index='day', columns='ice_category', values='quantity').fillna(0)
+                        
+                        # Calculate 7-day moving averages
+                        for col in ice_breakdown_pivot.columns:
+                            ice_breakdown_pivot[f'{col}_ma7d'] = ice_breakdown_pivot[col].rolling(window=7, min_periods=1).mean()
+                        
+                        fig_ice = px.line(ice_breakdown_pivot, 
+                                        y=[col for col in ice_breakdown_pivot.columns if '_ma7d' in col],
+                                        title=f"7-Day Moving Average by Ice Type - {selected_location}",
+                                        labels={'value': 'Quantity (7d avg)', 'day': 'Date'})
+                        fig_ice.update_layout(legend=dict(
+                            orientation="h",
+                            yanchor="bottom",
+                            y=1.02,
+                            xanchor="right",
+                            x=1
+                        ))
+                        st.plotly_chart(fig_ice, use_container_width=True)
+                    
+                    # Detailed metrics
+                    st.markdown("#### 📈 Current Forecast Metrics")
+                    
+                    # Get latest 7-day averages
+                    latest_date = location_detail_df['day'].max()
+                    week_ago = latest_date - pd.Timedelta(days=7)
+                    recent_data = location_detail_df[location_detail_df['day'] >= week_ago]
+                    
+                    if not recent_data.empty:
+                        col1, col2, col3, col4 = st.columns(4)
+                        
+                        with col1:
+                            # Calculate daily average sales
+                            daily_sales = recent_data.groupby('day')['total'].sum().mean()
+                            st.metric("💰 Avg Daily Sales", f"฿{daily_sales:,.0f}")
+                        
+                        with col2:
+                            # Calculate daily average for crushed ice
+                            crushed_data = recent_data[recent_data['ice_category'] == "🧊 ป่น (Crushed Ice)"]
+                            if not crushed_data.empty:
+                                crushed_daily = crushed_data.groupby('day')['quantity'].sum().mean()
+                                st.metric("🧊 ป่น (Crushed Ice)", f"{crushed_daily:.1f}")
+                            else:
+                                st.metric("🧊 ป่น (Crushed Ice)", "0.0")
+                        
+                        with col3:
+                            # Calculate daily average for small tube
+                            small_data = recent_data[recent_data['ice_category'] == "🧊 หลอดเล็ก (Small Tube)"]
+                            if not small_data.empty:
+                                small_daily = small_data.groupby('day')['quantity'].sum().mean()
+                                st.metric("🧊 หลอดเล็ก (Small Tube)", f"{small_daily:.1f}")
+                            else:
+                                st.metric("🧊 หลอดเล็ก (Small Tube)", "0.0")
+                        
+                        with col4:
+                            # Calculate daily average for large tube
+                            large_data = recent_data[recent_data['ice_category'] == "🧊 หลอดใหญ่ (Large Tube)"]
+                            if not large_data.empty:
+                                large_daily = large_data.groupby('day')['quantity'].sum().mean()
+                                st.metric("🧊 หลอดใหญ่ (Large Tube)", f"{large_daily:.1f}")
+                            else:
+                                st.metric("🧊 หลอดใหญ่ (Large Tube)", "0.0")
+                    
+                    # Recommendation section
+                    st.markdown("#### 💡 Loading Recommendations")
+                    
+                    if not recent_data.empty:
+                        # Calculate total ice needed using daily averages
+                        total_ice_needed = 0
+                        ice_breakdown = {}
+                        
+                        for ice_type in ice_types:
+                            ice_data = recent_data[recent_data['ice_category'] == ice_type]
+                            if not ice_data.empty:
+                                # Calculate daily average for this ice type
+                                daily_avg = ice_data.groupby('day')['quantity'].sum().mean()
+                                ice_breakdown[ice_type] = round(daily_avg, 1)
+                                total_ice_needed += daily_avg
+                            else:
+                                ice_breakdown[ice_type] = 0.0
+                        
+                        st.markdown(f"**Estimated Total Ice Needed:** {total_ice_needed:.1f} units")
+                        st.markdown("**Breakdown by Type:**")
+                        for ice_type, quantity in ice_breakdown.items():
+                            st.markdown(f"- {ice_type}: {quantity} units")
+                        
+                        # Safety buffer recommendation
+                        buffer = total_ice_needed * 0.2  # 20% buffer
+                        recommended_total = total_ice_needed + buffer
+                        
+                        st.markdown(f"**Recommended Loading (with 20% buffer):** {recommended_total:.1f} units")
+                        
+                        # Add explanation of calculation method
+                        st.markdown("---")
+                        st.markdown("#### 📊 Calculation Method")
+                        st.markdown("""
+                        **How these forecasts are calculated:**
+                        
+                        1. **Data Source**: Last 7 days of sales data for the selected location
+                        2. **Daily Aggregation**: For each ice type, we sum all quantities sold per day
+                        3. **Average Calculation**: We calculate the average daily quantity for each ice type
+                        4. **Safety Buffer**: Add 20% to account for unexpected demand spikes
+                        
+                        **Example**: If "🧊 ป่น (Crushed Ice)" sold 10, 12, 8, 15, 9, 11, 13 units over 7 days:
+                        - Daily average = (10+12+8+15+9+11+13) ÷ 7 = 11.1 units
+                        - With 20% buffer = 11.1 × 1.2 = 13.3 units
+                        """)
+                    else:
+                        st.warning("⚠️ No recent data available for forecasting. Please ensure you have at least 7 days of data.")
+        
+        elif st.session_state.selected_tab == get_text("crm"):
+            st.subheader(get_text("crm_dashboard"))
+            
+            # Check if we have data
+            if df.empty:
+                st.warning("⚠️ No data available. Please load data first.")
+            else:
+                # Initialize customer notes in session state
+                if 'customer_notes' not in st.session_state:
+                    st.session_state.customer_notes = {}
+                
+                # === TOP CUSTOMERS ANALYSIS ===
+                st.markdown("### 🏆 Top Customers")
+                
+                # Calculate customer metrics
+                customer_metrics = df.groupby(['customer_id', 'customer_name']).agg({
+                    'total': 'sum',
+                    'quantity': 'sum',
+                    'bill_number': 'nunique',
+                    'day': ['min', 'max', 'nunique']
+                }).reset_index()
+                
+                # Flatten column names
+                customer_metrics.columns = ['Customer ID', 'Customer Name', 'Total Spent', 'Total Items', 'Transactions', 'First Visit', 'Last Visit', 'Active Days']
+                
+                # Calculate additional metrics
+                customer_metrics['Avg Transaction'] = customer_metrics['Total Spent'] / customer_metrics['Transactions']
+                customer_metrics['Avg Items per Transaction'] = customer_metrics['Total Items'] / customer_metrics['Transactions']
+                customer_metrics['Days Since Last Visit'] = (pd.Timestamp.now() - pd.to_datetime(customer_metrics['Last Visit'])).dt.days
+                
+                # Sort by total spent
+                customer_metrics = customer_metrics.sort_values('Total Spent', ascending=False)
+                
+                # Display top customers
+                col1, col2, col3 = st.columns(3)
+                
+                with col1:
+                    st.metric("💰 Total Customers", len(customer_metrics))
+                
+                with col2:
+                    top_customer_spent = customer_metrics['Total Spent'].iloc[0] if len(customer_metrics) > 0 else 0
+                    st.metric("🏆 Top Customer Spent", f"฿{top_customer_spent:,.0f}")
+                
+                with col3:
+                    avg_customer_value = customer_metrics['Total Spent'].mean()
+                    st.metric("📊 Avg Customer Value", f"฿{avg_customer_value:,.0f}")
+                
+                st.markdown("---")
+                
+                # === CUSTOMER ALERTS ===
+                st.markdown("### 🚨 Customer Alerts")
+                
+                # Algorithm to detect sudden decreases in orders
+                def detect_customer_decline(customer_df):
+                    """Detect if a customer has had a sudden decrease in orders"""
+                    if len(customer_df) < 4:  # Need at least 4 data points
+                        return False, 0
+                    
+                    # Get last 30 days of data
+                    recent_cutoff = pd.Timestamp.now() - pd.Timedelta(days=30)
+                    recent_data = customer_df[customer_df['day'] >= recent_cutoff]
+                    
+                    if len(recent_data) < 2:
+                        return False, 0
+                    
+                    # Calculate weekly spending
+                    recent_data['week'] = recent_data['day'].dt.to_period('W')
+                    weekly_spending = recent_data.groupby('week')['total'].sum()
+                    
+                    if len(weekly_spending) < 2:
+                        return False, 0
+                    
+                    # Calculate percentage change
+                    latest_week = weekly_spending.iloc[-1]
+                    previous_week = weekly_spending.iloc[-2]
+                    
+                    if previous_week == 0:
+                        return False, 0
+                    
+                    decline_percentage = ((latest_week - previous_week) / previous_week) * 100
+                    
+                    # Alert if decline is more than 50%
+                    return decline_percentage < -50, abs(decline_percentage)
+                
+                # Check for customer declines
+                alerts = []
+                for _, customer in customer_metrics.head(20).iterrows():  # Check top 20 customers
+                    customer_id = customer['Customer ID']
+                    customer_name = customer['Customer Name']
+                    
+                    if pd.isna(customer_id) or pd.isna(customer_name) or customer_name == "Unknown Customer":
+                        continue
+                    
+                    customer_df = df[df['customer_id'] == customer_id].copy()
+                    customer_df['day'] = pd.to_datetime(customer_df['day'])
+                    customer_df = customer_df.sort_values('day')
+                    
+                    is_decline, decline_percentage = detect_customer_decline(customer_df)
+                    
+                    if is_decline:
+                        alerts.append({
+                            'Customer': customer_name,
+                            'Decline': f"{decline_percentage:.1f}%",
+                            'Total Spent': f"฿{customer['Total Spent']:,.0f}",
+                            'Last Visit': customer['Last Visit'],
+                            'Days Since Last Visit': customer['Days Since Last Visit']
+                        })
+                
+                if alerts:
+                    st.warning(f"🚨 {len(alerts)} customers showing significant order decline!")
+                    
+                    # Display alerts
+                    alerts_df = pd.DataFrame(alerts)
+                    st.dataframe(alerts_df, use_container_width=True, hide_index=True)
+                else:
+                    st.success("✅ No significant customer declines detected")
+                
+                st.markdown("---")
+                
+                # === CUSTOMER LIST WITH NOTES ===
+                st.markdown("### 📋 Customer Management")
+                
+                # Search and filter options
+                col1, col2, col3 = st.columns([2, 1, 1])
+                
+                with col1:
+                    search_term = st.text_input("🔍 Search Customer:", placeholder="Enter customer name or ID")
+                
+                with col2:
+                    min_spent = st.number_input("Min Total Spent (THB):", min_value=0, value=0)
+                
+                with col3:
+                    show_alerts_only = st.checkbox("Show Alerts Only", value=False)
+                
+                # Filter customers
+                filtered_customers = customer_metrics.copy()
+                
+                if search_term:
+                    mask = (
+                        filtered_customers['Customer Name'].str.contains(search_term, case=False, na=False) |
+                        filtered_customers['Customer ID'].str.contains(search_term, case=False, na=False)
+                    )
+                    filtered_customers = filtered_customers[mask]
+                
+                if min_spent > 0:
+                    filtered_customers = filtered_customers[filtered_customers['Total Spent'] >= min_spent]
+                
+                if show_alerts_only:
+                    alert_customer_ids = [alert['Customer'] for alert in alerts]
+                    filtered_customers = filtered_customers[filtered_customers['Customer Name'].isin(alert_customer_ids)]
+                
+                # Display customer list
+                st.markdown(f"**Showing {len(filtered_customers)} customers**")
+                
+                for idx, customer in filtered_customers.iterrows():
+                    customer_id = customer['Customer ID']
+                    customer_name = customer['Customer Name']
+                    
+                    if pd.isna(customer_id) or pd.isna(customer_name) or customer_name == "Unknown Customer":
+                        continue
+                    
+                    # Create expandable section for each customer
+                    with st.expander(f"👤 {customer_name} - ฿{customer['Total Spent']:,.0f} ({customer['Transactions']} transactions)"):
+                        col1, col2 = st.columns([2, 1])
+                        
+                        with col1:
+                            st.markdown(f"**Customer ID:** {customer_id}")
+                            st.markdown(f"**Total Spent:** ฿{customer['Total Spent']:,.0f}")
+                            st.markdown(f"**Transactions:** {customer['Transactions']}")
+                            st.markdown(f"**Avg Transaction:** ฿{customer['Avg Transaction']:,.0f}")
+                            st.markdown(f"**Last Visit:** {customer['Last Visit']}")
+                            st.markdown(f"**Days Since Last Visit:** {customer['Days Since Last Visit']}")
+                            
+                            # Check if this customer has alerts
+                            customer_alerts = [alert for alert in alerts if alert['Customer'] == customer_name]
+                            if customer_alerts:
+                                st.error(f"🚨 Alert: {customer_alerts[0]['Decline']} decline in recent orders")
+                        
+                        with col2:
+                            # Customer notes section
+                            st.markdown("**📝 Customer Notes:**")
+                            
+                            # Get existing notes
+                            note_key = f"customer_{customer_id}_notes"
+                            current_notes = st.session_state.customer_notes.get(note_key, "")
+                            
+                            # Display existing notes
+                            if current_notes:
+                                st.text_area("Current Notes:", value=current_notes, height=100, key=f"display_{note_key}", disabled=True)
+                            else:
+                                st.info("No notes yet")
+                            
+                            # Add new note
+                            new_note = st.text_area("Add Note:", key=f"input_{note_key}", height=60, placeholder="Enter customer notes...")
+                            
+                            col_save, col_clear = st.columns(2)
+                            with col_save:
+                                if st.button("💾 Save Note", key=f"save_{note_key}"):
+                                    if new_note.strip():
+                                        if current_notes:
+                                            updated_notes = current_notes + "\n\n" + f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] " + new_note.strip()
+                                        else:
+                                            updated_notes = f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] " + new_note.strip()
+                                        
+                                        st.session_state.customer_notes[note_key] = updated_notes
+                                        st.success("Note saved!")
+                                        st.rerun()
+                            
+                            with col_clear:
+                                if st.button("🗑️ Clear Notes", key=f"clear_{note_key}"):
+                                    st.session_state.customer_notes[note_key] = ""
+                                    st.success("Notes cleared!")
+                                    st.rerun()
+                        
+                        # Customer transaction history
+                        st.markdown("**📊 Recent Transaction History:**")
+                        customer_transactions = df[df['customer_id'] == customer_id].copy()
+                        customer_transactions = customer_transactions.sort_values('day', ascending=False)
+                        
+                        if not customer_transactions.empty:
+                            # Show last 10 transactions
+                            recent_transactions = customer_transactions.head(10)[['day', 'item', 'quantity', 'total', 'location']]
+                            recent_transactions.columns = ['Date', 'Item', 'Qty', 'Amount', 'Location']
+                            st.dataframe(recent_transactions, use_container_width=True, hide_index=True)
+                        else:
+                            st.info("No transaction history available")
         
         # --- Download ---
         st.markdown("---")

@@ -16,3 +16,4 @@ streamlit run app.py \
   --server.address=$STREAMLIT_SERVER_ADDRESS \
   --server.headless=$STREAMLIT_SERVER_HEADLESS \
   --browser.gatherUsageStats=$STREAMLIT_BROWSER_GATHER_USAGE_STATS
+

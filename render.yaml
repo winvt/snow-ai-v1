@@ -3,8 +3,9 @@ services:
     name: snowbomb-dashboard
     env: python
     plan: starter
+    region: singapore
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true
+    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableXsrfProtection=false
     envVars:
       - key: LOYVERSE_TOKEN
         value: d18826e6c76345888204b310aaca1351
@@ -16,3 +17,10 @@ services:
         value: true
       - key: STREAMLIT_BROWSER_GATHER_USAGE_STATS
         value: false
+      - key: STREAMLIT_SERVER_ENABLE_CORS
+        value: false
+      - key: STREAMLIT_SERVER_ENABLE_XSRF_PROTECTION
+        value: false
+      - key: PYTHONUNBUFFERED
+        value: 1
+
