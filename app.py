@@ -34,32 +34,32 @@ if 'authenticated' not in st.session_state:
 
 # Password authentication
 if not st.session_state.authenticated:
-    st.title("🔐 Snow AI Dashboard - Login Required")
+    st.title(get_text("login_required"))
     st.markdown("---")
     
     # Center the login form
     col1, col2, col3 = st.columns([1, 2, 1])
     
     with col2:
-        st.markdown("### Enter Password to Access Dashboard")
-        password_input = st.text_input("Password", type="password", placeholder="Enter password...")
+        st.markdown(f"### {get_text('enter_password')}")
+        password_input = st.text_input("Password", type="password", placeholder=get_text("password_placeholder"))
         
         col_login, col_clear = st.columns(2)
         
         with col_login:
-            if st.button("🔓 Login", type="primary", use_container_width=True):
+            if st.button(get_text("login_button"), type="primary", use_container_width=True):
                 if password_input == PASSWORD:
                     st.session_state.authenticated = True
                     st.rerun()
                 else:
-                    st.error("❌ Incorrect password. Please try again.")
+                    st.error(get_text("incorrect_password"))
         
         with col_clear:
-            if st.button("🗑️ Clear", use_container_width=True):
+            if st.button(get_text("clear_button"), use_container_width=True):
                 st.rerun()
         
         st.markdown("---")
-        st.info("💡 Contact administrator for access credentials")
+        st.info(get_text("contact_admin"))
     
     # Stop execution here if not authenticated
     st.stop()
@@ -218,7 +218,116 @@ TRANSLATIONS = {
         "transaction_log": "📋 บันทึกการทำรายการแยกตามสถานที่",
         "customer_invoice_generator": "🧾 เครื่องมือสร้างใบแจ้งหนี้ลูกค้า",
         "ice_forecast_dashboard": "🧊 แดชบอร์ดพยากรณ์น้ำแข็ง",
-        "crm_dashboard": "👥 การจัดการความสัมพันธ์ลูกค้า"
+        "crm_dashboard": "👥 การจัดการความสัมพันธ์ลูกค้า",
+        
+        # Password Authentication
+        "login_required": "🔐 Snow AI Dashboard - ต้องเข้าสู่ระบบ",
+        "enter_password": "กรอกรหัสผ่านเพื่อเข้าถึงแดชบอร์ด",
+        "password_placeholder": "กรอกรหัสผ่าน...",
+        "login_button": "🔓 เข้าสู่ระบบ",
+        "clear_button": "🗑️ ล้าง",
+        "incorrect_password": "❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่",
+        "contact_admin": "💡 ติดต่อผู้ดูแลระบบเพื่อขอข้อมูลการเข้าถึง",
+        "logout": "🚪 ออกจากระบบ",
+        
+        # Settings & Preferences
+        "appearance": "🎨 การแสดงผล",
+        "theme_mode": "โหมดธีม",
+        "light": "สว่าง",
+        "dark": "มืด",
+        "font_size": "ขนาดตัวอักษร",
+        "small": "เล็ก",
+        "medium": "กลาง",
+        "large": "ใหญ่",
+        "compact_mode": "โหมดกะทัดรัด",
+        "data_management": "💾 การจัดการข้อมูล",
+        "sync_receipts": "🔄 ซิงค์ใบเสร็จจาก API",
+        "sync_missing_data": "🔄 ซิงค์ข้อมูลที่ขาดหาย",
+        "sync_all_metadata": "🔄 ซิงค์ข้อมูลทั้งหมด",
+        "extended_sync_options": "📊 ตัวเลือกการซิงค์แบบขยาย",
+        "custom_date_range_sync": "📅 ช่วงวันที่กำหนดเองสำหรับการซิงค์",
+        "display_preferences": "🎯 การตั้งค่าการแสดงผล",
+        "data_backup": "💾 การสำรองข้อมูล",
+        "api_connection": "🔌 API และการเชื่อมต่อ",
+        "sync_data_operations": "🔄 การซิงค์และการดำเนินการข้อมูล",
+        "advanced_options": "⚙️ ตัวเลือกขั้นสูง",
+        "maintenance": "🔧 การบำรุงรักษา",
+        
+        # Key Metrics
+        "key_metrics": "📊 ตัวชี้วัดหลัก",
+        "total_sales": "ยอดขายรวม",
+        "total_items": "รายการรวม",
+        "unique_customers": "ลูกค้าไม่ซ้ำ",
+        "avg_transaction_value": "มูลค่าเฉลี่ยต่อรายการ",
+        "sales_growth": "การเติบโตของยอดขาย",
+        "sales_overview": "📊 ภาพรวมยอดขาย",
+        "daily_discounts": "💸 ส่วนลดรายวัน",
+        "day_of_week_analysis": "📅 การวิเคราะห์ตามวันในสัปดาห์",
+        "time_period_analysis": "📊 การวิเคราะห์ช่วงเวลา",
+        
+        # Product Analysis
+        "product_category_summary": "📊 สรุปหมวดหมู่สินค้า",
+        "sales_distribution": "🥧 การกระจายยอดขาย",
+        "category_summary_table": "📋 ตารางสรุปหมวดหมู่",
+        "sales_by_category": "📊 ยอดขายแยกตามหมวดหมู่",
+        "all_products_by_category": "สินค้าทั้งหมดแยกตามหมวดหมู่",
+        "edit_product_categories": "📝 แก้ไขหมวดหมู่สินค้า",
+        "select_product_to_edit": "เลือกสินค้าที่จะแก้ไข:",
+        "change_category_to": "เปลี่ยนหมวดหมู่เป็น:",
+        "current_product_breakdown": "📊 การแบ่งสินค้าปัจจุบัน",
+        
+        # Common terms
+        "date": "วันที่",
+        "sales": "ยอดขาย",
+        "quantity": "จำนวน",
+        "amount": "จำนวนเงิน",
+        "total": "รวม",
+        "average": "เฉลี่ย",
+        "growth": "การเติบโต",
+        "transactions": "รายการ",
+        "customers": "ลูกค้า",
+        "products": "สินค้า",
+        "locations": "สถานที่",
+        "categories": "หมวดหมู่",
+        "discounts": "ส่วนลด",
+        "refunds": "การคืนเงิน",
+        "net_sales": "ยอดขายสุทธิ",
+        "gross_sales": "ยอดขายรวม",
+        "items_sold": "รายการที่ขาย",
+        "active_days": "วันที่ใช้งาน",
+        "first_visit": "เยี่ยมครั้งแรก",
+        "last_visit": "เยี่ยมครั้งล่าสุด",
+        "total_spent": "ใช้จ่ายรวม",
+        "avg_per_transaction": "เฉลี่ยต่อรายการ",
+        "avg_items_per_transaction": "เฉลี่ยรายการต่อรายการ",
+        "peak_hours": "ชั่วโมงเร่งด่วน",
+        "slowest_hours": "ชั่วโมงที่ช้าที่สุด",
+        "forecast": "พยากรณ์",
+        "trend": "แนวโน้ม",
+        "analysis": "การวิเคราะห์",
+        "summary": "สรุป",
+        "details": "รายละเอียด",
+        "overview": "ภาพรวม",
+        "breakdown": "การแบ่ง",
+        "distribution": "การกระจาย",
+        "comparison": "การเปรียบเทียบ",
+        "performance": "ประสิทธิภาพ",
+        "insights": "ข้อมูลเชิงลึก",
+        "recommendations": "คำแนะนำ",
+        
+        # KPI Metrics
+        "avg_daily_sales": "ยอดขายเฉลี่ยต่อวัน",
+        "avg_transaction": "รายการเฉลี่ย",
+        "avg_items_per_day": "รายการเฉลี่ยต่อวัน",
+        "avg_customers_per_day": "ลูกค้าเฉลี่ยต่อวัน",
+        "total_sales_period": "ยอดขายรวมในระยะเวลา",
+        "total_items_period": "รายการรวมในระยะเวลา",
+        "unique_customers_period": "ลูกค้าไม่ซ้ำในระยะเวลา",
+        "total_transactions_period": "รายการรวมในระยะเวลา",
+        "sales_growth_period": "การเติบโตของยอดขาย",
+        "transaction_growth_period": "การเติบโตของรายการ",
+        "customer_growth_period": "การเติบโตของลูกค้า",
+        "item_growth_period": "การเติบโตของรายการ"
     }
 }
 
@@ -610,7 +719,7 @@ initialize_selected_tab()
 st.sidebar.title("🐻‍❄️ Snow AI")
 
 # Logout button
-if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True, type="secondary"):
+if st.sidebar.button(get_text("logout"), key="logout_btn", use_container_width=True, type="secondary"):
     st.session_state.authenticated = False
     st.rerun()
 
@@ -675,7 +784,7 @@ st.sidebar.markdown("---")
 with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
     
     # === VISUAL SETTINGS ===
-    st.markdown("### 🎨 Appearance")
+    st.markdown(f"### {get_text('appearance')}")
     
     # Initialize theme in session state
     if 'theme_mode' not in st.session_state:
@@ -684,13 +793,13 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
     # Theme selector
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("☀️ Light Mode", use_container_width=True, 
+        if st.button(f"☀️ {get_text('light')}", use_container_width=True, 
                     type="primary" if st.session_state.theme_mode == "Light" else "secondary"):
             st.session_state.theme_mode = "Light"
             st.info("💡 Light mode active")
     
     with col2:
-        if st.button("🌙 Dark Mode", use_container_width=True,
+        if st.button(f"🌙 {get_text('dark')}", use_container_width=True,
                     type="primary" if st.session_state.theme_mode == "Dark" else "secondary"):
             st.session_state.theme_mode = "Dark"
             st.info("🌙 Dark mode active (refresh to apply)")
@@ -712,8 +821,8 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
         st.session_state.font_size = "Medium"
     
     font_size = st.radio(
-        "🔤 Font Size",
-        ["Small", "Medium", "Large"],
+        f"🔤 {get_text('font_size')}",
+        [get_text("small"), get_text("medium"), get_text("large")],
         index=["Small", "Medium", "Large"].index(st.session_state.font_size),
         horizontal=True,
         key="font_size_select"
@@ -723,17 +832,17 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
     st.markdown("---")
     
     # === DATA MANAGEMENT ===
-    st.markdown("### 💾 Data Management")
+    st.markdown(f"### {get_text('data_management')}")
     
     # Database info
     db_stats = db.get_database_stats()
     col1, col2 = st.columns(2)
     with col1:
-        st.metric("💾 Customers", db_stats['customers'])
-        st.metric("📍 Locations", db_stats['categories'])
+        st.metric(f"💾 {get_text('customers')}", db_stats['customers'])
+        st.metric(f"📍 {get_text('locations')}", db_stats['categories'])
     with col2:
         st.metric("🧾 Receipts", db_stats['receipts'])
-        st.metric("📦 Products", db_stats['items'])
+        st.metric(f"📦 {get_text('products')}", db_stats['items'])
     
     if db_stats['date_range'][0]:
         st.caption(f"📅 Data: {db_stats['date_range'][0][:10]} to {db_stats['date_range'][1][:10]}")
@@ -742,7 +851,7 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
     st.subheader("📚 Reference Data")
     
     # Sync all metadata button
-    if st.button("🔄 Sync All Metadata", help="Fetch customers, payment types, stores, employees", key="sync_all_meta"):
+    if st.button(get_text("sync_all_metadata"), help="Fetch customers, payment types, stores, employees", key="sync_all_meta"):
         with st.spinner("Syncing all reference data..."):
             total_synced = 0
             
@@ -1775,7 +1884,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.subheader(get_text("daily_sales_analysis"))
             
             # === ENHANCED KPI CARDS ===
-            st.markdown("### 📊 Key Metrics")
+            st.markdown(f"### {get_text('key_metrics')}")
             
             # Calculate daily aggregations using receipt-level signed net
             if "signed_net" in df.columns:
@@ -1829,7 +1938,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             with col1:
                 st.metric(
-                    "💰 Avg Daily Sales", 
+                    f"💰 {get_text('avg_daily_sales')}", 
                     f"฿{avg_daily_sales:,.0f}",
                     delta=f"{sales_delta:+.1f}%" if sales_delta != 0 else None,
                     help="Average sales per day in selected period"
@@ -1837,21 +1946,21 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             with col2:
                 st.metric(
-                    "🧾 Avg Transaction", 
+                    f"🧾 {get_text('avg_transaction')}", 
                     f"฿{avg_transaction_value:,.0f}",
                     help="Average value per transaction"
                 )
             
             with col3:
                 st.metric(
-                    "📦 Avg Items/Day", 
+                    f"📦 {get_text('avg_items_per_day')}", 
                     f"{avg_items_per_day:,.0f}",
                     help="Average items sold per day"
                 )
             
             with col4:
                 st.metric(
-                    "👥 Avg Customers/Day", 
+                    f"👥 {get_text('avg_customers_per_day')}", 
                     f"{avg_customers_per_day:,.0f}",
                     delta=f"{trans_delta:+.1f}%" if trans_delta != 0 else None,
                     help="Average unique customers per day"
@@ -1860,7 +1969,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.markdown("---")
             
             # === DAILY SALES CHARTS ===
-            st.markdown("### 📊 Sales Overview")
+            st.markdown(f"### {get_text('sales_overview')}")
             
             # Bar chart - Full width using signed net
             if "signed_net" in df.columns:
@@ -1887,7 +1996,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     daily_discounts.columns = ["day", "discounts"]
                     
                     if daily_discounts["discounts"].sum() > 0:
-                        st.markdown("#### 💸 Daily Discounts")
+                        st.markdown(f"#### {get_text('daily_discounts')}")
                         fig_discounts = px.bar(daily_discounts, x="day", y="discounts", 
                                              title="Daily Discounts Applied",
                                              color="discounts",
@@ -1924,7 +2033,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.markdown("---")
             
             # === DAY OF WEEK ANALYSIS ===
-            st.markdown("### 📅 Day of Week Analysis")
+            st.markdown(f"### {get_text('day_of_week_analysis')}")
             
             # Add day of week to dataframe
             df_temp = df.copy()
