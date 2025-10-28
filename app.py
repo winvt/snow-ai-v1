@@ -2454,7 +2454,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             category_sales['Sales %'] = (category_sales['Total Sales'] / total_sales_sum * 100).round(2)
             
             # === SUMMARY METRICS ===
-            st.markdown("### 📊 Product Category Summary")
+            st.markdown(f"### {get_text('product_category_summary')}")
             
             col1, col2, col3, col4 = st.columns(4)
             
@@ -2484,7 +2484,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             col1, col2 = st.columns([1, 1])
             
             with col1:
-                st.markdown("#### 🥧 Sales Distribution")
+                st.markdown(f"#### {get_text('sales_distribution')}")
                 
                 # Pie chart
                 fig_pie = px.pie(
@@ -2503,7 +2503,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.plotly_chart(fig_pie, use_container_width=True)
             
             with col2:
-                st.markdown("#### 📋 Category Summary Table")
+                st.markdown(f"#### {get_text('category_summary_table')}")
                 
                 # Format the summary table
                 display_summary = category_sales[['Category', 'Total Sales', 'Sales %', 'Quantity', 'Transactions']].copy()
@@ -2526,7 +2526,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.markdown("---")
             
             # === BAR CHART ===
-            st.markdown("### 📊 Sales by Category")
+            st.markdown(f"### {get_text('sales_by_category')}")
             
             fig_bar = px.bar(
                 category_sales,
@@ -2544,7 +2544,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             # === DETAILED BREAKDOWN (EXPANDABLE) ===
             with st.expander("📋 Detailed Product Breakdown & Category Editor"):
-                st.markdown("#### All Products by Category")
+                st.markdown(f"#### {get_text('all_products_by_category')}")
                 st.caption("💡 Click on a product to manually change its category")
                 
                 # Group products by category with details
@@ -2565,7 +2565,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 detailed_products = detailed_products.sort_values(['Category', 'Total Sales'], ascending=[True, False])
                 
                 # Display as table with edit functionality
-                st.markdown("##### 📝 Edit Product Categories")
+                st.markdown(f"##### {get_text('edit_product_categories')}")
                 
                 # Category options
                 category_options = [
@@ -2579,7 +2579,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 col1, col2 = st.columns([2, 1])
                 
                 with col1:
-                    st.markdown("**Select Product to Edit:**")
+                    st.markdown(f"**{get_text('select_product_to_edit')}**")
                     # Get unique products sorted by sales
                     product_list = detailed_products.sort_values('Total Sales', ascending=False)['Product'].unique().tolist()
                     
@@ -2602,7 +2602,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             st.caption(f"Current auto-detected category: {current_cat}")
                 
                 with col2:
-                    st.markdown("**Change Category To:**")
+                    st.markdown(f"**{get_text('change_category_to')}**")
                     
                     if product_list:
                         # Get current index
@@ -2657,7 +2657,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             st.rerun()
                 
                 st.markdown("---")
-                st.markdown("##### 📊 Current Product Breakdown")
+                st.markdown(f"##### {get_text('current_product_breakdown')}")
                 
                 # Format for display
                 display_detailed = detailed_products.copy()
