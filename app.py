@@ -331,6 +331,8 @@ TRANSLATIONS = {
     }
 }
 
+# ===== FUNCTION DEFINITIONS (Must be before use) =====
+
 def get_text(key, **kwargs):
     """Get translated text for the current language"""
     lang = st.session_state.get('language', 'English')
