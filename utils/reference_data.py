@@ -19,10 +19,29 @@ class ReferenceData:
     
     def _load_all_maps(self):
         """Load all mapping dictionaries from database"""
-        self.customers = self.db.get_customer_map()
-        self.payment_types = self.db.get_payment_types_map()
-        self.stores = self.db.get_stores_map()
-        self.employees = self.db.get_employees_map()
+        try:
+            self.customers = self.db.get_customer_map()
+        except Exception as e:
+            print(f"Warning: Could not load customers: {e}")
+            self.customers = {}
+        
+        try:
+            self.payment_types = self.db.get_payment_types_map()
+        except Exception as e:
+            print(f"Warning: Could not load payment types: {e}")
+            self.payment_types = {}
+        
+        try:
+            self.stores = self.db.get_stores_map()
+        except Exception as e:
+            print(f"Warning: Could not load stores: {e}")
+            self.stores = {}
+        
+        try:
+            self.employees = self.db.get_employees_map()
+        except Exception as e:
+            print(f"Warning: Could not load employees: {e}")
+            self.employees = {}
     
     def refresh(self):
         """Reload all maps from database (call after sync)"""

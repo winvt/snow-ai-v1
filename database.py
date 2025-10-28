@@ -50,8 +50,13 @@ class LoyverseDB:
     
     def init_database(self):
         """Initialize database tables"""
-        conn = self.get_connection()
-        cursor = conn.cursor()
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            print(f"✅ Database connection established for: {self.db_path}")
+        except Exception as e:
+            print(f"❌ Database connection failed: {e}")
+            raise e
         
         # Customers table
         cursor.execute("""
@@ -217,6 +222,35 @@ class LoyverseDB:
         
         conn.commit()
         conn.close()
+        print(f"✅ Database tables initialized successfully for: {self.db_path}")
+    
+    def verify_tables_exist(self):
+        """Verify that all required tables exist"""
+        try:
+            conn = self.get_connection()
+            cursor = conn.cursor()
+            
+            # Check if customers table exists
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='customers'")
+            if not cursor.fetchone():
+                print("❌ Customers table does not exist")
+                return False
+            
+            # Check other critical tables
+            required_tables = ['receipts', 'line_items', 'payment_types', 'stores', 'employees']
+            for table in required_tables:
+                cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'")
+                if not cursor.fetchone():
+                    print(f"❌ {table} table does not exist")
+                    return False
+            
+            conn.close()
+            print("✅ All required tables exist")
+            return True
+            
+        except Exception as e:
+            print(f"❌ Error verifying tables: {e}")
+            return False
     
     # ===== CUSTOMER METHODS =====
     

@@ -749,6 +749,13 @@ def get_smart_sync_range(db):
 try:
     db = LoyverseDB()
     print(f"✅ Database initialized successfully at: {db.db_path}")
+    
+    # Verify tables exist
+    if not db.verify_tables_exist():
+        print("⚠️ Some tables missing, reinitializing database...")
+        db.init_database()
+        db.verify_tables_exist()
+        
 except Exception as e:
     print(f"❌ Database initialization failed: {e}")
     # Create a fallback database
@@ -757,7 +764,13 @@ except Exception as e:
 
 # Initialize reference data
 if 'ref_data' not in st.session_state:
-    st.session_state.ref_data = ReferenceData(db)
+    try:
+        st.session_state.ref_data = ReferenceData(db)
+        print("✅ Reference data initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Reference data initialization failed: {e}")
+        # Create empty reference data
+        st.session_state.ref_data = ReferenceData(db)
 ref_data = st.session_state.ref_data
 
 # Initialize selected tab with proper translation
