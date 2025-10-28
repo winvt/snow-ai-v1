@@ -788,15 +788,25 @@ st.sidebar.markdown("---")
 
 # Load Database button right under title
 if st.sidebar.button(get_text("load_database"), key="load_db_main", use_container_width=True, type="primary"):
-    # Load ALL data from database (not filtered by date range)
-    df = db.get_receipts_dataframe()
-    
-    if not df.empty:
-        st.session_state.receipts_df = df
-        total_receipts = db.get_receipt_count()
-        st.sidebar.success(get_text("loaded_success", total_receipts=total_receipts, line_items=len(df)))
-    else:
-        st.sidebar.warning(get_text("no_cached_data"))
+    try:
+        # Verify database tables exist first
+        if not db.verify_tables_exist():
+            st.sidebar.error("❌ Database tables not initialized. Please check the deployment logs.")
+            st.stop()
+        
+        # Load ALL data from database (not filtered by date range)
+        df = db.get_receipts_dataframe()
+        
+        if not df.empty:
+            st.session_state.receipts_df = df
+            total_receipts = db.get_receipt_count()
+            st.sidebar.success(get_text("loaded_success", total_receipts=total_receipts, line_items=len(df)))
+        else:
+            st.sidebar.warning(get_text("no_cached_data"))
+            st.sidebar.info("💡 Go to Settings tab to sync data from Loyverse API")
+    except Exception as e:
+        st.sidebar.error(f"❌ Database error: {str(e)}")
+        st.sidebar.info("💡 Try refreshing the page or check the deployment logs.")
 
 # Language switch buttons
 # Create two columns for the language buttons
@@ -897,14 +907,19 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
     st.markdown(f"### {get_text('data_management')}")
     
     # Database info
-    db_stats = db.get_database_stats()
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric(f"💾 {get_text('customers')}", db_stats['customers'])
-        st.metric(f"📍 {get_text('locations')}", db_stats['categories'])
-    with col2:
-        st.metric("🧾 Receipts", db_stats['receipts'])
-        st.metric(f"📦 {get_text('products')}", db_stats['items'])
+    try:
+        db_stats = db.get_database_stats()
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric(f"💾 {get_text('customers')}", db_stats['customers'])
+            st.metric(f"📍 {get_text('locations')}", db_stats['categories'])
+        with col2:
+            st.metric("🧾 Receipts", db_stats['receipts'])
+            st.metric(f"📦 {get_text('products')}", db_stats['items'])
+    except Exception as e:
+        st.error(f"❌ Database error: {str(e)}")
+        st.info("💡 Database tables may not be initialized. Check deployment logs.")
+        db_stats = {'customers': 0, 'receipts': 0, 'categories': 0, 'items': 0, 'date_range': [None, None]}
     
     if db_stats['date_range'][0]:
         st.caption(f"📅 Data: {db_stats['date_range'][0][:10]} to {db_stats['date_range'][1][:10]}")
@@ -1427,7 +1442,12 @@ else:
 # ========== MAIN CONTENT ==========
 
 # Get database stats for date navigator
-db_stats = db.get_database_stats()
+try:
+    db_stats = db.get_database_stats()
+except Exception as e:
+    st.error(f"❌ Database error: {str(e)}")
+    st.info("💡 Database tables may not be initialized. Check deployment logs.")
+    db_stats = {'customers': 0, 'receipts': 0, 'categories': 0, 'items': 0, 'date_range': [None, None]}
 
 # Enhanced Date Selector
 st.markdown(f"### 📅 {get_text('date_range_selector')}")

@@ -18,15 +18,19 @@ class LoyverseDB:
                 try:
                     os.makedirs(os.path.dirname(env_db_path), exist_ok=True)
                     self.db_path = env_db_path
+                    print(f"✅ Using persistent disk database: {self.db_path}")
                 except (OSError, PermissionError) as e:
-                    print(f"Warning: Could not create database directory {os.path.dirname(env_db_path)}: {e}")
-                    # Fallback to current directory
+                    print(f"⚠️ Warning: Could not create database directory {os.path.dirname(env_db_path)}: {e}")
+                    # Fallback to current directory - CRITICAL: Actually use the fallback path
                     self.db_path = "loyverse_data.db"
+                    print(f"🔄 Falling back to local database: {self.db_path}")
             else:
                 # Fallback to current directory (works on Render free tier)
                 self.db_path = "loyverse_data.db"
+                print(f"📁 Using local database: {self.db_path}")
         else:
             self.db_path = db_path
+            print(f"📁 Using specified database: {self.db_path}")
         self.init_database()
     
     def get_connection(self):
@@ -41,9 +45,19 @@ class LoyverseDB:
                     os.makedirs(os.path.dirname(self.db_path) or ".", exist_ok=True)
                     return sqlite3.connect(self.db_path)
                 except Exception as create_error:
-                    print(f"Error creating database directory: {create_error}")
-                    # Fallback to in-memory database
-                    print("Falling back to in-memory database")
+                    print(f"❌ Error creating database directory: {create_error}")
+                    # If we're using persistent disk path, try fallback to local
+                    if self.db_path.startswith('/opt/render'):
+                        print("🔄 Persistent disk failed, trying local fallback...")
+                        fallback_path = "loyverse_data.db"
+                        try:
+                            self.db_path = fallback_path
+                            print(f"✅ Switched to fallback database: {self.db_path}")
+                            return sqlite3.connect(self.db_path)
+                        except Exception as fallback_error:
+                            print(f"❌ Fallback database also failed: {fallback_error}")
+                    # Last resort: in-memory database
+                    print("⚠️ Falling back to in-memory database (data will be lost on restart)")
                     return sqlite3.connect(":memory:")
             else:
                 raise e
