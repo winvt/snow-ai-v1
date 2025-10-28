@@ -3,7 +3,9 @@ import pandas as pd
 import streamlit as st
 import plotly.express as px
 import os
+import re
 from datetime import datetime, timedelta
+import pytz
 from database import LoyverseDB
 from utils.reference_data import ReferenceData
 from utils import charts
@@ -21,7 +23,7 @@ BASE_URL = "https://api.loyverse.com/v1.0/receipts"
 PAGE_LIMIT = 250
 # ==========================
 
-st.set_page_config(page_title="❄️ Snowbomb Dashboard", layout="wide")
+st.set_page_config(page_title="🐻‍❄️ Snow AI Dashboard", layout="wide")
 
 # Initialize session state for selected tab
 if 'selected_tab' not in st.session_state:
@@ -194,7 +196,7 @@ def initialize_selected_tab():
 # ===== FUNCTION DEFINITIONS (Must be before use) =====
 
 # --- Fetch customers from Loyverse API ---
-@st.cache_data(ttl=300)  # Cache for 5 minutes
+@st.cache_data(ttl=3600)  # Cache for 1 hour
 def fetch_all_customers(token):
     """Fetch all customers from Loyverse API"""
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
@@ -344,9 +346,37 @@ def fetch_all_items(token):
 # --- Helper: API call with pagination for receipts ---
 def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250):
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    
+    # Handle both date and datetime objects
+    if isinstance(start_date, datetime):
+        # If it's already a datetime, use it directly
+        start_datetime_utc = start_date
+        if start_datetime_utc.tzinfo is None:
+            start_datetime_utc = pytz.UTC.localize(start_datetime_utc)
+        elif start_datetime_utc.tzinfo != pytz.UTC:
+            start_datetime_utc = start_datetime_utc.astimezone(pytz.UTC)
+    else:
+        # Convert GMT+7 date to UTC for API call
+        gmt_plus_7 = pytz.timezone('Asia/Bangkok')  # GMT+7 timezone
+        start_datetime_gmt7 = gmt_plus_7.localize(datetime.combine(start_date, datetime.min.time()))
+        start_datetime_utc = start_datetime_gmt7.astimezone(pytz.UTC)
+    
+    if isinstance(end_date, datetime):
+        # If it's already a datetime, use it directly
+        end_datetime_utc = end_date
+        if end_datetime_utc.tzinfo is None:
+            end_datetime_utc = pytz.UTC.localize(end_datetime_utc)
+        elif end_datetime_utc.tzinfo != pytz.UTC:
+            end_datetime_utc = end_datetime_utc.astimezone(pytz.UTC)
+    else:
+        # Convert GMT+7 date to UTC (end of day in GMT+7)
+        gmt_plus_7 = pytz.timezone('Asia/Bangkok')  # GMT+7 timezone
+        end_datetime_gmt7 = gmt_plus_7.localize(datetime.combine(end_date, datetime.max.time()))
+        end_datetime_utc = end_datetime_gmt7.astimezone(pytz.UTC)
+    
     params = {
-        "created_at_min": f"{start_date}T00:00:00.000Z",
-        "created_at_max": f"{end_date}T23:59:59.000Z",
+        "created_at_min": start_datetime_utc.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
+        "created_at_max": end_datetime_utc.strftime('%Y-%m-%dT%H:%M:%S.000Z'),
         "limit": limit
     }
     if store_id:
@@ -355,7 +385,8 @@ def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250):
     # Debug console output
     with st.expander("🔍 Debug Console", expanded=False):
         st.write(f"**Token:** {token[:10]}...{token[-10:]}")
-        st.write(f"**Date Range:** {start_date} to {end_date}")
+        st.write(f"**Date Range (GMT+7):** {start_date} to {end_date}")
+        st.write(f"**API Range (UTC):** {start_datetime_utc.strftime('%Y-%m-%d %H:%M:%S')} to {end_datetime_utc.strftime('%Y-%m-%d %H:%M:%S')}")
         st.write(f"**Store Filter:** {store_id if store_id else 'All stores'}")
     
     all_receipts = []
@@ -397,6 +428,131 @@ def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250):
     progress_bar.progress(100)
     return all_receipts
 
+# --- Helper: Convert UTC timestamp to GMT+7 date ---
+def convert_utc_to_gmt7_date(utc_timestamp):
+    """Convert UTC timestamp to GMT+7 date for display"""
+    if not utc_timestamp:
+        return None
+    
+    try:
+        # Parse UTC timestamp
+        if isinstance(utc_timestamp, str):
+            # Handle different timestamp formats
+            if 'T' in utc_timestamp:
+                if utc_timestamp.endswith('Z'):
+                    utc_dt = datetime.fromisoformat(utc_timestamp.replace('Z', '+00:00'))
+                else:
+                    utc_dt = datetime.fromisoformat(utc_timestamp)
+            else:
+                utc_dt = datetime.fromisoformat(utc_timestamp)
+        else:
+            utc_dt = utc_timestamp
+            
+        # Ensure it's timezone aware (UTC)
+        if utc_dt.tzinfo is None:
+            utc_dt = pytz.UTC.localize(utc_dt)
+        elif utc_dt.tzinfo != pytz.UTC:
+            utc_dt = utc_dt.astimezone(pytz.UTC)
+        
+        # Convert to GMT+7
+        gmt_plus_7 = pytz.timezone('Asia/Bangkok')
+        gmt7_dt = utc_dt.astimezone(gmt_plus_7)
+        
+        return gmt7_dt.date()
+    except Exception as e:
+        # Fallback to original parsing
+        return parse_date_safe(utc_timestamp)
+
+# --- Helper: Parse date string safely ---
+def parse_date_safe(date_str):
+    """Safely parse date string that might be in various formats"""
+    if not date_str:
+        return None
+    
+    # Remove timezone info and try different formats
+    clean_date = date_str.split('T')[0]  # Get just the date part
+    
+    try:
+        # Try parsing as simple date
+        return datetime.strptime(clean_date, '%Y-%m-%d').date()
+    except ValueError:
+        try:
+            # Try parsing as ISO format
+            return datetime.fromisoformat(clean_date).date()
+        except ValueError:
+            # Last resort: try to extract just the date part
+            date_match = re.search(r'(\d{4}-\d{2}-\d{2})', date_str)
+            if date_match:
+                return datetime.strptime(date_match.group(1), '%Y-%m-%d').date()
+            return None
+
+# --- Helper: Get smart sync date range ---
+def get_smart_sync_range(db):
+    """Get intelligent sync date range based on existing data - starts from exact latest timestamp"""
+    date_range = db.get_date_range()
+    
+    # Debug information
+    with st.expander("🔍 Sync Missing Data Debug", expanded=False):
+        st.write(f"**Raw date range from DB:** {date_range}")
+        if date_range and date_range[1]:
+            st.write(f"**Latest timestamp:** {date_range[1]}")
+    
+    if date_range and date_range[1]:  # If we have data, start from exact latest timestamp
+        latest_timestamp = date_range[1]
+        
+        try:
+            # Parse the latest timestamp as UTC
+            if latest_timestamp.endswith('Z'):
+                latest_utc = datetime.fromisoformat(latest_timestamp.replace('Z', '+00:00'))
+            else:
+                latest_utc = datetime.fromisoformat(latest_timestamp)
+            
+            # Ensure it's timezone aware (UTC)
+            if latest_utc.tzinfo is None:
+                latest_utc = pytz.UTC.localize(latest_utc)
+            elif latest_utc.tzinfo != pytz.UTC:
+                latest_utc = latest_utc.astimezone(pytz.UTC)
+            
+            # Start from latest timestamp + 1 second to avoid duplicates
+            start_utc = latest_utc + timedelta(seconds=1)
+            end_utc = datetime.now(pytz.UTC)
+            
+            # Convert to GMT+7 for display
+            gmt_plus_7 = pytz.timezone('Asia/Bangkok')
+            start_gmt7 = start_utc.astimezone(gmt_plus_7)
+            end_gmt7 = end_utc.astimezone(gmt_plus_7)
+            
+            # Convert to date objects for the return (API will handle precise timestamps)
+            start_date = start_gmt7.date()
+            end_date = end_gmt7.date()
+            
+            # Debug info
+            with st.expander("🔍 Sync Missing Data Debug", expanded=False):
+                st.write(f"**Raw date range from DB:** {date_range}")
+                st.write(f"**Latest timestamp (UTC):** {latest_utc}")
+                st.write(f"**Start timestamp (UTC):** {start_utc}")
+                st.write(f"**End timestamp (UTC):** {end_utc}")
+                st.write(f"**Start date (GMT+7):** {start_date}")
+                st.write(f"**End date (GMT+7):** {end_date}")
+            
+            # If start is in the future, sync last 7 days instead
+            if start_date > end_date:
+                end_date = datetime.today().date()
+                start_date = end_date - timedelta(days=7)
+                return start_date, end_date, f"Start date was in future, syncing last 7 days from {end_date}"
+            
+            return start_date, end_date, f"Continuing from exact timestamp {latest_utc.strftime('%Y-%m-%d %H:%M:%S')} UTC"
+            
+        except Exception as e:
+            # If we can't parse the timestamp, fall back to last 30 days
+            end_date = datetime.today().date()
+            start_date = end_date - timedelta(days=30)
+            return start_date, end_date, f"Could not parse latest timestamp '{latest_timestamp}': {str(e)}. Syncing last 30 days"
+    else:  # If no data, start from 30 days ago
+        end_date = datetime.today().date()
+        start_date = end_date - timedelta(days=30)
+        return start_date, end_date, "No existing data, syncing last 30 days"
+
 # ===== END FUNCTION DEFINITIONS =====
 
 # Initialize database
@@ -411,7 +567,7 @@ ref_data = st.session_state.ref_data
 initialize_selected_tab()
 
 # ========== SIDEBAR NAVIGATION ==========
-st.sidebar.title("❄️ Snowbomb")
+st.sidebar.title("🐻‍❄️ Snow AI")
 
 # Load Database button right under title
 if st.sidebar.button(get_text("load_database"), key="load_db_main", use_container_width=True, type="primary"):
@@ -662,23 +818,59 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
     st.markdown("---")
     st.subheader("📊 Receipt Data Management")
     
-    # Show current database stats
-    st.info(f"📊 **Current Database:** {db_stats['receipts']} receipts, {db_stats['customers']} customers")
+    # Show current database stats with date range
+    date_range = db.get_date_range()
+    if date_range and date_range[0] and date_range[1]:
+        st.info(f"📊 **Current Database:** {db_stats['receipts']} receipts, {db_stats['customers']} customers | **Date Range:** {date_range[0]} to {date_range[1]}")
+    else:
+        st.info(f"📊 **Current Database:** {db_stats['receipts']} receipts, {db_stats['customers']} customers | **No data yet**")
     
     # Sync options with better date range controls
     st.markdown("#### 🔄 Sync Receipts from API")
     
-    # Quick sync buttons
+    # Help information
+    with st.expander("ℹ️ Sync Options Help", expanded=False):
+        st.markdown("""
+        **🔄 Sync Missing Data** - Intelligently syncs from your latest data to today  
+        **📅 Sync Last Week** - Downloads last 7 days of receipts  
+        **📅 Sync Last Month** - Downloads last 30 days of receipts  
+        **📅 Sync Last 3 Months** - Downloads last 90 days of receipts  
+        **📅 Sync All Historical Data** - Downloads ALL historical data (may take time)  
+        
+        💡 **Tip:** Use "Sync Missing Data" for regular updates - it's the smartest option!
+        """)
+    
+    # Quick sync buttons - Enhanced with new options
     col1, col2, col3 = st.columns(3)
     with col1:
-        if st.button("📅 Sync Last 30 Days", help="Download last 30 days of receipts", key="sync_30days_btn"):
+        if st.button("🔄 Sync Missing Data", help="Sync from latest data to current date", key="sync_missing_btn"):
+            start_date, end_date, message = get_smart_sync_range(db)
+            st.session_state.sync_start_date = start_date
+            st.session_state.sync_end_date = end_date
+            st.session_state.trigger_sync = True
+            st.session_state.is_sync_missing = True  # Flag for precise timestamp handling
+            st.info(f"📅 {message} - Syncing from {start_date} to {end_date}")
+    
+    with col2:
+        if st.button("📅 Sync Last Week", help="Download last 7 days of receipts", key="sync_week_btn"):
+            end_date = datetime.today()
+            start_date = end_date - timedelta(days=7)
+            st.session_state.sync_start_date = start_date.date()
+            st.session_state.sync_end_date = end_date.date()
+            st.session_state.trigger_sync = True
+    
+    with col3:
+        if st.button("📅 Sync Last Month", help="Download last 30 days of receipts", key="sync_month_btn"):
             end_date = datetime.today()
             start_date = end_date - timedelta(days=30)
             st.session_state.sync_start_date = start_date.date()
             st.session_state.sync_end_date = end_date.date()
             st.session_state.trigger_sync = True
     
-    with col2:
+    # Additional sync options
+    st.markdown("#### 📊 Extended Sync Options")
+    col1, col2, col3 = st.columns(3)
+    with col1:
         if st.button("📅 Sync Last 3 Months", help="Download last 3 months of receipts", key="sync_3months_btn"):
             end_date = datetime.today()
             start_date = end_date - timedelta(days=90)
@@ -686,7 +878,7 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
             st.session_state.sync_end_date = end_date.date()
             st.session_state.trigger_sync = True
     
-    with col3:
+    with col2:
         if st.button("📅 Sync All Historical Data", help="Download ALL historical receipts (may take a while)", key="sync_all_historical_btn"):
             # Set date range to cover a wide historical period
             end_date = datetime.today()
@@ -695,6 +887,14 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
             st.session_state.sync_end_date = end_date.date()
             st.session_state.trigger_sync = True
             st.warning("⚠️ This may take several minutes for large datasets!")
+    
+    with col3:
+        # Show current database date range
+        date_range = db.get_date_range()
+        if date_range and date_range[0] and date_range[1]:
+            st.info(f"📊 **Current Data:** {date_range[0]} to {date_range[1]}")
+        else:
+            st.warning("📊 **No data in database**")
     
     # Manual date range for sync
     st.markdown("#### 📅 Custom Date Range for Sync")
@@ -1024,6 +1224,10 @@ if db_stats['date_range'][0]:
     if 'date_selector_end' not in st.session_state:
         st.session_state.date_selector_end = max_date
     
+    # Ensure session state values are within valid range
+    st.session_state.date_selector_start = max(min_date, min(max_date, st.session_state.date_selector_start))
+    st.session_state.date_selector_end = max(min_date, min(max_date, st.session_state.date_selector_end))
+    
     # Quick shortcut buttons
     st.markdown(f"**{get_text('quick_shortcuts')}**")
     
@@ -1049,7 +1253,7 @@ if db_stats['date_range'][0]:
     
     with col3:
         if st.button(get_text("last_3_days"), key="quick_last_3_days", help="Select last 3 days"):
-            start_date = max_date - timedelta(days=2)
+            start_date = max(min_date, max_date - timedelta(days=2))
             st.session_state.date_selector_start = start_date
             st.session_state.date_selector_end = max_date
             st.session_state.view_start_date = start_date
@@ -1058,7 +1262,7 @@ if db_stats['date_range'][0]:
     
     with col4:
         if st.button(get_text("last_week"), key="quick_last_week", help="Select last 7 days"):
-            start_date = max_date - timedelta(days=6)
+            start_date = max(min_date, max_date - timedelta(days=6))
             st.session_state.date_selector_start = start_date
             st.session_state.date_selector_end = max_date
             st.session_state.view_start_date = start_date
@@ -1067,7 +1271,7 @@ if db_stats['date_range'][0]:
     
     with col5:
         if st.button(get_text("last_2_weeks"), key="quick_last_2_weeks", help="Select last 14 days"):
-            start_date = max_date - timedelta(days=13)
+            start_date = max(min_date, max_date - timedelta(days=13))
             st.session_state.date_selector_start = start_date
             st.session_state.date_selector_end = max_date
             st.session_state.view_start_date = start_date
@@ -1076,7 +1280,7 @@ if db_stats['date_range'][0]:
     
     with col6:
         if st.button(get_text("last_30_days"), key="quick_last_30_days", help="Select last 30 days"):
-            start_date = max_date - timedelta(days=29)
+            start_date = max(min_date, max_date - timedelta(days=29))
             st.session_state.date_selector_start = start_date
             st.session_state.date_selector_end = max_date
             st.session_state.view_start_date = start_date
@@ -1284,15 +1488,53 @@ if sync_data:
     sync_start_date = st.session_state.get('sync_start_date', datetime.today() - timedelta(days=30))
     sync_end_date = st.session_state.get('sync_end_date', datetime.today())
     
-    # Convert to datetime objects if they're date objects
-    if hasattr(sync_start_date, 'date'):
-        sync_start_date = sync_start_date.date()
-    if hasattr(sync_end_date, 'date'):
-        sync_end_date = sync_end_date.date()
-    
-    # Convert to datetime for the API call
-    sync_start_datetime = datetime.combine(sync_start_date, datetime.min.time())
-    sync_end_datetime = datetime.combine(sync_end_date, datetime.max.time())
+    # Handle precise timestamps for sync missing data
+    if st.session_state.get('is_sync_missing', False):
+        # For sync missing data, we need to get the precise timestamps
+        # Re-call get_smart_sync_range to get the exact UTC timestamps
+        start_date, end_date, message = get_smart_sync_range(db)
+        
+        # Get the precise timestamps from the database
+        date_range = db.get_date_range()
+        if date_range and date_range[1]:
+            latest_timestamp = date_range[1]
+            try:
+                # Parse the latest timestamp as UTC
+                if latest_timestamp.endswith('Z'):
+                    latest_utc = datetime.fromisoformat(latest_timestamp.replace('Z', '+00:00'))
+                else:
+                    latest_utc = datetime.fromisoformat(latest_timestamp)
+                
+                # Ensure it's timezone aware (UTC)
+                if latest_utc.tzinfo is None:
+                    latest_utc = pytz.UTC.localize(latest_utc)
+                elif latest_utc.tzinfo != pytz.UTC:
+                    latest_utc = latest_utc.astimezone(pytz.UTC)
+                
+                # Start from latest timestamp + 1 second to avoid duplicates
+                sync_start_datetime = latest_utc + timedelta(seconds=1)
+                sync_end_datetime = datetime.now(pytz.UTC)
+            except Exception as e:
+                # Fallback to regular date handling
+                sync_start_datetime = datetime.combine(sync_start_date, datetime.min.time())
+                sync_end_datetime = datetime.combine(sync_end_date, datetime.max.time())
+        else:
+            # Fallback to regular date handling
+            sync_start_datetime = datetime.combine(sync_start_date, datetime.min.time())
+            sync_end_datetime = datetime.combine(sync_end_date, datetime.max.time())
+        
+        # Clear the flag
+        st.session_state.is_sync_missing = False
+    else:
+        # For other sync operations, convert to datetime objects if they're date objects
+        if hasattr(sync_start_date, 'date'):
+            sync_start_date = sync_start_date.date()
+        if hasattr(sync_end_date, 'date'):
+            sync_end_date = sync_end_date.date()
+        
+        # Convert to datetime for the API call
+        sync_start_datetime = datetime.combine(sync_start_date, datetime.min.time())
+        sync_end_datetime = datetime.combine(sync_end_date, datetime.max.time())
     
     st.info(f"🔄 **Syncing receipts from {sync_start_date} to {sync_end_date}**")
     
@@ -1305,7 +1547,7 @@ if sync_data:
     existing_count = len(existing_df) if not existing_df.empty else 0
     
     with st.spinner(f"Fetching receipts from API ({sync_start_date} to {sync_end_date})..."):
-        receipts = fetch_all_receipts(LOYVERSE_TOKEN, sync_start_date, sync_end_date, store_filter)
+        receipts = fetch_all_receipts(LOYVERSE_TOKEN, sync_start_datetime, sync_end_datetime, store_filter)
     
     if receipts:
         # Save to database (INSERT OR REPLACE = merge/upsert)
@@ -1360,7 +1602,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
     if not df.empty:
         # --- Data Cleaning ---
         df["date"] = pd.to_datetime(df["date"])
-        df["day"] = df["date"].dt.date
+        # Convert UTC timestamps to GMT+7 dates for proper display
+        df["day"] = df["date"].apply(lambda x: convert_utc_to_gmt7_date(x) if pd.notna(x) else None)
         
         # Enrich with reference data (adds customer_name, payment_name, store_name, employee_name)
         df = ref_data.enrich_dataframe(df)
@@ -1385,7 +1628,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     unknown_df = pd.DataFrame({
                         "Customer ID": unknown_customers,
                         "Transactions": [df[df["customer_id"] == cid]["bill_number"].nunique() for cid in unknown_customers],
-                        "Total Sales": [df[df["customer_id"] == cid]["total"].sum() for cid in unknown_customers]
+                        "Total Sales": [df[df["customer_id"] == cid]["signed_net"].sum() if "signed_net" in df.columns else df[df["customer_id"] == cid]["line_total"].sum() for cid in unknown_customers]
                     })
                     st.dataframe(unknown_df, use_container_width=True)
                     
@@ -1443,7 +1686,22 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 df = df[df["bill_type"] == selected_payment]
 
         # --- KPI Cards ---
-        total_sales = df["total"].astype(float).sum()
+        # Compute net sales at receipt level and subtract refunds
+        # First, aggregate per receipt to avoid line duplication
+        if {"bill_number","receipt_total","receipt_discount","receipt_type"}.issubset(df.columns):
+            receipt_level = df.groupby(["bill_number","receipt_type"], as_index=False).agg({
+                "receipt_total":"first",
+                "receipt_discount":"first"
+            })
+            receipt_level["receipt_net"] = receipt_level["receipt_total"].fillna(0) - receipt_level["receipt_discount"].fillna(0)
+            # Refunds should subtract from sales
+            receipt_level["signed_net"] = receipt_level.apply(lambda r: -r["receipt_net"] if str(r["receipt_type"]).lower()=="refund" else r["receipt_net"], axis=1)
+            total_sales = float(receipt_level["signed_net"].sum())
+            # attach signed_net back to rows for day-level calcs
+            df_receipt_net = receipt_level[["bill_number","signed_net"]]
+            df = df.merge(df_receipt_net, on="bill_number", how="left")
+        else:
+            total_sales = df["line_total"].astype(float).sum()
         total_items = df["quantity"].sum()
         unique_customers = df["customer_id"].nunique()
         
@@ -1472,14 +1730,23 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             # === ENHANCED KPI CARDS ===
             st.markdown("### 📊 Key Metrics")
             
-            # Calculate daily aggregations
-            daily_agg = df.groupby("day").agg({
-                "total": "sum",
-                "quantity": "sum",
-                "bill_number": "nunique",
-                "customer_id": "nunique"
-            }).reset_index()
-            daily_agg.columns = ["day", "total_sales", "items", "transactions", "customers"]
+            # Calculate daily aggregations using receipt-level signed net
+            if "signed_net" in df.columns:
+                daily_agg = df.groupby("day").agg({
+                    "signed_net": "sum",
+                    "quantity": "sum", 
+                    "bill_number": "nunique",
+                    "customer_id": "nunique"
+                }).reset_index()
+                daily_agg.columns = ["day", "total_sales", "items", "transactions", "customers"]
+            else:
+                daily_agg = df.groupby("day").agg({
+                    "line_total": "sum",
+                    "quantity": "sum", 
+                    "bill_number": "nunique",
+                    "customer_id": "nunique"
+                }).reset_index()
+                daily_agg.columns = ["day", "total_sales", "items", "transactions", "customers"]
             
             # Calculate metrics for display
             total_days = len(daily_agg)
@@ -1487,7 +1754,15 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             avg_items_per_day = daily_agg["items"].mean()
             avg_transactions_per_day = daily_agg["transactions"].mean()
             avg_customers_per_day = daily_agg["customers"].mean()
-            avg_transaction_value = df.groupby("bill_number")["total"].sum().mean()
+            # Average transaction value based on receipt-level net (exclude refunds)
+            if "signed_net" in df.columns and "receipt_type" in df.columns:
+                per_receipt = df.groupby(["bill_number","receipt_type"], as_index=False)["signed_net"].first()
+                per_receipt = per_receipt[per_receipt["receipt_type"].str.lower() != "refund"]
+                avg_transaction_value = per_receipt["signed_net"].mean() if not per_receipt.empty else 0
+            elif "line_total" in df.columns:
+                avg_transaction_value = df.groupby("bill_number")["line_total"].sum().mean()
+            else:
+                avg_transaction_value = 0
             
             # Calculate growth (last day vs previous day)
             if len(daily_agg) >= 2:
@@ -1540,9 +1815,13 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             # === DAILY SALES CHARTS ===
             st.markdown("### 📊 Sales Overview")
             
-            # Bar chart - Full width
-            daily_sales = df.groupby("day")["total"].sum().reset_index()
-            fig = px.bar(daily_sales, x="day", y="total", title="Daily Sales Trend", 
+            # Bar chart - Full width using signed net
+            if "signed_net" in df.columns:
+                daily_sales = df.groupby("day")["signed_net"].sum().reset_index().rename(columns={"signed_net":"total"})
+            else:
+                daily_sales = df.groupby("day")["line_total"].sum().reset_index().rename(columns={"line_total":"total"})
+            
+            fig = px.bar(daily_sales, x="day", y="total", title="Daily Sales Trend (Net Sales)", 
                         text_auto=True, color="total",
                         color_continuous_scale="Blues",
                         labels={"total": "Total Sales", "day": "Date"})
@@ -1550,12 +1829,42 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             fig.update_layout(showlegend=False, height=500)
             st.plotly_chart(fig, use_container_width=True)
             
-            # Line chart with hover details - Full width
-            daily_details = df.groupby("day").agg({
-                "total": "sum",
-                "quantity": "sum",
-                "bill_number": "nunique"
-            }).reset_index()
+            # Show discount information if available
+            if 'receipt_discount' in df.columns:
+                total_discounts = df["receipt_discount"].sum()
+                if total_discounts > 0:
+                    st.info(f"💰 **Total Discounts Applied:** ฿{total_discounts:,.2f}")
+                    
+                    # Show daily discount breakdown
+                    daily_discounts = df.groupby("day")["receipt_discount"].sum().reset_index()
+                    daily_discounts.columns = ["day", "discounts"]
+                    
+                    if daily_discounts["discounts"].sum() > 0:
+                        st.markdown("#### 💸 Daily Discounts")
+                        fig_discounts = px.bar(daily_discounts, x="day", y="discounts", 
+                                             title="Daily Discounts Applied",
+                                             color="discounts",
+                                             color_continuous_scale="Reds",
+                                             text_auto=True)
+                        fig_discounts.update_traces(textposition='outside')
+                        fig_discounts.update_layout(showlegend=False, height=400)
+                        st.plotly_chart(fig_discounts, use_container_width=True)
+                else:
+                    st.info("ℹ️ **No discounts found in the data**")
+            
+            # Line chart with hover details - Full width using signed net
+            if "signed_net" in df.columns:
+                daily_details = df.groupby("day").agg({
+                    "signed_net": "sum",
+                    "quantity": "sum",
+                    "bill_number": "nunique"
+                }).reset_index().rename(columns={"signed_net":"Total Sales"})
+            else:
+                daily_details = df.groupby("day").agg({
+                    "line_total": "sum",
+                    "quantity": "sum",
+                    "bill_number": "nunique"
+                }).reset_index().rename(columns={"line_total":"Total Sales"})
             daily_details.columns = ["Date", "Total Sales", "Items Sold", "Transactions"]
             fig2 = px.line(daily_details, x="Date", y="Total Sales", 
                           title="Sales Trend Line",
@@ -1576,16 +1885,25 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             df_temp['day_of_week'] = df_temp['day_date'].dt.day_name()
             df_temp['weekday_num'] = df_temp['day_date'].dt.dayofweek
             
-            # Aggregate by day of week
-            dow_sales = df_temp.groupby(['day_of_week', 'weekday_num']).agg({
-                'total': ['sum', 'mean', 'count'],
-                'bill_number': 'nunique',
-                'customer_id': 'nunique',
-                'quantity': 'sum'
-            }).reset_index()
-            
-            # Flatten column names
-            dow_sales.columns = ['day_of_week', 'weekday_num', 'total_sales', 'avg_sales', 'days_count', 'transactions', 'customers', 'items']
+            # Aggregate by day of week using signed_net if available
+            if 'signed_net' in df_temp.columns:
+                dow_sales = df_temp.groupby(['day_of_week', 'weekday_num']).agg({
+                    'signed_net': ['sum', 'mean', 'count'],
+                    'bill_number': 'nunique',
+                    'customer_id': 'nunique',
+                    'quantity': 'sum'
+                }).reset_index()
+                # Flatten column names
+                dow_sales.columns = ['day_of_week', 'weekday_num', 'total_sales', 'avg_sales', 'days_count', 'transactions', 'customers', 'items']
+            else:
+                dow_sales = df_temp.groupby(['day_of_week', 'weekday_num']).agg({
+                    'line_total': ['sum', 'mean', 'count'],
+                    'bill_number': 'nunique',
+                    'customer_id': 'nunique',
+                    'quantity': 'sum'
+                }).reset_index()
+                # Flatten column names
+                dow_sales.columns = ['day_of_week', 'weekday_num', 'total_sales', 'avg_sales', 'days_count', 'transactions', 'customers', 'items']
             
             # Sort by weekday (Monday=0, Sunday=6)
             dow_sales = dow_sales.sort_values('weekday_num')
@@ -1671,13 +1989,22 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             if "location" in df.columns and not df["location"].isna().all():
                 # Location sales summary
-                location_sales = df.groupby("location").agg({
-                    "total": "sum",
-                    "quantity": "sum",
-                    "bill_number": "nunique",
-                    "customer_id": "nunique"
-                }).reset_index()
-                location_sales.columns = ["Location", "Total Sales", "Items Sold", "Transactions", "Unique Customers"]
+                if "signed_net" in df.columns:
+                    location_sales = df.groupby("location").agg({
+                        "signed_net": "sum",
+                        "quantity": "sum",
+                        "bill_number": "nunique",
+                        "customer_id": "nunique"
+                    }).reset_index()
+                    location_sales.columns = ["Location", "Total Sales", "Items Sold", "Transactions", "Unique Customers"]
+                else:
+                    location_sales = df.groupby("location").agg({
+                        "line_total": "sum",
+                        "quantity": "sum",
+                        "bill_number": "nunique",
+                        "customer_id": "nunique"
+                    }).reset_index()
+                    location_sales.columns = ["Location", "Total Sales", "Items Sold", "Transactions", "Unique Customers"]
                 location_sales = location_sales.sort_values("Total Sales", ascending=False)
                 
                 # Bar chart
@@ -1714,9 +2041,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 
                 # Location trends over time
                 st.subheader("📈 Location Trends Over Time")
-                location_daily = df.groupby(["day", "location"])["total"].sum().reset_index()
+                if "signed_net" in df.columns:
+                    location_daily = df.groupby(["day", "location"])["signed_net"].sum().reset_index().rename(columns={"signed_net":"total"})
+                else:
+                    location_daily = df.groupby(["day", "location"])["line_total"].sum().reset_index().rename(columns={"line_total":"total"})
                 fig_trend = px.line(location_daily, x="day", y="total", color="location",
-                                   title="Daily Sales Trend by Location",
+                                   title="Daily Sales Trend by Location (Net Sales)",
                                    markers=True)
                 st.plotly_chart(fig_trend, use_container_width=True)
                 
@@ -1748,18 +2078,26 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 
                 if not hourly_data.empty:
                     # Aggregate by hour
-                    hourly_sales = hourly_data.groupby('hour').agg({
-                        'total': 'sum',
-                        'bill_number': 'nunique',
-                        'customer_id': 'nunique',
-                        'quantity': 'sum'
-                    }).reset_index()
+                    if "signed_net" in hourly_data.columns:
+                        hourly_sales = hourly_data.groupby('hour').agg({
+                            'signed_net': 'sum',
+                            'bill_number': 'nunique',
+                            'customer_id': 'nunique',
+                            'quantity': 'sum',
+                        }).reset_index()
+                    else:
+                        hourly_sales = hourly_data.groupby('hour').agg({
+                            'line_total': 'sum',
+                            'bill_number': 'nunique',
+                            'customer_id': 'nunique',
+                            'quantity': 'sum',
+                        }).reset_index()
                     
                     # Calculate occurrences before renaming columns
                     hour_counts = hourly_data.groupby('hour').size().reset_index(name='occurrences')
                     hourly_sales = hourly_sales.merge(hour_counts, on='hour')
                     
-                    # Now rename columns
+                    # Now rename columns after merge
                     hourly_sales.columns = ['Hour', 'Sales', 'Transactions', 'Customers', 'Items', 'occurrences']
                     hourly_sales['Avg Sales'] = hourly_sales['Sales'] / hourly_sales['occurrences']
                     hourly_sales['Avg Transactions'] = hourly_sales['Transactions'] / hourly_sales['occurrences']
@@ -1937,13 +2275,22 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             df_products['product_category'] = df_products['item'].apply(categorize_product)
             
             # Aggregate by category
-            category_sales = df_products.groupby('product_category').agg({
-                'total': 'sum',
-                'quantity': 'sum',
-                'bill_number': 'nunique',
-                'item': 'count'
-            }).reset_index()
-            category_sales.columns = ['Category', 'Total Sales', 'Quantity Sold', 'Transactions', 'Line Items']
+            if "signed_net" in df_products.columns:
+                category_sales = df_products.groupby('product_category').agg({
+                    'signed_net': 'sum',
+                    'quantity': 'sum',
+                    'bill_number': 'nunique',
+                    'item': 'count'
+                }).reset_index()
+                category_sales.columns = ['Category', 'Total Sales', 'Quantity', 'Transactions', 'Items Sold']
+            else:
+                category_sales = df_products.groupby('product_category').agg({
+                    'line_total': 'sum',
+                    'quantity': 'sum',
+                    'bill_number': 'nunique',
+                    'item': 'count'
+                }).reset_index()
+                category_sales.columns = ['Category', 'Total Sales', 'Quantity', 'Transactions', 'Items Sold']
             category_sales = category_sales.sort_values('Total Sales', ascending=False)
             
             # Calculate percentages
@@ -1968,7 +2315,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                          f"฿{top_sales:,.0f}")
             
             with col3:
-                total_quantity = category_sales['Quantity Sold'].sum()
+                total_quantity = category_sales['Quantity'].sum()
                 st.metric("📦 Total Quantity", f"{total_quantity:,.0f} units")
             
             with col4:
@@ -2003,10 +2350,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.markdown("#### 📋 Category Summary Table")
                 
                 # Format the summary table
-                display_summary = category_sales[['Category', 'Total Sales', 'Sales %', 'Quantity Sold', 'Transactions']].copy()
+                display_summary = category_sales[['Category', 'Total Sales', 'Sales %', 'Quantity', 'Transactions']].copy()
                 display_summary['Total Sales'] = display_summary['Total Sales'].apply(lambda x: f"฿{x:,.0f}")
                 display_summary['Sales %'] = display_summary['Sales %'].apply(lambda x: f"{x:.1f}%")
-                display_summary['Quantity Sold'] = display_summary['Quantity Sold'].apply(lambda x: f"{x:,.0f}")
+                display_summary['Quantity'] = display_summary['Quantity'].apply(lambda x: f"{x:,.0f}")
                 
                 st.dataframe(display_summary, use_container_width=True, hide_index=True)
                 
@@ -2033,7 +2380,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 color='Total Sales',
                 color_continuous_scale='Viridis',
                 text='Total Sales',
-                hover_data=['Quantity Sold', 'Transactions']
+                hover_data=['Quantity', 'Transactions']
             )
             fig_bar.update_traces(texttemplate='฿%{text:,.0f}', textposition='outside')
             fig_bar.update_layout(showlegend=False, xaxis_tickangle=-45)
@@ -2045,12 +2392,20 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.caption("💡 Click on a product to manually change its category")
                 
                 # Group products by category with details
-                detailed_products = df_products.groupby(['product_category', 'item']).agg({
-                    'total': 'sum',
-                    'quantity': 'sum',
-                    'bill_number': 'nunique'
-                }).reset_index()
-                detailed_products.columns = ['Category', 'Product Name', 'Total Sales', 'Quantity', 'Transactions']
+                if "signed_net" in df_products.columns:
+                    detailed_products = df_products.groupby(['product_category', 'item']).agg({
+                        'signed_net': 'sum',
+                        'quantity': 'sum',
+                        'bill_number': 'nunique'
+                    }).reset_index()
+                    detailed_products.columns = ['Category', 'Product', 'Total Sales', 'Quantity', 'Transactions']
+                else:
+                    detailed_products = df_products.groupby(['product_category', 'item']).agg({
+                        'line_total': 'sum',
+                        'quantity': 'sum',
+                        'bill_number': 'nunique'
+                    }).reset_index()
+                    detailed_products.columns = ['Category', 'Product', 'Total Sales', 'Quantity', 'Transactions']
                 detailed_products = detailed_products.sort_values(['Category', 'Total Sales'], ascending=[True, False])
                 
                 # Display as table with edit functionality
@@ -2070,7 +2425,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 with col1:
                     st.markdown("**Select Product to Edit:**")
                     # Get unique products sorted by sales
-                    product_list = detailed_products.sort_values('Total Sales', ascending=False)['Product Name'].unique().tolist()
+                    product_list = detailed_products.sort_values('Total Sales', ascending=False)['Product'].unique().tolist()
                     
                     if product_list:
                         selected_product = st.selectbox(
@@ -2080,7 +2435,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         )
                         
                         # Get current category for this product
-                        current_cat = detailed_products[detailed_products['Product Name'] == selected_product]['Category'].iloc[0]
+                        current_cat = detailed_products[detailed_products['Product'] == selected_product]['Category'].iloc[0]
                         
                         # Check if there's a manual override
                         if selected_product in st.session_state.manual_categories:
@@ -2230,14 +2585,24 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.warning("No customer data available. Transactions may not have customer IDs.")
             else:
                 # Group by customer_id and get the first customer_name for each
-                customer_stats = customer_df.groupby("customer_id").agg({
-                    "customer_name": "first",
-                    "total": "sum",
-                    "bill_number": "nunique",
-                    "quantity": "sum",
-                    "day": "nunique"
-                }).reset_index()
-                customer_stats.columns = ["Customer ID", "Customer Name", "Total Sales", "Number of Purchases", "Items Purchased", "Days Active"]
+                if "signed_net" in customer_df.columns:
+                    customer_stats = customer_df.groupby("customer_id").agg({
+                        "customer_name": "first",
+                        "signed_net": "sum",
+                        "bill_number": "nunique",
+                        "quantity": "sum",
+                        "day": "nunique"
+                    }).reset_index()
+                    customer_stats.columns = ["Customer ID", "Customer Name", "Total Sales", "Number of Purchases", "Items Purchased", "Days Active"]
+                else:
+                    customer_stats = customer_df.groupby("customer_id").agg({
+                        "customer_name": "first",
+                        "line_total": "sum",
+                        "bill_number": "nunique",
+                        "quantity": "sum",
+                        "day": "nunique"
+                    }).reset_index()
+                    customer_stats.columns = ["Customer ID", "Customer Name", "Total Sales", "Number of Purchases", "Items Purchased", "Days Active"]
                 customer_stats["Average Order Value"] = customer_stats["Total Sales"] / customer_stats["Number of Purchases"]
                 
                 # Sort based on selection
@@ -2312,7 +2677,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 else:
                     # Summary metrics
                     col1, col2, col3, col4 = st.columns(4)
-                    total_credit = credit_df['total'].sum()
+                    if "signed_net" in credit_df.columns:
+                        total_credit = credit_df['signed_net'].sum()
+                    else:
+                        total_credit = credit_df['line_total'].sum()
                     credit_customers = credit_df['customer_id'].nunique()
                     credit_transactions = credit_df['bill_number'].nunique()
                     avg_credit = total_credit / credit_customers if credit_customers > 0 else 0
@@ -2327,14 +2695,22 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     # Outstanding by Customer
                     st.markdown("### 👥 Outstanding Balance by Customer")
                     
-                    customer_credit = credit_df.groupby(['customer_id', 'customer_name']).agg({
-                        'total': 'sum',
-                        'bill_number': 'nunique',
-                        'day': ['min', 'max']
-                    }).reset_index()
-                    
-                    customer_credit.columns = ['Customer ID', 'Customer Name', 'Outstanding Amount', 
-                                              'Transactions', 'First Credit Date', 'Last Credit Date']
+                    if "signed_net" in credit_df.columns:
+                        customer_credit = credit_df.groupby(['customer_id', 'customer_name']).agg({
+                            'signed_net': 'sum',
+                            'bill_number': 'nunique',
+                            'day': ['min', 'max']
+                        }).reset_index()
+                        customer_credit.columns = ['Customer ID', 'Customer Name', 'Outstanding Amount', 
+                                                  'Transactions', 'First Credit Date', 'Last Credit Date']
+                    else:
+                        customer_credit = credit_df.groupby(['customer_id', 'customer_name']).agg({
+                            'line_total': 'sum',
+                            'bill_number': 'nunique',
+                            'day': ['min', 'max']
+                        }).reset_index()
+                        customer_credit.columns = ['Customer ID', 'Customer Name', 'Outstanding Amount', 
+                                                  'Transactions', 'First Credit Date', 'Last Credit Date']
                     customer_credit = customer_credit.sort_values('Outstanding Amount', ascending=False)
                     
                     # Calculate days outstanding
@@ -2382,12 +2758,20 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.markdown("### 📍 Credit Sales by Location")
                     
                     if 'location' in credit_df.columns:
-                        location_credit = credit_df.groupby('location').agg({
-                            'total': 'sum',
-                            'bill_number': 'nunique',
-                            'customer_id': 'nunique'
-                        }).reset_index()
-                        location_credit.columns = ['Location', 'Total Credit', 'Transactions', 'Customers']
+                        if "signed_net" in credit_df.columns:
+                            location_credit = credit_df.groupby('location').agg({
+                                'signed_net': 'sum',
+                                'bill_number': 'nunique',
+                                'customer_id': 'nunique'
+                            }).reset_index()
+                            location_credit.columns = ['Location', 'Total Credit', 'Transactions', 'Customers']
+                        else:
+                            location_credit = credit_df.groupby('location').agg({
+                                'line_total': 'sum',
+                                'bill_number': 'nunique',
+                                'customer_id': 'nunique'
+                            }).reset_index()
+                            location_credit.columns = ['Location', 'Total Credit', 'Transactions', 'Customers']
                         location_credit = location_credit.sort_values('Total Credit', ascending=False)
                         
                         col1, col2 = st.columns(2)
@@ -2416,12 +2800,20 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     cash_df = df[df['payment_name'].str.contains('เงินสด', case=False, na=False)].copy()
                     
                     # Daily aggregation for credit
-                    credit_daily = credit_df.groupby('day')['total'].sum().reset_index()
-                    credit_daily.columns = ['Date', 'Credit Sales']
+                    if "signed_net" in credit_df.columns:
+                        credit_daily = credit_df.groupby('day')['signed_net'].sum().reset_index()
+                        credit_daily.columns = ['Date', 'Credit Sales']
+                    else:
+                        credit_daily = credit_df.groupby('day')['line_total'].sum().reset_index()
+                        credit_daily.columns = ['Date', 'Credit Sales']
                     
                     # Daily aggregation for cash
-                    cash_daily = cash_df.groupby('day')['total'].sum().reset_index()
-                    cash_daily.columns = ['Date', 'Cash Sales']
+                    if "signed_net" in cash_df.columns:
+                        cash_daily = cash_df.groupby('day')['signed_net'].sum().reset_index()
+                        cash_daily.columns = ['Date', 'Cash Sales']
+                    else:
+                        cash_daily = cash_df.groupby('day')['line_total'].sum().reset_index()
+                        cash_daily.columns = ['Date', 'Cash Sales']
                     
                     # Merge for comparison
                     daily_comparison = pd.merge(credit_daily, cash_daily, on='Date', how='outer').fillna(0)
@@ -2558,7 +2950,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             # Show filtered metrics
             col1, col2, col3, col4 = st.columns(4)
-            col1.metric("Filtered Sales", f"{filtered_df['total'].sum():,.0f}")
+            if "signed_net" in filtered_df.columns:
+                col1.metric("Filtered Sales", f"{filtered_df['signed_net'].sum():,.0f}")
+            else:
+                col1.metric("Filtered Sales", f"{filtered_df['line_total'].sum():,.0f}")
             col2.metric("Filtered Items", f"{filtered_df['quantity'].sum():,.0f}")
             col3.metric("Transactions", len(filtered_df["bill_number"].unique()))
             col4.metric("Products", len(filtered_df["item"].unique()))
@@ -2583,12 +2978,20 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             # Scatter plot for correlation analysis
             st.subheader("📈 Quantity vs Total Sales")
-            scatter_data = filtered_df.groupby("item").agg({
-                "quantity": "sum",
-                "total": "sum",
-                "bill_number": "count"
-            }).reset_index()
-            scatter_data.columns = ["Product", "Total Quantity", "Total Sales", "Times Sold"]
+            if "signed_net" in filtered_df.columns:
+                scatter_data = filtered_df.groupby("item").agg({
+                    "quantity": "sum",
+                    "signed_net": "sum",
+                    "bill_number": "count"
+                }).reset_index()
+                scatter_data.columns = ["Product", "Total Quantity", "Total Sales", "Times Sold"]
+            else:
+                scatter_data = filtered_df.groupby("item").agg({
+                    "quantity": "sum",
+                    "line_total": "sum",
+                    "bill_number": "count"
+                }).reset_index()
+                scatter_data.columns = ["Product", "Total Quantity", "Total Sales", "Times Sold"]
             
             fig_scatter = px.scatter(scatter_data, 
                                     x="Total Quantity", 
@@ -2678,7 +3081,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     else:
                         # Summary metrics for selected location
                         col1, col2, col3, col4 = st.columns(4)
-                        col1.metric("Total Sales", f"{location_df['total'].sum():,.0f}")
+                        if "signed_net" in location_df.columns:
+                            col1.metric("Total Sales", f"{location_df['signed_net'].sum():,.0f}")
+                        else:
+                            col1.metric("Total Sales", f"{location_df['line_total'].sum():,.0f}")
                         col2.metric("Transactions", location_df['bill_number'].nunique())
                         col3.metric("Items Sold", f"{location_df['quantity'].sum():,.0f}")
                         col4.metric("Unique Customers", location_df['customer_id'].nunique())
@@ -2881,9 +3287,11 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 col1, col2 = st.columns([2, 2])
                 
                 with col1:
+                    # Ensure default value is within the valid range
+                    default_start = max(cust_min_date, cust_max_date - timedelta(days=7))
                     invoice_start = st.date_input(
                         "Invoice Start Date:",
-                        value=cust_max_date - timedelta(days=7),
+                        value=default_start,
                         min_value=cust_min_date,
                         max_value=cust_max_date,
                         key="invoice_start"
@@ -2960,7 +3368,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         
                         # Invoice summary metrics
                         col1, col2, col3, col4 = st.columns(4)
-                        total_amount = invoice_df['total'].sum()
+                        if "signed_net" in invoice_df.columns:
+                            total_amount = invoice_df['signed_net'].sum()
+                        else:
+                            total_amount = invoice_df['line_total'].sum()
                         total_items = invoice_df['quantity'].sum()
                         num_transactions = invoice_df['bill_number'].nunique()
                         
@@ -2975,9 +3386,16 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         st.markdown("### 📋 Itemized Transactions")
                         
                         # Prepare invoice line items with price
-                        invoice_items = invoice_df[[
-                            'day', 'bill_number', 'location', 'item', 'sku', 'price', 'quantity', 'total'
-                        ]].copy()
+                        if "signed_net" in invoice_df.columns:
+                            invoice_items = invoice_df[[
+                                'day', 'bill_number', 'location', 'item', 'sku', 'price', 'quantity', 'signed_net'
+                            ]].copy()
+                            invoice_items = invoice_items.rename(columns={'signed_net': 'total'})
+                        else:
+                            invoice_items = invoice_df[[
+                                'day', 'bill_number', 'location', 'item', 'sku', 'price', 'quantity', 'line_total'
+                            ]].copy()
+                            invoice_items = invoice_items.rename(columns={'line_total': 'total'})
                         
                         # Sort by date
                         invoice_items = invoice_items.sort_values('day', ascending=True)
@@ -2999,13 +3417,22 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         
                         # Summary by product
                         st.markdown("### 📊 Summary by Product")
-                        product_summary = invoice_df.groupby('item').agg({
-                            'price': 'first',  # Get unit price
-                            'quantity': 'sum',
-                            'total': 'sum',
-                            'bill_number': 'count'
-                        }).reset_index()
-                        product_summary.columns = ['Product', 'Unit Price', 'Total Qty', 'Total Amount', 'Times Purchased']
+                        if "signed_net" in invoice_df.columns:
+                            product_summary = invoice_df.groupby('item').agg({
+                                'price': 'first',  # Get unit price
+                                'quantity': 'sum',
+                                'signed_net': 'sum',
+                                'bill_number': 'count'
+                            }).reset_index()
+                            product_summary.columns = ['Product', 'Unit Price', 'Total Qty', 'Total Amount', 'Times Purchased']
+                        else:
+                            product_summary = invoice_df.groupby('item').agg({
+                                'price': 'first',  # Get unit price
+                                'quantity': 'sum',
+                                'line_total': 'sum',
+                                'bill_number': 'count'
+                            }).reset_index()
+                            product_summary.columns = ['Product', 'Unit Price', 'Total Qty', 'Total Amount', 'Times Purchased']
                         product_summary = product_summary.sort_values('Total Amount', ascending=False)
                         
                         # Format currency columns
@@ -3017,8 +3444,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         # Payment breakdown if available
                         if 'payment_name' in invoice_df.columns:
                             st.markdown("### 💳 Payment Methods Used")
-                            payment_summary = invoice_df.groupby('payment_name')['total'].sum().reset_index()
-                            payment_summary.columns = ['Payment Method', 'Amount']
+                            if "signed_net" in invoice_df.columns:
+                                payment_summary = invoice_df.groupby('payment_name')['signed_net'].sum().reset_index()
+                                payment_summary.columns = ['Payment Method', 'Amount']
+                            else:
+                                payment_summary = invoice_df.groupby('payment_name')['line_total'].sum().reset_index()
+                                payment_summary.columns = ['Payment Method', 'Amount']
                             payment_summary = payment_summary.sort_values('Amount', ascending=False)
                             
                             col1, col2 = st.columns(2)
@@ -3099,9 +3530,16 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             st.markdown("### 📋 Itemized Transactions")
                             
                             # Prepare print-friendly table
-                            print_items = invoice_df[[
-                                'day', 'item', 'sku', 'price', 'quantity', 'total'
-                            ]].copy()
+                            if 'signed_net' in invoice_df.columns:
+                                print_items = invoice_df[[
+                                    'day', 'item', 'sku', 'price', 'quantity', 'signed_net'
+                                ]].copy()
+                                print_items = print_items.rename(columns={'signed_net': 'total'})
+                            else:
+                                print_items = invoice_df[[
+                                    'day', 'item', 'sku', 'price', 'quantity', 'line_total'
+                                ]].copy()
+                                print_items = print_items.rename(columns={'line_total': 'total'})
                             print_items = print_items.sort_values('day', ascending=True)
                             print_items['price'] = print_items['price'].apply(lambda x: f"{x:,.2f}")
                             print_items['total'] = print_items['total'].apply(lambda x: f"{x:,.2f}")
@@ -3112,11 +3550,20 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             # Product summary (print version)
                             st.markdown("### 📊 Summary by Product")
                             
-                            print_summary = invoice_df.groupby('item').agg({
-                                'price': 'first',
-                                'quantity': 'sum',
-                                'total': 'sum'
-                            }).reset_index()
+                            if 'signed_net' in invoice_df.columns:
+                                print_summary = invoice_df.groupby('item').agg({
+                                    'price': 'first',
+                                    'quantity': 'sum',
+                                    'signed_net': 'sum'
+                                }).reset_index()
+                                print_summary = print_summary.rename(columns={'signed_net': 'total'})
+                            else:
+                                print_summary = invoice_df.groupby('item').agg({
+                                    'price': 'first',
+                                    'quantity': 'sum',
+                                    'line_total': 'sum'
+                                }).reset_index()
+                                print_summary = print_summary.rename(columns={'line_total': 'total'})
                             print_summary.columns = ['Product', 'Unit Price', 'Total Qty', 'Total Amount']
                             print_summary = print_summary.sort_values('Total Amount', ascending=False)
                             print_summary['Unit Price'] = print_summary['Unit Price'].apply(lambda x: f"{x:,.2f}")
@@ -3211,11 +3658,18 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     
                     # Calculate total sales 7-day average
                     if len(location_df) >= 7:
-                        daily_sales = location_df.groupby('day')['total'].sum().reset_index()
-                        daily_sales['ma_7d'] = daily_sales['total'].rolling(window=7, min_periods=1).mean()
+                        if "signed_net" in location_df.columns:
+                            daily_sales = location_df.groupby('day')['signed_net'].sum().reset_index()
+                            daily_sales['ma_7d'] = daily_sales['signed_net'].rolling(window=7, min_periods=1).mean()
+                        else:
+                            daily_sales = location_df.groupby('day')['line_total'].sum().reset_index()
+                            daily_sales['ma_7d'] = daily_sales['line_total'].rolling(window=7, min_periods=1).mean()
                         location_forecast['Total Sales (7d avg)'] = round(daily_sales['ma_7d'].iloc[-1], 0)
                     else:
-                        location_forecast['Total Sales (7d avg)'] = round(location_df['total'].mean(), 0)
+                        if "signed_net" in location_df.columns:
+                            location_forecast['Total Sales (7d avg)'] = round(location_df['signed_net'].mean(), 0)
+                        else:
+                            location_forecast['Total Sales (7d avg)'] = round(location_df['line_total'].mean(), 0)
                     
                     forecast_data.append(location_forecast)
                 
@@ -3260,47 +3714,50 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     # Calculate 7-day moving averages for each ice type
                     ice_types = ["🧊 ป่น (Crushed Ice)", "🧊 หลอดเล็ก (Small Tube)", "🧊 หลอดใหญ่ (Large Tube)", "📦 อื่นๆ (Other)"]
                     
-                    # Create charts for each ice type
-                    col1, col2 = st.columns(2)
+                    # Create charts for each ice type - Full width
                     
-                    with col1:
-                        # Total orders trend
-                        daily_totals = location_detail_df.groupby('day')['total'].sum().reset_index()
-                        daily_totals['ma_7d'] = daily_totals['total'].rolling(window=7, min_periods=1).mean()
-                        
-                        fig_total = px.line(daily_totals, x='day', y=['total', 'ma_7d'],
-                                          title=f"Total Orders - {selected_location}",
-                                          labels={'value': 'Total Sales (THB)', 'day': 'Date'})
-                        fig_total.update_layout(legend=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.02,
-                            xanchor="right",
-                            x=1
-                        ))
-                        st.plotly_chart(fig_total, use_container_width=True)
+                    # Total orders trend - Full width
+                    if "signed_net" in location_detail_df.columns:
+                        daily_totals = location_detail_df.groupby('day')['signed_net'].sum().reset_index()
+                        daily_totals['ma_7d'] = daily_totals['signed_net'].rolling(window=7, min_periods=1).mean()
+                        daily_totals = daily_totals.rename(columns={'signed_net': 'total'})
+                    else:
+                        daily_totals = location_detail_df.groupby('day')['line_total'].sum().reset_index()
+                        daily_totals['ma_7d'] = daily_totals['line_total'].rolling(window=7, min_periods=1).mean()
+                        daily_totals = daily_totals.rename(columns={'line_total': 'total'})
                     
-                    with col2:
-                        # Ice type breakdown
-                        ice_breakdown = location_detail_df.groupby(['day', 'ice_category'])['quantity'].sum().reset_index()
-                        ice_breakdown_pivot = ice_breakdown.pivot(index='day', columns='ice_category', values='quantity').fillna(0)
-                        
-                        # Calculate 7-day moving averages
-                        for col in ice_breakdown_pivot.columns:
-                            ice_breakdown_pivot[f'{col}_ma7d'] = ice_breakdown_pivot[col].rolling(window=7, min_periods=1).mean()
-                        
-                        fig_ice = px.line(ice_breakdown_pivot, 
-                                        y=[col for col in ice_breakdown_pivot.columns if '_ma7d' in col],
-                                        title=f"7-Day Moving Average by Ice Type - {selected_location}",
-                                        labels={'value': 'Quantity (7d avg)', 'day': 'Date'})
-                        fig_ice.update_layout(legend=dict(
-                            orientation="h",
-                            yanchor="bottom",
-                            y=1.02,
-                            xanchor="right",
-                            x=1
-                        ))
-                        st.plotly_chart(fig_ice, use_container_width=True)
+                    fig_total = px.line(daily_totals, x='day', y=['total', 'ma_7d'],
+                                      title=f"Total Orders - {selected_location}",
+                                      labels={'value': 'Total Sales (THB)', 'day': 'Date'})
+                    fig_total.update_layout(legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    ))
+                    st.plotly_chart(fig_total, use_container_width=True)
+                    
+                    # Ice type breakdown - Full width
+                    ice_breakdown = location_detail_df.groupby(['day', 'ice_category'])['quantity'].sum().reset_index()
+                    ice_breakdown_pivot = ice_breakdown.pivot(index='day', columns='ice_category', values='quantity').fillna(0)
+                    
+                    # Calculate 7-day moving averages
+                    for col in ice_breakdown_pivot.columns:
+                        ice_breakdown_pivot[f'{col}_ma7d'] = ice_breakdown_pivot[col].rolling(window=7, min_periods=1).mean()
+                    
+                    fig_ice = px.line(ice_breakdown_pivot, 
+                                    y=[col for col in ice_breakdown_pivot.columns if '_ma7d' in col],
+                                    title=f"7-Day Moving Average by Ice Type - {selected_location}",
+                                    labels={'value': 'Quantity (7d avg)', 'day': 'Date'})
+                    fig_ice.update_layout(legend=dict(
+                        orientation="h",
+                        yanchor="bottom",
+                        y=1.02,
+                        xanchor="right",
+                        x=1
+                    ))
+                    st.plotly_chart(fig_ice, use_container_width=True)
                     
                     # Detailed metrics
                     st.markdown("#### 📈 Current Forecast Metrics")
@@ -3314,36 +3771,40 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         col1, col2, col3, col4 = st.columns(4)
                         
                         with col1:
-                            # Calculate daily average sales
-                            daily_sales = recent_data.groupby('day')['total'].sum().mean()
-                            st.metric("💰 Avg Daily Sales", f"฿{daily_sales:,.0f}")
+                            # Calculate total ice needed per unit
+                            total_ice_needed = 0
+                            for ice_type in ["🧊 ป่น (Crushed Ice)", "🧊 หลอดเล็ก (Small Tube)", "🧊 หลอดใหญ่ (Large Tube)", "📦 อื่นๆ (Other)"]:
+                                ice_data = recent_data[recent_data['ice_category'] == ice_type]
+                                if not ice_data.empty:
+                                    daily_avg = ice_data.groupby('day')['quantity'].sum().mean()
+                                    total_ice_needed += daily_avg
+                            st.metric("1️⃣ Est Ice Needed / Unit", f"{total_ice_needed:.1f}")
                         
                         with col2:
+                            # Calculate daily average sales
+                            if "signed_net" in recent_data.columns:
+                                daily_sales = recent_data.groupby('day')['signed_net'].sum().mean()
+                            else:
+                                daily_sales = recent_data.groupby('day')['line_total'].sum().mean()
+                            st.metric("2️⃣ Est Sales", f"฿{daily_sales:,.0f}")
+                        
+                        with col3:
                             # Calculate daily average for crushed ice
                             crushed_data = recent_data[recent_data['ice_category'] == "🧊 ป่น (Crushed Ice)"]
                             if not crushed_data.empty:
                                 crushed_daily = crushed_data.groupby('day')['quantity'].sum().mean()
-                                st.metric("🧊 ป่น (Crushed Ice)", f"{crushed_daily:.1f}")
+                                st.metric("3️⃣ ป่น (Crushed Ice)", f"{crushed_daily:.1f}")
                             else:
-                                st.metric("🧊 ป่น (Crushed Ice)", "0.0")
+                                st.metric("3️⃣ ป่น (Crushed Ice)", "0.0")
                         
-                        with col3:
+                        with col4:
                             # Calculate daily average for small tube
                             small_data = recent_data[recent_data['ice_category'] == "🧊 หลอดเล็ก (Small Tube)"]
                             if not small_data.empty:
                                 small_daily = small_data.groupby('day')['quantity'].sum().mean()
-                                st.metric("🧊 หลอดเล็ก (Small Tube)", f"{small_daily:.1f}")
+                                st.metric("4️⃣ หลอดเล็ก (Small Tube)", f"{small_daily:.1f}")
                             else:
-                                st.metric("🧊 หลอดเล็ก (Small Tube)", "0.0")
-                        
-                        with col4:
-                            # Calculate daily average for large tube
-                            large_data = recent_data[recent_data['ice_category'] == "🧊 หลอดใหญ่ (Large Tube)"]
-                            if not large_data.empty:
-                                large_daily = large_data.groupby('day')['quantity'].sum().mean()
-                                st.metric("🧊 หลอดใหญ่ (Large Tube)", f"{large_daily:.1f}")
-                            else:
-                                st.metric("🧊 หลอดใหญ่ (Large Tube)", "0.0")
+                                st.metric("4️⃣ หลอดเล็ก (Small Tube)", "0.0")
                     
                     # Recommendation section
                     st.markdown("#### 💡 Loading Recommendations")
@@ -3407,15 +3868,22 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.markdown("### 🏆 Top Customers")
                 
                 # Calculate customer metrics
-                customer_metrics = df.groupby(['customer_id', 'customer_name']).agg({
-                    'total': 'sum',
-                    'quantity': 'sum',
-                    'bill_number': 'nunique',
-                    'day': ['min', 'max', 'nunique']
-                }).reset_index()
-                
-                # Flatten column names
-                customer_metrics.columns = ['Customer ID', 'Customer Name', 'Total Spent', 'Total Items', 'Transactions', 'First Visit', 'Last Visit', 'Active Days']
+                if "signed_net" in df.columns:
+                    customer_metrics = df.groupby(['customer_id', 'customer_name']).agg({
+                        'signed_net': 'sum',
+                        'quantity': 'sum',
+                        'bill_number': 'nunique',
+                        'day': ['min', 'max', 'nunique']
+                    }).reset_index()
+                    customer_metrics.columns = ['Customer ID', 'Customer Name', 'Total Spent', 'Total Items', 'Transactions', 'First Visit', 'Last Visit', 'Active Days']
+                else:
+                    customer_metrics = df.groupby(['customer_id', 'customer_name']).agg({
+                        'line_total': 'sum',
+                        'quantity': 'sum',
+                        'bill_number': 'nunique',
+                        'day': ['min', 'max', 'nunique']
+                    }).reset_index()
+                    customer_metrics.columns = ['Customer ID', 'Customer Name', 'Total Spent', 'Total Items', 'Transactions', 'First Visit', 'Last Visit', 'Active Days']
                 
                 # Calculate additional metrics
                 customer_metrics['Avg Transaction'] = customer_metrics['Total Spent'] / customer_metrics['Transactions']
@@ -3459,7 +3927,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     
                     # Calculate weekly spending
                     recent_data['week'] = recent_data['day'].dt.to_period('W')
-                    weekly_spending = recent_data.groupby('week')['total'].sum()
+                    if "signed_net" in recent_data.columns:
+                        weekly_spending = recent_data.groupby('week')['signed_net'].sum()
+                    else:
+                        weekly_spending = recent_data.groupby('week')['line_total'].sum()
                     
                     if len(weekly_spending) < 2:
                         return False, 0
@@ -3613,7 +4084,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         
                         if not customer_transactions.empty:
                             # Show last 10 transactions
-                            recent_transactions = customer_transactions.head(10)[['day', 'item', 'quantity', 'total', 'location']]
+                            if 'signed_net' in customer_transactions.columns:
+                                recent_transactions = customer_transactions.head(10)[['day', 'item', 'quantity', 'signed_net', 'location']].copy()
+                                recent_transactions = recent_transactions.rename(columns={'signed_net': 'total'})
+                            else:
+                                recent_transactions = customer_transactions.head(10)[['day', 'item', 'quantity', 'line_total', 'location']].copy()
+                                recent_transactions = recent_transactions.rename(columns={'line_total': 'total'})
                             recent_transactions.columns = ['Date', 'Item', 'Qty', 'Amount', 'Location']
                             st.dataframe(recent_transactions, use_container_width=True, hide_index=True)
                         else:

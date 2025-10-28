@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: snowbomb-dashboard
+    name: snow-ai
     env: python
     plan: starter
     region: singapore
@@ -23,4 +23,10 @@ services:
         value: false
       - key: PYTHONUNBUFFERED
         value: 1
+      - key: DATABASE_PATH
+        value: /opt/render/project/src/data/loyverse_data.db
+    disk:
+      name: snowbomb-database
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
 

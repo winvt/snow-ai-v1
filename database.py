@@ -11,12 +11,12 @@ class LoyverseDB:
         # Use persistent disk path if available, otherwise local path
         if db_path is None:
             import os
-            # Check for Render persistent disk path first
-            persistent_path = "/app/data"
-            if os.path.exists(persistent_path):
-                # Create data directory if it doesn't exist
-                os.makedirs(persistent_path, exist_ok=True)
-                self.db_path = os.path.join(persistent_path, "loyverse_data.db")
+            # Check for DATABASE_PATH environment variable first (Render persistent disk)
+            env_db_path = os.getenv('DATABASE_PATH')
+            if env_db_path:
+                # Create directory if it doesn't exist
+                os.makedirs(os.path.dirname(env_db_path), exist_ok=True)
+                self.db_path = env_db_path
             else:
                 # Fallback to current directory (works on Render free tier)
                 self.db_path = "loyverse_data.db"
@@ -185,6 +185,16 @@ class LoyverseDB:
             )
         """)
         
+        # Create indexes for better performance
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_receipts_date ON receipts(receipt_date)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_receipts_store ON receipts(store_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_receipts_type ON receipts(receipt_type)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_receipts_created ON receipts(created_at)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_line_items_receipt ON line_items(receipt_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_line_items_item ON line_items(item_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_receipt ON payments(receipt_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_items_category ON items(category_id)")
+        
         conn.commit()
         conn.close()
     
@@ -340,6 +350,7 @@ class LoyverseDB:
         """Get receipts as DataFrame for dashboard with location from categories"""
         conn = self.get_connection()
         
+        # Optimized query with better indexing hints
         query = """
             SELECT 
                 r.created_at as date,
@@ -348,12 +359,16 @@ class LoyverseDB:
                 r.receipt_number as bill_number,
                 r.dining_option,
                 r.employee_id,
+                r.receipt_type,
                 li.item_id,
                 li.sku,
                 li.item_name as item,
                 li.quantity,
                 li.price,
-                li.total_money as total,
+                li.total_money as line_total,
+                r.total_money as receipt_total,
+                r.total_discount as receipt_discount,
+                r.total_tax as receipt_tax,
                 i.category_id,
                 c.name as location,
                 GROUP_CONCAT(p.payment_type_id, '+') as bill_type
@@ -363,16 +378,17 @@ class LoyverseDB:
             LEFT JOIN items i ON li.item_id = i.item_id
             LEFT JOIN categories c ON i.category_id = c.category_id
             WHERE 1=1
+            -- include refunds; we will handle sign in app layer
         """
         
         params = []
         
         if start_date:
-            query += " AND r.receipt_date >= ?"
+            query += " AND DATE(r.created_at) >= ?"
             params.append(start_date)
         
         if end_date:
-            query += " AND r.receipt_date <= ?"
+            query += " AND DATE(r.created_at) <= ?"
             params.append(end_date)
         
         if store_id:
@@ -400,9 +416,9 @@ class LoyverseDB:
         conn = self.get_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT MIN(receipt_date), MAX(receipt_date) 
+            SELECT MIN(created_at), MAX(created_at) 
             FROM receipts 
-            WHERE receipt_date IS NOT NULL
+            WHERE created_at IS NOT NULL
         """)
         result = cursor.fetchone()
         conn.close()
@@ -806,7 +822,7 @@ class LoyverseDB:
         stats['items'] = cursor.fetchone()[0]
         
         # Date range
-        cursor.execute("SELECT MIN(receipt_date), MAX(receipt_date) FROM receipts")
+        cursor.execute("SELECT MIN(created_at), MAX(created_at) FROM receipts")
         date_range = cursor.fetchone()
         stats['date_range'] = date_range
         
