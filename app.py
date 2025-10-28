@@ -25,6 +25,46 @@ PAGE_LIMIT = 250
 
 st.set_page_config(page_title="🐻‍❄️ Snow AI Dashboard", layout="wide")
 
+# ========= PASSWORD AUTHENTICATION =========
+PASSWORD = "snowbomb"
+
+# Initialize authentication state
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# Password authentication
+if not st.session_state.authenticated:
+    st.title("🔐 Snow AI Dashboard - Login Required")
+    st.markdown("---")
+    
+    # Center the login form
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown("### Enter Password to Access Dashboard")
+        password_input = st.text_input("Password", type="password", placeholder="Enter password...")
+        
+        col_login, col_clear = st.columns(2)
+        
+        with col_login:
+            if st.button("🔓 Login", type="primary", use_container_width=True):
+                if password_input == PASSWORD:
+                    st.session_state.authenticated = True
+                    st.rerun()
+                else:
+                    st.error("❌ Incorrect password. Please try again.")
+        
+        with col_clear:
+            if st.button("🗑️ Clear", use_container_width=True):
+                st.rerun()
+        
+        st.markdown("---")
+        st.info("💡 Contact administrator for access credentials")
+    
+    # Stop execution here if not authenticated
+    st.stop()
+
+# ========= MAIN APP LOGIC =========
 # Initialize session state for selected tab
 if 'selected_tab' not in st.session_state:
     st.session_state.selected_tab = "📅 Daily Sales"  # Will be updated after language is set
@@ -568,6 +608,13 @@ initialize_selected_tab()
 
 # ========== SIDEBAR NAVIGATION ==========
 st.sidebar.title("🐻‍❄️ Snow AI")
+
+# Logout button
+if st.sidebar.button("🚪 Logout", key="logout_btn", use_container_width=True, type="secondary"):
+    st.session_state.authenticated = False
+    st.rerun()
+
+st.sidebar.markdown("---")
 
 # Load Database button right under title
 if st.sidebar.button(get_text("load_database"), key="load_db_main", use_container_width=True, type="primary"):
