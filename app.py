@@ -17,113 +17,6 @@ try:
 except ImportError:
     pass  # python-dotenv not installed, continue without it
 
-# ========= CONFIG =========
-LOYVERSE_TOKEN = os.getenv("LOYVERSE_TOKEN", "d18826e6c76345888204b310aaca1351")
-BASE_URL = "https://api.loyverse.com/v1.0/receipts"
-PAGE_LIMIT = 250
-# ==========================
-
-st.set_page_config(page_title="🐻‍❄️ Snow AI Dashboard", layout="wide")
-
-# ========= PASSWORD AUTHENTICATION =========
-PASSWORD = "snowbomb"
-
-# Initialize authentication state
-if 'authenticated' not in st.session_state:
-    st.session_state.authenticated = False
-
-# Password authentication
-if not st.session_state.authenticated:
-    st.title(get_text("login_required"))
-    st.markdown("---")
-    
-    # Center the login form
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        st.markdown(f"### {get_text('enter_password')}")
-        password_input = st.text_input("Password", type="password", placeholder=get_text("password_placeholder"))
-        
-        col_login, col_clear = st.columns(2)
-        
-        with col_login:
-            if st.button(get_text("login_button"), type="primary", use_container_width=True):
-                if password_input == PASSWORD:
-                    st.session_state.authenticated = True
-                    st.rerun()
-                else:
-                    st.error(get_text("incorrect_password"))
-        
-        with col_clear:
-            if st.button(get_text("clear_button"), use_container_width=True):
-                st.rerun()
-        
-        st.markdown("---")
-        st.info(get_text("contact_admin"))
-    
-    # Stop execution here if not authenticated
-    st.stop()
-
-# ========= MAIN APP LOGIC =========
-# Initialize session state for selected tab
-if 'selected_tab' not in st.session_state:
-    st.session_state.selected_tab = "📅 Daily Sales"  # Will be updated after language is set
-
-# Initialize theme
-if 'theme_mode' not in st.session_state:
-    st.session_state.theme_mode = "Light"
-
-# Initialize language
-if 'language' not in st.session_state:
-    st.session_state.language = "English"
-
-# Apply theme CSS
-if st.session_state.theme_mode == "Dark":
-    st.markdown("""
-    <style>
-        /* Dark Mode Styling */
-        .stApp {
-            background-color: #0e1117;
-            color: #fafafa;
-        }
-        .stMarkdown {
-            color: #fafafa;
-        }
-        div[data-testid="stMetricValue"] {
-            color: #fafafa;
-        }
-        .stSelectbox label, .stDateInput label, .stTextInput label {
-            color: #fafafa !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Apply font size
-if 'font_size' in st.session_state:
-    font_sizes = {"Small": "12px", "Medium": "14px", "Large": "16px"}
-    base_font = font_sizes.get(st.session_state.font_size, "14px")
-    st.markdown(f"""
-    <style>
-        html, body, [class*="css"] {{
-            font-size: {base_font};
-        }}
-    </style>
-    """, unsafe_allow_html=True)
-
-# Apply compact mode
-if st.session_state.get('compact_mode', False):
-    st.markdown("""
-    <style>
-        .block-container {
-            padding-top: 2rem !important;
-            padding-bottom: 1rem !important;
-        }
-        .element-container {
-            margin-bottom: 0.5rem !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
 # ===== TRANSLATION DICTIONARIES =====
 TRANSLATIONS = {
     "English": {
@@ -171,7 +64,17 @@ TRANSLATIONS = {
         "transaction_log": "📋 Transaction Log by Location",
         "customer_invoice_generator": "🧾 Customer Invoice Generator",
         "ice_forecast_dashboard": "🧊 Ice Forecast Dashboard",
-        "crm_dashboard": "👥 Customer Relationship Management"
+        "crm_dashboard": "👥 Customer Relationship Management",
+        
+        # Password Authentication
+        "login_required": "🔐 Snow AI Dashboard - Login Required",
+        "enter_password": "Enter password to access dashboard",
+        "password_placeholder": "Enter password...",
+        "login_button": "🔓 Login",
+        "clear_button": "🗑️ Clear",
+        "incorrect_password": "❌ Incorrect password. Please try again",
+        "contact_admin": "💡 Contact administrator for access information",
+        "logout": "🚪 Logout"
     },
     "Thai": {
         "load_database": "💾 โหลดฐานข้อมูล",
@@ -338,6 +241,115 @@ def get_text(key, **kwargs):
     lang = st.session_state.get('language', 'English')
     template = TRANSLATIONS[lang].get(key, TRANSLATIONS['English'].get(key, key))
     return template.format(**kwargs) if kwargs else template
+
+# ========= CONFIG =========
+LOYVERSE_TOKEN = os.getenv("LOYVERSE_TOKEN", "d18826e6c76345888204b310aaca1351")
+BASE_URL = "https://api.loyverse.com/v1.0/receipts"
+PAGE_LIMIT = 250
+# ==========================
+
+st.set_page_config(page_title="🐻‍❄️ Snow AI Dashboard", layout="wide")
+
+# ========= PASSWORD AUTHENTICATION =========
+PASSWORD = "snowbomb"
+
+# Initialize authentication state
+if 'authenticated' not in st.session_state:
+    st.session_state.authenticated = False
+
+# Password authentication
+if not st.session_state.authenticated:
+    st.title(get_text("login_required"))
+    st.markdown("---")
+    
+    # Center the login form
+    col1, col2, col3 = st.columns([1, 2, 1])
+    
+    with col2:
+        st.markdown(f"### {get_text('enter_password')}")
+        password_input = st.text_input("Password", type="password", placeholder=get_text("password_placeholder"))
+        
+        col_login, col_clear = st.columns(2)
+        
+        with col_login:
+            if st.button(get_text("login_button"), type="primary", use_container_width=True):
+                if password_input == PASSWORD:
+                    st.session_state.authenticated = True
+                    st.rerun()
+                else:
+                    st.error(get_text("incorrect_password"))
+        
+        with col_clear:
+            if st.button(get_text("clear_button"), use_container_width=True):
+                st.rerun()
+        
+        st.markdown("---")
+        st.info(get_text("contact_admin"))
+    
+    # Stop execution here if not authenticated
+    st.stop()
+
+# ========= MAIN APP LOGIC =========
+# Initialize session state for selected tab
+if 'selected_tab' not in st.session_state:
+    st.session_state.selected_tab = "📅 Daily Sales"  # Will be updated after language is set
+
+# Initialize theme
+if 'theme_mode' not in st.session_state:
+    st.session_state.theme_mode = "Light"
+
+# Initialize language
+if 'language' not in st.session_state:
+    st.session_state.language = "English"
+
+# Apply theme CSS
+if st.session_state.theme_mode == "Dark":
+    st.markdown("""
+    <style>
+        /* Dark Mode Styling */
+        .stApp {
+            background-color: #0e1117;
+            color: #fafafa;
+        }
+        .stMarkdown {
+            color: #fafafa;
+        }
+        div[data-testid="stMetricValue"] {
+            color: #fafafa;
+        }
+        .stSelectbox label, .stDateInput label, .stTextInput label {
+            color: #fafafa !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+# Apply font size
+if 'font_size' in st.session_state:
+    font_sizes = {"Small": "12px", "Medium": "14px", "Large": "16px"}
+    base_font = font_sizes.get(st.session_state.font_size, "14px")
+    st.markdown(f"""
+    <style>
+        html, body, [class*="css"] {{
+            font-size: {base_font};
+        }}
+    </style>
+    """, unsafe_allow_html=True)
+
+# Apply compact mode
+if st.session_state.get('compact_mode', False):
+    st.markdown("""
+    <style>
+        .block-container {
+            padding-top: 2rem !important;
+            padding-bottom: 1rem !important;
+        }
+        .element-container {
+            margin-bottom: 0.5rem !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ===== TRANSLATION DICTIONARIES =====
 
 def initialize_selected_tab():
     """Initialize selected tab with proper translation"""
