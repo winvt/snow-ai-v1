@@ -15,8 +15,13 @@ class LoyverseDB:
             env_db_path = os.getenv('DATABASE_PATH')
             if env_db_path:
                 # Create directory if it doesn't exist
-                os.makedirs(os.path.dirname(env_db_path), exist_ok=True)
-                self.db_path = env_db_path
+                try:
+                    os.makedirs(os.path.dirname(env_db_path), exist_ok=True)
+                    self.db_path = env_db_path
+                except (OSError, PermissionError) as e:
+                    print(f"Warning: Could not create database directory {os.path.dirname(env_db_path)}: {e}")
+                    # Fallback to current directory
+                    self.db_path = "loyverse_data.db"
             else:
                 # Fallback to current directory (works on Render free tier)
                 self.db_path = "loyverse_data.db"
@@ -26,7 +31,22 @@ class LoyverseDB:
     
     def get_connection(self):
         """Create a database connection"""
-        return sqlite3.connect(self.db_path)
+        try:
+            return sqlite3.connect(self.db_path)
+        except sqlite3.OperationalError as e:
+            if "unable to open database file" in str(e):
+                # Try to create the directory and file
+                import os
+                try:
+                    os.makedirs(os.path.dirname(self.db_path) or ".", exist_ok=True)
+                    return sqlite3.connect(self.db_path)
+                except Exception as create_error:
+                    print(f"Error creating database directory: {create_error}")
+                    # Fallback to in-memory database
+                    print("Falling back to in-memory database")
+                    return sqlite3.connect(":memory:")
+            else:
+                raise e
     
     def init_database(self):
         """Initialize database tables"""

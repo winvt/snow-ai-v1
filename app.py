@@ -74,7 +74,30 @@ TRANSLATIONS = {
         "clear_button": "🗑️ Clear",
         "incorrect_password": "❌ Incorrect password. Please try again",
         "contact_admin": "💡 Contact administrator for access information",
-        "logout": "🚪 Logout"
+        "logout": "🚪 Logout",
+        
+        # Settings & Preferences
+        "appearance": "🎨 Appearance",
+        "theme_mode": "Theme Mode",
+        "light": "Light",
+        "dark": "Dark",
+        "font_size": "Font Size",
+        "small": "Small",
+        "medium": "Medium",
+        "large": "Large",
+        "compact_mode": "Compact Mode",
+        "data_management": "💾 Data Management",
+        "sync_receipts": "🔄 Sync Receipts from API",
+        "sync_missing_data": "🔄 Sync Missing Data",
+        "sync_all_metadata": "🔄 Sync All Metadata",
+        "extended_sync_options": "📊 Extended Sync Options",
+        "custom_date_range_sync": "📅 Custom Date Range for Sync",
+        "display_preferences": "🎯 Display Preferences",
+        "data_backup": "💾 Data Backup",
+        "api_connection": "🔌 API & Connection",
+        "sync_data_operations": "🔄 Data Sync & Operations",
+        "advanced_options": "⚙️ Advanced Options",
+        "maintenance": "🔧 Maintenance"
     },
     "Thai": {
         "load_database": "💾 โหลดฐานข้อมูล",
@@ -325,7 +348,11 @@ if st.session_state.theme_mode == "Dark":
 
 # Apply font size
 if 'font_size' in st.session_state:
-    font_sizes = {"Small": "12px", "Medium": "14px", "Large": "16px"}
+    # Map both English and Thai font size values to CSS values
+    font_sizes = {
+        "Small": "12px", "Medium": "14px", "Large": "16px",  # English
+        "เล็ก": "12px", "กลาง": "14px", "ใหญ่": "16px"  # Thai
+    }
     base_font = font_sizes.get(st.session_state.font_size, "14px")
     st.markdown(f"""
     <style>
@@ -719,7 +746,14 @@ def get_smart_sync_range(db):
 # ===== END FUNCTION DEFINITIONS =====
 
 # Initialize database
-db = LoyverseDB()
+try:
+    db = LoyverseDB()
+    print(f"✅ Database initialized successfully at: {db.db_path}")
+except Exception as e:
+    print(f"❌ Database initialization failed: {e}")
+    # Create a fallback database
+    db = LoyverseDB("loyverse_data.db")
+    print(f"✅ Fallback database created at: {db.db_path}")
 
 # Initialize reference data
 if 'ref_data' not in st.session_state:
@@ -832,12 +866,13 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
     
     # Font size
     if 'font_size' not in st.session_state:
-        st.session_state.font_size = "Medium"
+        st.session_state.font_size = get_text("medium")
     
+    font_size_options = [get_text("small"), get_text("medium"), get_text("large")]
     font_size = st.radio(
         f"🔤 {get_text('font_size')}",
-        [get_text("small"), get_text("medium"), get_text("large")],
-        index=["Small", "Medium", "Large"].index(st.session_state.font_size),
+        font_size_options,
+        index=font_size_options.index(st.session_state.font_size) if st.session_state.font_size in font_size_options else 1,
         horizontal=True,
         key="font_size_select"
     )
@@ -1339,7 +1374,7 @@ with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
     if st.button("🔄 Reset All Preferences", use_container_width=True, help="Reset visual and display settings to defaults"):
         st.session_state.theme_mode = "Light"
         st.session_state.color_scheme = "Default"
-        st.session_state.font_size = "Medium"
+        st.session_state.font_size = get_text("medium")
         st.session_state.decimal_places = 0
         st.session_state.date_format = "YYYY-MM-DD"
         st.session_state.chart_animation = True
