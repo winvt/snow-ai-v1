@@ -5,7 +5,7 @@ services:
     plan: starter
     region: singapore
     buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run app.py --server.port=$PORT --server.address=0.0.0.0 --server.headless=true --server.enableCORS=false --server.enableXsrfProtection=false
+    startCommand: ./start.sh
     envVars:
       - key: LOYVERSE_TOKEN
         value: d18826e6c76345888204b310aaca1351
@@ -25,6 +25,34 @@ services:
         value: 1
       - key: DATABASE_PATH
         value: /opt/render/project/src/data/loyverse_data.db
+    disk:
+      name: snowbomb-database
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+
+  - type: cron
+    name: daily-briefing
+    env: python
+    plan: starter
+    region: singapore
+    schedule: "0 2 * * *"  # Runs daily at 2:00 AM UTC (9:00 AM Bangkok time)
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 daily_briefing.py
+    envVars:
+      - key: LOYVERSE_TOKEN
+        value: d18826e6c76345888204b310aaca1351
+      - key: DATABASE_PATH
+        value: /opt/render/project/src/data/loyverse_data.db
+      - key: PYTHONUNBUFFERED
+        value: 1
+      # IMPORTANT: Replace these placeholder values with your actual LINE credentials
+      # You can set these in the Render dashboard under Environment Variables
+      # Or uncomment and replace the values below:
+      # - key: LINE_CHANNEL_ACCESS_TOKEN
+      #   value: YOUR_LINE_CHANNEL_ACCESS_TOKEN_HERE
+      # - key: LINE_RECIPIENT_ID_GROUP
+      #   value: YOUR_LINE_GROUP_ID_HERE
+      # Alternative: Use LINE_RECIPIENT_ID for individual user instead of group
     disk:
       name: snowbomb-database
       mountPath: /opt/render/project/src/data

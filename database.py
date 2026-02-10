@@ -339,7 +339,46 @@ class LoyverseDB:
         conn = self.get_connection()
         cursor = conn.cursor()
         
+        # Filter out problematic high-value receipts
+        problematic_receipts = ['1-8761', '1-8762']
+        filtered_receipts = []
+        filtered_count = 0
+        
         for receipt in receipts:
+            receipt_number = receipt.get('receipt_number')
+            total_money = receipt.get('total_money', 0)
+            
+            # Skip specific problematic receipts
+            if receipt_number in problematic_receipts:
+                print(f"🚫 Filtering out problematic receipt: {receipt_number}")
+                filtered_count += 1
+                continue
+            
+            # Skip high-value receipts (999,999+ or -999,999-)
+            if total_money >= 999999 or total_money <= -999999:
+                print(f"🚫 Filtering out high-value receipt: {receipt_number} (${total_money:,.2f})")
+                filtered_count += 1
+                continue
+            
+            # Check line items for high values
+            has_high_value_item = False
+            for line_item in receipt.get('line_items', []):
+                price = line_item.get('price', 0)
+                total = line_item.get('total_money', 0)
+                if price >= 999999 or total >= 999999:
+                    print(f"🚫 Filtering out receipt with high-value item: {receipt_number}")
+                    filtered_count += 1
+                    has_high_value_item = True
+                    break
+            
+            if not has_high_value_item:
+                filtered_receipts.append(receipt)
+        
+        if filtered_count > 0:
+            print(f"✅ Filtered out {filtered_count} problematic receipts")
+            print(f"✅ Processing {len(filtered_receipts)} clean receipts")
+        
+        for receipt in filtered_receipts:
             receipt_id = receipt.get('id') or receipt.get('receipt_number')
             
             # Save receipt
@@ -412,7 +451,52 @@ class LoyverseDB:
         
         conn.commit()
         conn.close()
-        return len(receipts)
+        return len(filtered_receipts)
+    
+    def remove_problematic_receipts(self):
+        """Remove problematic high-value receipts from database"""
+        conn = self.get_connection()
+        cursor = conn.cursor()
+        
+        problematic_receipts = ['1-8761', '1-8762']
+        removed_count = 0
+        
+        for receipt_number in problematic_receipts:
+            # Get receipt ID
+            cursor.execute("SELECT receipt_id FROM receipts WHERE receipt_number = ?", (receipt_number,))
+            result = cursor.fetchone()
+            
+            if result:
+                receipt_id = result[0]
+                
+                # Delete line items
+                cursor.execute("DELETE FROM line_items WHERE receipt_id = ?", (receipt_id,))
+                
+                # Delete payments
+                cursor.execute("DELETE FROM payments WHERE receipt_id = ?", (receipt_id,))
+                
+                # Delete receipt
+                cursor.execute("DELETE FROM receipts WHERE receipt_id = ?", (receipt_id,))
+                
+                removed_count += 1
+                print(f"🗑️ Removed problematic receipt: {receipt_number}")
+        
+        # Also remove any receipts with extremely high values
+        cursor.execute("""
+            DELETE FROM receipts 
+            WHERE total_money >= 999999 OR total_money <= -999999
+        """)
+        high_value_removed = cursor.rowcount
+        
+        if high_value_removed > 0:
+            print(f"🗑️ Removed {high_value_removed} high-value receipts")
+            removed_count += high_value_removed
+        
+        conn.commit()
+        conn.close()
+        
+        print(f"✅ Total problematic receipts removed: {removed_count}")
+        return removed_count
     
     def get_receipts_dataframe(self, start_date=None, end_date=None, store_id=None):
         """Get receipts as DataFrame for dashboard with location from categories"""
@@ -421,7 +505,7 @@ class LoyverseDB:
         # Optimized query with better indexing hints
         query = """
             SELECT 
-                r.created_at as date,
+                COALESCE(r.receipt_date, r.created_at) as date,
                 r.store_id,
                 r.customer_id,
                 r.receipt_number as bill_number,
@@ -452,11 +536,11 @@ class LoyverseDB:
         params = []
         
         if start_date:
-            query += " AND DATE(r.created_at) >= ?"
+            query += " AND DATE(COALESCE(r.receipt_date, r.created_at)) >= ?"
             params.append(start_date)
         
         if end_date:
-            query += " AND DATE(r.created_at) <= ?"
+            query += " AND DATE(COALESCE(r.receipt_date, r.created_at)) <= ?"
             params.append(end_date)
         
         if store_id:

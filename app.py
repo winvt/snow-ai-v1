@@ -533,6 +533,83 @@ def fetch_all_items(token):
     
     return all_items
 
+# --- Loyverse Importer Class (Robust & Idempotent) ---
+class LoyverseImporter:
+    def __init__(self, token):
+        self.token = token
+        self.headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+
+    def check_exists(self, created_at, total_money, receipt_number=None):
+        """
+        Check if receipt exists by (created_at + total_money) or receipt_number.
+        Returns existing ID if found, None otherwise.
+        """
+        # Search window: +/- 1 second to be safe, or exact match
+        params = {
+            "created_at_min": created_at,
+            "created_at_max": created_at,
+            "limit": 20
+        }
+        
+        try:
+            res = requests.get(BASE_URL, headers=self.headers, params=params, timeout=10)
+            if res.status_code == 200:
+                candidates = res.json().get('receipts', [])
+                for r in candidates:
+                    # 1. Check receipt number if provided (Strongest check)
+                    if receipt_number and r.get('receipt_number') == receipt_number:
+                        return r.get('id') or "EXISTING_NO_ID"
+                    
+                    # 2. Check total money (Secondary check)
+                    # Note: Float comparison needs epsilon, but API returns string or float
+                    api_total = float(r.get('total_money', 0))
+                    if abs(api_total - float(total_money)) < 0.01:
+                        return r.get('id') or "EXISTING_NO_ID"
+                        
+            return None
+        except Exception as e:
+            print(f"⚠️ Check failed: {e}")
+            return "CHECK_FAILED"
+
+    def import_receipt(self, receipt_data):
+        """
+        Import a single receipt idempotently.
+        """
+        created_at = receipt_data.get('created_at')
+        total_money = receipt_data.get('total_money')
+        receipt_number = receipt_data.get('receipt_number')
+        
+        if not created_at or total_money is None:
+            print("❌ Invalid data: Missing created_at or total_money")
+            return False
+
+        # 1. Idempotency Check
+        existing_id = self.check_exists(created_at, total_money, receipt_number)
+        if existing_id == "CHECK_FAILED":
+             print(f"⚠️ Skipped due to check failure: {created_at} - {total_money}")
+             return False
+        if existing_id:
+            print(f"⏭️ Skipped duplicate: {created_at} - {total_money} (ID: {existing_id})")
+            return True # Treated as success
+
+        # 2. Create
+        try:
+            res = requests.post(BASE_URL, headers=self.headers, json=receipt_data, timeout=10)
+            if res.status_code == 201:
+                new_id = res.json().get('id')
+                print(f"✅ Created: {created_at} - {total_money} (ID: {new_id})")
+                return True
+            else:
+                print(f"❌ Failed to create: {res.status_code} - {res.text}")
+                return False
+        except Exception as e:
+            print(f"❌ Network error: {e}")
+            return False
+
 # --- Helper: API call with pagination for receipts ---
 def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250):
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
@@ -829,6 +906,9 @@ with lang_col2:
 st.sidebar.markdown("---")
 st.sidebar.subheader(get_text("navigation"))
 
+# Dedicated import/reconciliation workspace
+DATA_IMPORT_TAB = "🧪 Data Import & Reconciliation"
+
 # Tab navigation buttons
 tabs = [
     get_text("daily_sales"),
@@ -840,7 +920,8 @@ tabs = [
     get_text("transaction_log"),
     get_text("customer_invoice"),
     get_text("ice_forecast"),
-    get_text("crm")
+    get_text("crm"),
+    DATA_IMPORT_TAB
 ]
 
 for tab in tabs:
@@ -1752,31 +1833,38 @@ if sync_data:
                 # Start from latest timestamp + 1 second to avoid duplicates
                 sync_start_datetime = latest_utc + timedelta(seconds=1)
                 sync_end_datetime = datetime.now(pytz.UTC)
+                api_start = sync_start_datetime
+                api_end = sync_end_datetime
             except Exception as e:
-                # Fallback to regular date handling
-                sync_start_datetime = datetime.combine(sync_start_date, datetime.min.time())
-                sync_end_datetime = datetime.combine(sync_end_date, datetime.max.time())
+                # Fallback: use Bangkok calendar dates for API (same as custom sync)
+                _start = sync_start_date.date() if hasattr(sync_start_date, 'date') else sync_start_date
+                _end = sync_end_date.date() if hasattr(sync_end_date, 'date') else sync_end_date
+                api_start = _start
+                api_end = _end
         else:
-            # Fallback to regular date handling
-            sync_start_datetime = datetime.combine(sync_start_date, datetime.min.time())
-            sync_end_datetime = datetime.combine(sync_end_date, datetime.max.time())
+            # Fallback: use Bangkok calendar dates for API
+            _start = sync_start_date.date() if hasattr(sync_start_date, 'date') else sync_start_date
+            _end = sync_end_date.date() if hasattr(sync_end_date, 'date') else sync_end_date
+            api_start = _start
+            api_end = _end
         
         # Clear the flag
         st.session_state.is_sync_missing = False
     else:
-        # For other sync operations, convert to datetime objects if they're date objects
+        # For custom/range sync: user picks Bangkok calendar dates.
+        # Pass DATE objects so fetch_all_receipts converts Bangkok -> UTC correctly.
+        # (Previously we passed naive datetime and it was treated as UTC, missing
+        # 00:00-06:59 Bangkok and misaligning with POS export.)
         if hasattr(sync_start_date, 'date'):
             sync_start_date = sync_start_date.date()
         if hasattr(sync_end_date, 'date'):
             sync_end_date = sync_end_date.date()
-        
-        # Convert to datetime for the API call
-        sync_start_datetime = datetime.combine(sync_start_date, datetime.min.time())
-        sync_end_datetime = datetime.combine(sync_end_date, datetime.max.time())
+        api_start = sync_start_date
+        api_end = sync_end_date
     
     st.info(f"🔄 **Syncing receipts from {sync_start_date} to {sync_end_date}**")
     
-    # Check what's already in database for this range
+    # Check what's already in database for this range (DB stores UTC; we query by date strings)
     existing_df = db.get_receipts_dataframe(
         start_date=sync_start_date.isoformat(),
         end_date=sync_end_date.isoformat(),
@@ -1785,12 +1873,111 @@ if sync_data:
     existing_count = len(existing_df) if not existing_df.empty else 0
     
     with st.spinner(f"Fetching receipts from API ({sync_start_date} to {sync_end_date})..."):
-        receipts = fetch_all_receipts(LOYVERSE_TOKEN, sync_start_datetime, sync_end_datetime, store_filter)
+        receipts = fetch_all_receipts(LOYVERSE_TOKEN, api_start, api_end, store_filter)
     
     if receipts:
+        # --- DEDUP GUARDRAILS ---
+        # Guardrail: never dedupe by (created_at + amount) alone because many
+        # legitimate receipts can share the same second and value.
+        conn = db.get_connection()
+        existing_core_query = """
+            SELECT receipt_id, receipt_number, store_id, created_at, receipt_date, total_money
+            FROM receipts
+            WHERE DATE(COALESCE(receipt_date, created_at)) >= ? AND DATE(COALESCE(receipt_date, created_at)) <= ?
+        """
+        query_params = [sync_start_date.isoformat(), sync_end_date.isoformat()]
+        if store_filter:
+            existing_core_query += " AND store_id = ?"
+            query_params.append(store_filter)
+        existing_core = pd.read_sql_query(existing_core_query, conn, params=query_params)
+        conn.close()
+
+        existing_receipt_ids = set(existing_core["receipt_id"].dropna().astype(str).tolist())
+        existing_number_keys = set(
+            zip(
+                existing_core["store_id"].fillna("").astype(str),
+                existing_core["receipt_number"].fillna("").astype(str),
+            )
+        )
+        existing_time_amount_store_keys = set(
+            zip(
+                existing_core["created_at"].fillna("").astype(str),
+                existing_core["total_money"].fillna(0).astype(float).round(2),
+                existing_core["store_id"].fillna("").astype(str),
+            )
+        )
+
+        unique_receipts = []
+        duplicate_by_id_count = 0
+        duplicate_by_number_count = 0
+        suspicious_time_amount_collisions = 0
+
+        for r in receipts:
+            receipt_id = str(r.get("id") or r.get("receipt_number") or "")
+            receipt_number = str(r.get("receipt_number") or "")
+            receipt_store = str(r.get("store_id") or "")
+            receipt_created = str(r.get("created_at") or "")
+            receipt_total = round(float(r.get("total_money", 0) or 0), 2)
+
+            if receipt_id and receipt_id in existing_receipt_ids:
+                duplicate_by_id_count += 1
+                continue
+
+            if receipt_number and (receipt_store, receipt_number) in existing_number_keys:
+                duplicate_by_number_count += 1
+                continue
+
+            # Guardrail signal only: we don't skip on this weak key.
+            if (receipt_created, receipt_total, receipt_store) in existing_time_amount_store_keys:
+                suspicious_time_amount_collisions += 1
+
+            unique_receipts.append(r)
+            if receipt_id:
+                existing_receipt_ids.add(receipt_id)
+            if receipt_number:
+                existing_number_keys.add((receipt_store, receipt_number))
+
+        skipped_duplicates = duplicate_by_id_count + duplicate_by_number_count
+        if skipped_duplicates > 0:
+            st.warning(
+                f"⚠️ Skipped {skipped_duplicates} duplicates "
+                f"(by ID: {duplicate_by_id_count}, by receipt number: {duplicate_by_number_count})"
+            )
+        if suspicious_time_amount_collisions > 0:
+            st.info(
+                f"ℹ️ Detected {suspicious_time_amount_collisions} same-time/same-amount collisions "
+                "in existing data. Guardrail kept them for review (not auto-deduped)."
+            )
+            
         # Save to database (INSERT OR REPLACE = merge/upsert)
-        saved_count = db.save_receipts(receipts)
+        saved_count = db.save_receipts(unique_receipts)
         db.update_sync_time('receipts', f"{saved_count} receipts")
+
+        # Post-sync integrity guardrail: duplicate receipt numbers in range.
+        conn = db.get_connection()
+        dup_num_query = """
+            SELECT store_id, receipt_number, COUNT(*) AS c
+            FROM receipts
+            WHERE DATE(COALESCE(receipt_date, created_at)) >= ? AND DATE(COALESCE(receipt_date, created_at)) <= ?
+              AND receipt_number IS NOT NULL
+            GROUP BY store_id, receipt_number
+            HAVING c > 1
+            ORDER BY c DESC
+            LIMIT 20
+        """
+        dup_num_df = pd.read_sql_query(
+            dup_num_query,
+            conn,
+            params=[sync_start_date.isoformat(), sync_end_date.isoformat()],
+        )
+        conn.close()
+        if not dup_num_df.empty:
+            st.error(
+                f"🚨 Guardrail: Found {len(dup_num_df)} duplicate receipt-number groups "
+                f"in synced range ({sync_start_date} to {sync_end_date})."
+            )
+            with st.expander("Show duplicate receipt-number groups", expanded=False):
+                st.dataframe(dup_num_df, use_container_width=True, hide_index=True)
         
         # Check if we added new data or just updated
         new_df = db.get_receipts_dataframe(
@@ -1866,7 +2053,17 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     unknown_df = pd.DataFrame({
                         "Customer ID": unknown_customers,
                         "Transactions": [df[df["customer_id"] == cid]["bill_number"].nunique() for cid in unknown_customers],
-                        "Total Sales": [df[df["customer_id"] == cid]["signed_net"].sum() if "signed_net" in df.columns else df[df["customer_id"] == cid]["line_total"].sum() for cid in unknown_customers]
+                        "Total Sales": [
+                            (
+                                df[df["customer_id"] == cid]
+                                .groupby("bill_number", as_index=False)["signed_net"]
+                                .first()["signed_net"]
+                                .sum()
+                            )
+                            if "signed_net" in df.columns and "bill_number" in df.columns
+                            else df[df["customer_id"] == cid]["line_total"].sum()
+                            for cid in unknown_customers
+                        ]
                     })
                     st.dataframe(unknown_df, use_container_width=True)
                     
@@ -1923,25 +2120,141 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             if selected_payment != "All":
                 df = df[df["bill_type"] == selected_payment]
 
+        # Canonical analysis frames:
+        # - line_df: one row per line item
+        # - receipt_df: one row per receipt (aggregated from line_df)
+        line_df = df.copy()
+
+        def build_receipt_frame(source_df):
+            receipt_columns = [
+                "day",
+                "bill_number",
+                "receipt_type",
+                "signed_net",
+                "receipt_discount",
+                "customer_id",
+                "customer_name",
+                "store_id",
+                "payment_name",
+                "location",
+                "date",
+            ]
+            if source_df.empty or "bill_number" not in source_df.columns:
+                return pd.DataFrame(columns=receipt_columns)
+
+            group_cols = ["bill_number"]
+            if "day" in source_df.columns:
+                group_cols.insert(0, "day")
+
+            agg_map = {}
+            for col in [
+                "date",
+                "receipt_type",
+                "signed_net",
+                "receipt_discount",
+                "customer_id",
+                "customer_name",
+                "store_id",
+                "payment_name",
+                "location",
+                "receipt_total",
+            ]:
+                if col in source_df.columns:
+                    agg_map[col] = "first"
+
+            receipt_df_local = source_df.groupby(group_cols, as_index=False).agg(agg_map)
+
+            if "receipt_discount" in receipt_df_local.columns:
+                receipt_df_local["receipt_discount"] = receipt_df_local["receipt_discount"].fillna(0)
+
+            if (
+                "signed_net" not in receipt_df_local.columns
+                and {"receipt_total", "receipt_discount", "receipt_type"}.issubset(receipt_df_local.columns)
+            ):
+                receipt_net = (
+                    receipt_df_local["receipt_total"].fillna(0)
+                    - receipt_df_local["receipt_discount"].fillna(0)
+                )
+                is_refund = receipt_df_local["receipt_type"].astype(str).str.lower().eq("refund")
+                receipt_df_local["signed_net"] = receipt_net.where(~is_refund, -receipt_net)
+            elif "signed_net" not in receipt_df_local.columns and "line_total" in source_df.columns:
+                line_sales = source_df.groupby(group_cols, as_index=False)["line_total"].sum()
+                receipt_df_local = receipt_df_local.merge(line_sales, on=group_cols, how="left")
+                receipt_df_local["signed_net"] = receipt_df_local["line_total"].fillna(0)
+                receipt_df_local = receipt_df_local.drop(columns=["line_total"], errors="ignore")
+
+            if "day" not in receipt_df_local.columns:
+                receipt_df_local["day"] = None
+
+            for col in receipt_columns:
+                if col not in receipt_df_local.columns:
+                    receipt_df_local[col] = None
+
+            return receipt_df_local[receipt_columns]
+
+        def compute_sales_kpis(receipt_frame, line_frame):
+            """Trusted KPI source: money from receipt grain, quantity from line grain."""
+            out = {
+                "total_sales": 0.0,
+                "total_items": 0.0,
+                "unique_customers": 0,
+                "transactions": 0,
+            }
+            if receipt_frame is None or line_frame is None:
+                return out
+            if not receipt_frame.empty and "signed_net" in receipt_frame.columns:
+                out["total_sales"] = float(pd.to_numeric(receipt_frame["signed_net"], errors="coerce").fillna(0).sum())
+            elif "line_total" in line_frame.columns:
+                out["total_sales"] = float(pd.to_numeric(line_frame["line_total"], errors="coerce").fillna(0).sum())
+            if "quantity" in line_frame.columns:
+                out["total_items"] = float(pd.to_numeric(line_frame["quantity"], errors="coerce").fillna(0).sum())
+            if "customer_id" in receipt_frame.columns:
+                out["unique_customers"] = int(receipt_frame["customer_id"].dropna().nunique())
+            elif "customer_id" in line_frame.columns:
+                out["unique_customers"] = int(line_frame["customer_id"].dropna().nunique())
+            if "bill_number" in receipt_frame.columns:
+                out["transactions"] = int(receipt_frame["bill_number"].dropna().nunique())
+            return out
+
+        def build_reconciliation_monitor(receipt_frame, line_frame, tolerance=0.01):
+            """
+            Cross-check receipt totals against an independently rebuilt receipt frame
+            from line-level rows. Any mismatch indicates aggregation drift.
+            """
+            if receipt_frame is None or line_frame is None or receipt_frame.empty:
+                return {"ok": True, "message": "No data available for monitor."}
+            rebuilt = build_receipt_frame(line_frame)
+            r_sales = float(pd.to_numeric(receipt_frame.get("signed_net"), errors="coerce").fillna(0).sum())
+            b_sales = float(pd.to_numeric(rebuilt.get("signed_net"), errors="coerce").fillna(0).sum())
+            r_disc = float(pd.to_numeric(receipt_frame.get("receipt_discount"), errors="coerce").fillna(0).sum())
+            b_disc = float(pd.to_numeric(rebuilt.get("receipt_discount"), errors="coerce").fillna(0).sum())
+            r_txn = int(receipt_frame["bill_number"].dropna().nunique()) if "bill_number" in receipt_frame.columns else 0
+            b_txn = int(rebuilt["bill_number"].dropna().nunique()) if "bill_number" in rebuilt.columns else 0
+            sales_gap = r_sales - b_sales
+            disc_gap = r_disc - b_disc
+            txn_gap = r_txn - b_txn
+            ok = abs(sales_gap) <= tolerance and abs(disc_gap) <= tolerance and txn_gap == 0
+            return {
+                "ok": ok,
+                "sales_receipt": r_sales,
+                "sales_rebuilt": b_sales,
+                "sales_gap": sales_gap,
+                "discount_receipt": r_disc,
+                "discount_rebuilt": b_disc,
+                "discount_gap": disc_gap,
+                "txn_receipt": r_txn,
+                "txn_rebuilt": b_txn,
+                "txn_gap": txn_gap,
+            }
+
+        receipt_df = build_receipt_frame(line_df)
+        df = line_df
+
         # --- KPI Cards ---
-        # Compute net sales at receipt level and subtract refunds
-        # First, aggregate per receipt to avoid line duplication
-        if {"bill_number","receipt_total","receipt_discount","receipt_type"}.issubset(df.columns):
-            receipt_level = df.groupby(["bill_number","receipt_type"], as_index=False).agg({
-                "receipt_total":"first",
-                "receipt_discount":"first"
-            })
-            receipt_level["receipt_net"] = receipt_level["receipt_total"].fillna(0) - receipt_level["receipt_discount"].fillna(0)
-            # Refunds should subtract from sales
-            receipt_level["signed_net"] = receipt_level.apply(lambda r: -r["receipt_net"] if str(r["receipt_type"]).lower()=="refund" else r["receipt_net"], axis=1)
-            total_sales = float(receipt_level["signed_net"].sum())
-            # attach signed_net back to rows for day-level calcs
-            df_receipt_net = receipt_level[["bill_number","signed_net"]]
-            df = df.merge(df_receipt_net, on="bill_number", how="left")
-        else:
-            total_sales = df["line_total"].astype(float).sum()
-        total_items = df["quantity"].sum()
-        unique_customers = df["customer_id"].nunique()
+        kpi_summary = compute_sales_kpis(receipt_df, line_df)
+        total_sales = kpi_summary["total_sales"]
+        total_items = kpi_summary["total_items"]
+        unique_customers = kpi_summary["unique_customers"]
         
         # Calculate bags per day
         if 'view_start_date' in st.session_state and 'view_end_date' in st.session_state:
@@ -1959,26 +2272,45 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
         col3.metric("👥 Unique Customers", f"{unique_customers}")
         col4.metric("📅 Bags/Day", f"{bags_per_day:.1f}", help=f"Average bags sold per day over {days_in_period} days")
 
+        with st.expander("🛡️ Aggregation Integrity Monitor", expanded=False):
+            monitor = build_reconciliation_monitor(receipt_df, line_df)
+            if monitor.get("ok"):
+                st.success("Receipt-grain totals are consistent with rebuilt line->receipt totals.")
+            else:
+                st.error("Aggregation mismatch detected. Review before using totals for invoicing.")
+            mcol1, mcol2, mcol3 = st.columns(3)
+            mcol1.metric("Sales Gap", f"{monitor.get('sales_gap', 0):,.2f}")
+            mcol2.metric("Discount Gap", f"{monitor.get('discount_gap', 0):,.2f}")
+            mcol3.metric("Txn Gap", f"{monitor.get('txn_gap', 0)}")
+            st.caption("Expected normal state: all three gaps are 0.")
+
         st.markdown("---")
 
         # --- Render selected tab content ---
         if st.session_state.selected_tab == get_text("daily_sales"):
             st.subheader(get_text("daily_sales_analysis"))
             
+            # Use canonical receipt-level frame for sales KPIs/charts.
+            receipt_day_sales = receipt_df.copy()
+            
             # === ENHANCED KPI CARDS ===
             st.markdown(f"### {get_text('key_metrics')}")
             
             # Calculate daily aggregations using receipt-level signed net
-            if "signed_net" in df.columns:
-                daily_agg = df.groupby("day").agg({
-                    "signed_net": "sum",
-                    "quantity": "sum", 
-                    "bill_number": "nunique",
-                    "customer_id": "nunique"
-                }).reset_index()
+            if receipt_day_sales is not None:
+                # Sales and transaction/customer counts from receipt-level data
+                sales_agg = receipt_day_sales.groupby("day", as_index=False).agg(
+                    signed_net=("signed_net", "sum"),
+                    bill_number=("bill_number", "nunique"),
+                    customer_id=("customer_id", "nunique"),
+                )
+                # Items sold remains line-level quantity aggregation
+                qty_agg = line_df.groupby("day", as_index=False).agg(quantity=("quantity", "sum"))
+                daily_agg = sales_agg.merge(qty_agg, on="day", how="left")
+                daily_agg = daily_agg[["day", "signed_net", "quantity", "bill_number", "customer_id"]]
                 daily_agg.columns = ["day", "total_sales", "items", "transactions", "customers"]
             else:
-                daily_agg = df.groupby("day").agg({
+                daily_agg = line_df.groupby("day").agg({
                     "line_total": "sum",
                     "quantity": "sum", 
                     "bill_number": "nunique",
@@ -1993,12 +2325,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             avg_transactions_per_day = daily_agg["transactions"].mean()
             avg_customers_per_day = daily_agg["customers"].mean()
             # Average transaction value based on receipt-level net (exclude refunds)
-            if "signed_net" in df.columns and "receipt_type" in df.columns:
-                per_receipt = df.groupby(["bill_number","receipt_type"], as_index=False)["signed_net"].first()
+            if "signed_net" in receipt_day_sales.columns and "receipt_type" in receipt_day_sales.columns:
+                per_receipt = receipt_day_sales[["bill_number", "receipt_type", "signed_net"]].copy()
                 per_receipt = per_receipt[per_receipt["receipt_type"].str.lower() != "refund"]
                 avg_transaction_value = per_receipt["signed_net"].mean() if not per_receipt.empty else 0
             elif "line_total" in df.columns:
-                avg_transaction_value = df.groupby("bill_number")["line_total"].sum().mean()
+                avg_transaction_value = line_df.groupby("bill_number")["line_total"].sum().mean()
             else:
                 avg_transaction_value = 0
             
@@ -2053,11 +2385,15 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             # === DAILY SALES CHARTS ===
             st.markdown(f"### {get_text('sales_overview')}")
             
-            # Bar chart - Full width using signed net
-            if "signed_net" in df.columns:
-                daily_sales = df.groupby("day")["signed_net"].sum().reset_index().rename(columns={"signed_net":"total"})
+            # Bar chart - Full width using receipt-level signed net
+            if receipt_day_sales is not None:
+                daily_sales = (
+                    receipt_day_sales.groupby("day", as_index=False)["signed_net"]
+                    .sum()
+                    .rename(columns={"signed_net": "total"})
+                )
             else:
-                daily_sales = df.groupby("day")["line_total"].sum().reset_index().rename(columns={"line_total":"total"})
+                daily_sales = line_df.groupby("day")["line_total"].sum().reset_index().rename(columns={"line_total":"total"})
             
             fig = px.bar(daily_sales, x="day", y="total", title="Daily Sales Trend (Net Sales)", 
                         text_auto=True, color="total",
@@ -2068,13 +2404,13 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.plotly_chart(fig, use_container_width=True)
             
             # Show discount information if available
-            if 'receipt_discount' in df.columns:
-                total_discounts = df["receipt_discount"].sum()
+            if 'receipt_discount' in receipt_day_sales.columns:
+                total_discounts = receipt_day_sales["receipt_discount"].fillna(0).sum()
                 if total_discounts > 0:
                     st.info(f"💰 **Total Discounts Applied:** ฿{total_discounts:,.2f}")
                     
                     # Show daily discount breakdown
-                    daily_discounts = df.groupby("day")["receipt_discount"].sum().reset_index()
+                    daily_discounts = receipt_day_sales.groupby("day")["receipt_discount"].sum().reset_index()
                     daily_discounts.columns = ["day", "discounts"]
                     
                     if daily_discounts["discounts"].sum() > 0:
@@ -2090,20 +2426,29 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 else:
                     st.info("ℹ️ **No discounts found in the data**")
             
-            # Line chart with hover details - Full width using signed net
-            if "signed_net" in df.columns:
-                daily_details = df.groupby("day").agg({
-                    "signed_net": "sum",
-                    "quantity": "sum",
-                    "bill_number": "nunique"
-                }).reset_index().rename(columns={"signed_net":"Total Sales"})
+            # Line chart with hover details - receipt-level sales totals
+            if receipt_day_sales is not None:
+                sales_details = receipt_day_sales.groupby("day", as_index=False).agg(
+                    signed_net=("signed_net", "sum"),
+                    bill_number=("bill_number", "nunique"),
+                )
+                qty_details = line_df.groupby("day", as_index=False).agg(quantity=("quantity", "sum"))
+                daily_details = sales_details.merge(qty_details, on="day", how="left")
+                daily_details = daily_details.rename(
+                    columns={
+                        "day": "Date",
+                        "signed_net": "Total Sales",
+                        "quantity": "Items Sold",
+                        "bill_number": "Transactions",
+                    }
+                )
             else:
-                daily_details = df.groupby("day").agg({
+                daily_details = line_df.groupby("day").agg({
                     "line_total": "sum",
                     "quantity": "sum",
                     "bill_number": "nunique"
                 }).reset_index().rename(columns={"line_total":"Total Sales"})
-            daily_details.columns = ["Date", "Total Sales", "Items Sold", "Transactions"]
+                daily_details.columns = ["Date", "Total Sales", "Items Sold", "Transactions"]
             fig2 = px.line(daily_details, x="Date", y="Total Sales", 
                           title="Sales Trend Line",
                           markers=True,
@@ -2117,31 +2462,39 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             # === DAY OF WEEK ANALYSIS ===
             st.markdown(f"### {get_text('day_of_week_analysis')}")
             
-            # Add day of week to dataframe
-            df_temp = df.copy()
-            df_temp['day_date'] = pd.to_datetime(df_temp['day'])
-            df_temp['day_of_week'] = df_temp['day_date'].dt.day_name()
-            df_temp['weekday_num'] = df_temp['day_date'].dt.dayofweek
-            
-            # Aggregate by day of week using signed_net if available
+            # Add day-of-week dimensions from receipt-level data.
+            df_temp = receipt_day_sales.copy()
+            df_temp["day_date"] = pd.to_datetime(df_temp["day"])
+            df_temp["day_of_week"] = df_temp["day_date"].dt.day_name()
+            df_temp["weekday_num"] = df_temp["day_date"].dt.dayofweek
+
             if 'signed_net' in df_temp.columns:
-                dow_sales = df_temp.groupby(['day_of_week', 'weekday_num']).agg({
-                    'signed_net': ['sum', 'mean', 'count'],
-                    'bill_number': 'nunique',
-                    'customer_id': 'nunique',
-                    'quantity': 'sum'
-                }).reset_index()
-                # Flatten column names
-                dow_sales.columns = ['day_of_week', 'weekday_num', 'total_sales', 'avg_sales', 'days_count', 'transactions', 'customers', 'items']
+                dow_sales = df_temp.groupby(["day_of_week", "weekday_num"], as_index=False).agg(
+                    total_sales=("signed_net", "sum"),
+                    days_count=("day", "nunique"),
+                    transactions=("bill_number", "nunique"),
+                    customers=("customer_id", "nunique"),
+                )
+                qty_temp = line_df.copy()
+                qty_temp["day_date"] = pd.to_datetime(qty_temp["day"])
+                qty_temp["day_of_week"] = qty_temp["day_date"].dt.day_name()
+                qty_temp["weekday_num"] = qty_temp["day_date"].dt.dayofweek
+                dow_qty = qty_temp.groupby(["day_of_week", "weekday_num"], as_index=False).agg(items=("quantity", "sum"))
+                dow_sales = dow_sales.merge(dow_qty, on=["day_of_week", "weekday_num"], how="left").fillna({"items": 0})
+                dow_sales["avg_sales"] = dow_sales["total_sales"] / dow_sales["days_count"].replace(0, pd.NA)
             else:
-                dow_sales = df_temp.groupby(['day_of_week', 'weekday_num']).agg({
-                    'line_total': ['sum', 'mean', 'count'],
-                    'bill_number': 'nunique',
-                    'customer_id': 'nunique',
-                    'quantity': 'sum'
-                }).reset_index()
-                # Flatten column names
-                dow_sales.columns = ['day_of_week', 'weekday_num', 'total_sales', 'avg_sales', 'days_count', 'transactions', 'customers', 'items']
+                dow_sales = line_df.copy()
+                dow_sales["day_date"] = pd.to_datetime(dow_sales["day"])
+                dow_sales["day_of_week"] = dow_sales["day_date"].dt.day_name()
+                dow_sales["weekday_num"] = dow_sales["day_date"].dt.dayofweek
+                dow_sales = dow_sales.groupby(["day_of_week", "weekday_num"], as_index=False).agg(
+                    total_sales=("line_total", "sum"),
+                    avg_sales=("line_total", "mean"),
+                    days_count=("day", "nunique"),
+                    transactions=("bill_number", "nunique"),
+                    customers=("customer_id", "nunique"),
+                    items=("quantity", "sum"),
+                )
             
             # Sort by weekday (Monday=0, Sunday=6)
             dow_sales = dow_sales.sort_values('weekday_num')
@@ -2225,24 +2578,37 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
         elif st.session_state.selected_tab == get_text("by_location"):
             st.subheader(get_text("sales_by_location"))
             
-            if "location" in df.columns and not df["location"].isna().all():
+            if "location" in line_df.columns and not line_df["location"].isna().all():
                 # Location sales summary
-                if "signed_net" in df.columns:
-                    location_sales = df.groupby("location").agg({
-                        "signed_net": "sum",
-                        "quantity": "sum",
-                        "bill_number": "nunique",
-                        "customer_id": "nunique"
-                    }).reset_index()
-                    location_sales.columns = ["Location", "Total Sales", "Items Sold", "Transactions", "Unique Customers"]
+                if "signed_net" in receipt_df.columns:
+                    sales_by_location = (
+                        receipt_df.groupby("location", as_index=False).agg(
+                            **{
+                                "Total Sales": ("signed_net", "sum"),
+                                "Transactions": ("bill_number", "nunique"),
+                                "Unique Customers": ("customer_id", "nunique"),
+                            }
+                        )
+                    )
                 else:
-                    location_sales = df.groupby("location").agg({
-                        "line_total": "sum",
-                        "quantity": "sum",
-                        "bill_number": "nunique",
-                        "customer_id": "nunique"
-                    }).reset_index()
-                    location_sales.columns = ["Location", "Total Sales", "Items Sold", "Transactions", "Unique Customers"]
+                    sales_by_location = (
+                        line_df.groupby("location", as_index=False).agg(
+                            **{
+                                "Total Sales": ("line_total", "sum"),
+                                "Transactions": ("bill_number", "nunique"),
+                                "Unique Customers": ("customer_id", "nunique"),
+                            }
+                        )
+                    )
+                items_by_location = (
+                    line_df.groupby("location", as_index=False)["quantity"].sum()
+                    .rename(columns={"location": "Location", "quantity": "Items Sold"})
+                )
+                location_sales = sales_by_location.rename(columns={"location": "Location"}).merge(
+                    items_by_location,
+                    on="Location",
+                    how="left",
+                )
                 location_sales = location_sales.sort_values("Total Sales", ascending=False)
                 
                 # Bar chart
@@ -2279,10 +2645,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 
                 # Location trends over time
                 st.subheader("📈 Location Trends Over Time")
-                if "signed_net" in df.columns:
-                    location_daily = df.groupby(["day", "location"])["signed_net"].sum().reset_index().rename(columns={"signed_net":"total"})
+                if "signed_net" in receipt_df.columns:
+                    location_daily = receipt_df.groupby(["day", "location"])["signed_net"].sum().reset_index().rename(columns={"signed_net":"total"})
                 else:
-                    location_daily = df.groupby(["day", "location"])["line_total"].sum().reset_index().rename(columns={"line_total":"total"})
+                    location_daily = line_df.groupby(["day", "location"])["line_total"].sum().reset_index().rename(columns={"line_total":"total"})
                 fig_trend = px.line(location_daily, x="day", y="total", color="location",
                                    title="Daily Sales Trend by Location (Net Sales)",
                                    markers=True)
@@ -2294,12 +2660,15 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.subheader("🕐 Peak Hours Analysis by Location")
                 
                 # Extract hour from timestamp
-                df_hours = df.copy()
-                df_hours['datetime'] = pd.to_datetime(df_hours['date'])
-                df_hours['hour'] = df_hours['datetime'].dt.hour
+                df_hours_line = line_df.copy()
+                df_hours_line['datetime'] = pd.to_datetime(df_hours_line['date'])
+                df_hours_line['hour'] = df_hours_line['datetime'].dt.hour
+                df_hours_receipt = receipt_df.copy()
+                df_hours_receipt['datetime'] = pd.to_datetime(df_hours_receipt['date'])
+                df_hours_receipt['hour'] = df_hours_receipt['datetime'].dt.hour
                 
                 # Location selector for peak hours
-                peak_location_list = ["All Locations"] + sorted(df["location"].dropna().unique().tolist())
+                peak_location_list = ["All Locations"] + sorted(line_df["location"].dropna().unique().tolist())
                 selected_peak_location = st.selectbox(
                     "📍 Select Location for Peak Hours Analysis:",
                     peak_location_list,
@@ -2308,31 +2677,34 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 
                 # Filter data
                 if selected_peak_location == "All Locations":
-                    hourly_data = df_hours.copy()
+                    hourly_receipt = df_hours_receipt.copy()
+                    hourly_line = df_hours_line.copy()
                     analysis_title = "All Locations"
                 else:
-                    hourly_data = df_hours[df_hours["location"] == selected_peak_location].copy()
+                    hourly_receipt = df_hours_receipt[df_hours_receipt["location"] == selected_peak_location].copy()
+                    hourly_line = df_hours_line[df_hours_line["location"] == selected_peak_location].copy()
                     analysis_title = selected_peak_location
                 
-                if not hourly_data.empty:
+                if not hourly_receipt.empty:
                     # Aggregate by hour
-                    if "signed_net" in hourly_data.columns:
-                        hourly_sales = hourly_data.groupby('hour').agg({
+                    if "signed_net" in hourly_receipt.columns:
+                        hourly_sales = hourly_receipt.groupby('hour').agg({
                             'signed_net': 'sum',
                             'bill_number': 'nunique',
                             'customer_id': 'nunique',
-                            'quantity': 'sum',
                         }).reset_index()
                     else:
-                        hourly_sales = hourly_data.groupby('hour').agg({
+                        hourly_sales = hourly_receipt.groupby('hour').agg({
                             'line_total': 'sum',
                             'bill_number': 'nunique',
                             'customer_id': 'nunique',
-                            'quantity': 'sum',
                         }).reset_index()
+                    hourly_items = hourly_line.groupby("hour", as_index=False)["quantity"].sum()
+                    hourly_items.columns = ["hour", "quantity"]
+                    hourly_sales = hourly_sales.merge(hourly_items, on="hour", how="left").fillna({"quantity": 0})
                     
                     # Calculate occurrences before renaming columns
-                    hour_counts = hourly_data.groupby('hour').size().reset_index(name='occurrences')
+                    hour_counts = hourly_receipt.groupby('hour').size().reset_index(name='occurrences')
                     hourly_sales = hourly_sales.merge(hour_counts, on='hour')
                     
                     # Now rename columns after merge
@@ -2509,26 +2881,17 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     return "📦 อื่นๆ (Other)"
             
             # Apply categorization
-            df_products = df.copy()
+            df_products = line_df.copy()
             df_products['product_category'] = df_products['item'].apply(categorize_product)
             
             # Aggregate by category
-            if "signed_net" in df_products.columns:
-                category_sales = df_products.groupby('product_category').agg({
-                    'signed_net': 'sum',
-                    'quantity': 'sum',
-                    'bill_number': 'nunique',
-                    'item': 'count'
-                }).reset_index()
-                category_sales.columns = ['Category', 'Total Sales', 'Quantity', 'Transactions', 'Items Sold']
-            else:
-                category_sales = df_products.groupby('product_category').agg({
-                    'line_total': 'sum',
-                    'quantity': 'sum',
-                    'bill_number': 'nunique',
-                    'item': 'count'
-                }).reset_index()
-                category_sales.columns = ['Category', 'Total Sales', 'Quantity', 'Transactions', 'Items Sold']
+            category_sales = df_products.groupby('product_category').agg({
+                'line_total': 'sum',
+                'quantity': 'sum',
+                'bill_number': 'nunique',
+                'item': 'count'
+            }).reset_index()
+            category_sales.columns = ['Category', 'Total Sales', 'Quantity', 'Transactions', 'Items Sold']
             category_sales = category_sales.sort_values('Total Sales', ascending=False)
             
             # Calculate percentages
@@ -2630,20 +2993,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.caption("💡 Click on a product to manually change its category")
                 
                 # Group products by category with details
-                if "signed_net" in df_products.columns:
-                    detailed_products = df_products.groupby(['product_category', 'item']).agg({
-                        'signed_net': 'sum',
-                        'quantity': 'sum',
-                        'bill_number': 'nunique'
-                    }).reset_index()
-                    detailed_products.columns = ['Category', 'Product', 'Total Sales', 'Quantity', 'Transactions']
-                else:
-                    detailed_products = df_products.groupby(['product_category', 'item']).agg({
-                        'line_total': 'sum',
-                        'quantity': 'sum',
-                        'bill_number': 'nunique'
-                    }).reset_index()
-                    detailed_products.columns = ['Category', 'Product', 'Total Sales', 'Quantity', 'Transactions']
+                detailed_products = df_products.groupby(['product_category', 'item']).agg({
+                    'line_total': 'sum',
+                    'quantity': 'sum',
+                    'bill_number': 'nunique'
+                }).reset_index()
+                detailed_products.columns = ['Category', 'Product', 'Total Sales', 'Quantity', 'Transactions']
                 detailed_products = detailed_products.sort_values(['Category', 'Total Sales'], ascending=[True, False])
                 
                 # Display as table with edit functionality
@@ -2817,30 +3172,41 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 customer_limit = st.selectbox("Show Top", [10, 20, 30, 50, 100], index=1, key="customer_limit")
             
             # Prepare customer data
-            customer_df = df[df["customer_id"].notna()].copy()
+            customer_line_df = line_df[line_df["customer_id"].notna()].copy()
+            customer_receipt_df = receipt_df[receipt_df["customer_id"].notna()].copy()
             
-            if customer_df.empty:
+            if customer_receipt_df.empty:
                 st.warning("No customer data available. Transactions may not have customer IDs.")
             else:
-                # Group by customer_id and get the first customer_name for each
-                if "signed_net" in customer_df.columns:
-                    customer_stats = customer_df.groupby("customer_id").agg({
+                # Sales and transaction metrics from receipt-level data.
+                if "signed_net" in customer_receipt_df.columns:
+                    customer_stats = customer_receipt_df.groupby("customer_id").agg({
                         "customer_name": "first",
                         "signed_net": "sum",
                         "bill_number": "nunique",
-                        "quantity": "sum",
                         "day": "nunique"
                     }).reset_index()
-                    customer_stats.columns = ["Customer ID", "Customer Name", "Total Sales", "Number of Purchases", "Items Purchased", "Days Active"]
+                    customer_stats.columns = ["Customer ID", "Customer Name", "Total Sales", "Number of Purchases", "Days Active"]
                 else:
-                    customer_stats = customer_df.groupby("customer_id").agg({
+                    customer_stats = customer_receipt_df.groupby("customer_id").agg({
                         "customer_name": "first",
                         "line_total": "sum",
                         "bill_number": "nunique",
-                        "quantity": "sum",
                         "day": "nunique"
                     }).reset_index()
-                    customer_stats.columns = ["Customer ID", "Customer Name", "Total Sales", "Number of Purchases", "Items Purchased", "Days Active"]
+                    customer_stats.columns = ["Customer ID", "Customer Name", "Total Sales", "Number of Purchases", "Days Active"]
+
+                # Quantity remains line-level.
+                customer_items = (
+                    customer_line_df.groupby("customer_id", as_index=False)["quantity"].sum()
+                    .rename(columns={"quantity": "Items Purchased"})
+                )
+                customer_stats = customer_stats.merge(
+                    customer_items.rename(columns={"customer_id": "Customer ID"}),
+                    on="Customer ID",
+                    how="left",
+                )
+                customer_stats["Items Purchased"] = customer_stats["Items Purchased"].fillna(0)
                 customer_stats["Average Order Value"] = customer_stats["Total Sales"] / customer_stats["Number of Purchases"]
                 
                 # Sort based on selection
@@ -2906,21 +3272,19 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.subheader(get_text("credit_management"))
             
             # Filter for credit transactions
-            if 'payment_name' in df.columns:
-                credit_df = df[df['payment_name'].str.contains('ค้างชำระ|เครดิต', case=False, na=False)].copy()
+            if 'payment_name' in receipt_df.columns:
+                credit_receipt_df = receipt_df[receipt_df['payment_name'].str.contains('ค้างชำระ|เครดิต', case=False, na=False)].copy()
+                credit_line_df = line_df[line_df['payment_name'].str.contains('ค้างชำระ|เครดิต', case=False, na=False)].copy()
                 
-                if credit_df.empty:
+                if credit_receipt_df.empty:
                     st.warning("⚠️ No credit transactions found in current data")
                     st.info("Credit transactions are those with payment type: ค้างชำระ or เครดิต")
                 else:
                     # Summary metrics
                     col1, col2, col3, col4 = st.columns(4)
-                    if "signed_net" in credit_df.columns:
-                        total_credit = credit_df['signed_net'].sum()
-                    else:
-                        total_credit = credit_df['line_total'].sum()
-                    credit_customers = credit_df['customer_id'].nunique()
-                    credit_transactions = credit_df['bill_number'].nunique()
+                    total_credit = credit_receipt_df['signed_net'].sum() if "signed_net" in credit_receipt_df.columns else 0
+                    credit_customers = credit_receipt_df['customer_id'].nunique()
+                    credit_transactions = credit_receipt_df['bill_number'].nunique()
                     avg_credit = total_credit / credit_customers if credit_customers > 0 else 0
                     
                     col1.metric("💰 Total Credit Sales", f"{total_credit:,.2f} THB")
@@ -2933,8 +3297,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     # Outstanding by Customer
                     st.markdown("### 👥 Outstanding Balance by Customer")
                     
-                    if "signed_net" in credit_df.columns:
-                        customer_credit = credit_df.groupby(['customer_id', 'customer_name']).agg({
+                    if "signed_net" in credit_receipt_df.columns:
+                        customer_credit = credit_receipt_df.groupby(['customer_id', 'customer_name']).agg({
                             'signed_net': 'sum',
                             'bill_number': 'nunique',
                             'day': ['min', 'max']
@@ -2942,7 +3306,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         customer_credit.columns = ['Customer ID', 'Customer Name', 'Outstanding Amount', 
                                                   'Transactions', 'First Credit Date', 'Last Credit Date']
                     else:
-                        customer_credit = credit_df.groupby(['customer_id', 'customer_name']).agg({
+                        customer_credit = credit_receipt_df.groupby(['customer_id', 'customer_name']).agg({
                             'line_total': 'sum',
                             'bill_number': 'nunique',
                             'day': ['min', 'max']
@@ -2995,16 +3359,16 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     # Credit by Location
                     st.markdown("### 📍 Credit Sales by Location")
                     
-                    if 'location' in credit_df.columns:
-                        if "signed_net" in credit_df.columns:
-                            location_credit = credit_df.groupby('location').agg({
+                    if 'location' in credit_receipt_df.columns:
+                        if "signed_net" in credit_receipt_df.columns:
+                            location_credit = credit_receipt_df.groupby('location').agg({
                                 'signed_net': 'sum',
                                 'bill_number': 'nunique',
                                 'customer_id': 'nunique'
                             }).reset_index()
                             location_credit.columns = ['Location', 'Total Credit', 'Transactions', 'Customers']
                         else:
-                            location_credit = credit_df.groupby('location').agg({
+                            location_credit = credit_receipt_df.groupby('location').agg({
                                 'line_total': 'sum',
                                 'bill_number': 'nunique',
                                 'customer_id': 'nunique'
@@ -3035,23 +3399,15 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.markdown("### 📈 Credit vs Cash Sales Trend")
                     
                     # Get cash transactions
-                    cash_df = df[df['payment_name'].str.contains('เงินสด', case=False, na=False)].copy()
+                    cash_receipt_df = receipt_df[receipt_df['payment_name'].str.contains('เงินสด', case=False, na=False)].copy()
                     
                     # Daily aggregation for credit
-                    if "signed_net" in credit_df.columns:
-                        credit_daily = credit_df.groupby('day')['signed_net'].sum().reset_index()
-                        credit_daily.columns = ['Date', 'Credit Sales']
-                    else:
-                        credit_daily = credit_df.groupby('day')['line_total'].sum().reset_index()
-                        credit_daily.columns = ['Date', 'Credit Sales']
+                    credit_daily = credit_receipt_df.groupby('day')['signed_net'].sum().reset_index()
+                    credit_daily.columns = ['Date', 'Credit Sales']
                     
                     # Daily aggregation for cash
-                    if "signed_net" in cash_df.columns:
-                        cash_daily = cash_df.groupby('day')['signed_net'].sum().reset_index()
-                        cash_daily.columns = ['Date', 'Cash Sales']
-                    else:
-                        cash_daily = cash_df.groupby('day')['line_total'].sum().reset_index()
-                        cash_daily.columns = ['Date', 'Cash Sales']
+                    cash_daily = cash_receipt_df.groupby('day')['signed_net'].sum().reset_index()
+                    cash_daily.columns = ['Date', 'Cash Sales']
                     
                     # Merge for comparison
                     daily_comparison = pd.merge(credit_daily, cash_daily, on='Date', how='outer').fillna(0)
@@ -3148,7 +3504,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     
                     with col3:
                         # All credit transactions
-                        csv_all_credit = credit_df.to_csv(index=False).encode("utf-8")
+                        csv_all_credit = credit_line_df.to_csv(index=False).encode("utf-8")
                         st.download_button(
                             "⬇️ All Credit Transactions",
                             csv_all_credit,
@@ -3173,7 +3529,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 search_customer = st.text_input("🔍 Search Customer", "")
             
             # Filter dataframe
-            filtered_df = df.copy()
+            filtered_df = line_df.copy()
             if search_product:
                 filtered_df = filtered_df[filtered_df["item"].str.contains(search_product, case=False, na=False)]
             if search_sku:
@@ -3186,14 +3542,16 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 )
                 filtered_df = filtered_df[customer_mask]
             
+            filtered_receipt_df = build_receipt_frame(filtered_df)
+
             # Show filtered metrics
             col1, col2, col3, col4 = st.columns(4)
-            if "signed_net" in filtered_df.columns:
-                col1.metric("Filtered Sales", f"{filtered_df['signed_net'].sum():,.0f}")
+            if "signed_net" in filtered_receipt_df.columns:
+                col1.metric("Filtered Sales", f"{filtered_receipt_df['signed_net'].sum():,.0f}")
             else:
                 col1.metric("Filtered Sales", f"{filtered_df['line_total'].sum():,.0f}")
             col2.metric("Filtered Items", f"{filtered_df['quantity'].sum():,.0f}")
-            col3.metric("Transactions", len(filtered_df["bill_number"].unique()))
+            col3.metric("Transactions", filtered_receipt_df["bill_number"].nunique())
             col4.metric("Products", len(filtered_df["item"].unique()))
             
             # Sorting options
@@ -3216,20 +3574,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             # Scatter plot for correlation analysis
             st.subheader("📈 Quantity vs Total Sales")
-            if "signed_net" in filtered_df.columns:
-                scatter_data = filtered_df.groupby("item").agg({
-                    "quantity": "sum",
-                    "signed_net": "sum",
-                    "bill_number": "count"
-                }).reset_index()
-                scatter_data.columns = ["Product", "Total Quantity", "Total Sales", "Times Sold"]
-            else:
-                scatter_data = filtered_df.groupby("item").agg({
-                    "quantity": "sum",
-                    "line_total": "sum",
-                    "bill_number": "count"
-                }).reset_index()
-                scatter_data.columns = ["Product", "Total Quantity", "Total Sales", "Times Sold"]
+            scatter_data = filtered_df.groupby("item").agg({
+                "quantity": "sum",
+                "line_total": "sum",
+                "bill_number": "nunique"
+            }).reset_index()
+            scatter_data.columns = ["Product", "Total Quantity", "Total Sales", "Times Sold"]
             
             fig_scatter = px.scatter(scatter_data, 
                                     x="Total Quantity", 
@@ -3299,8 +3649,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.markdown("---")
             
             # Location selector
-            if "location" in df.columns:
-                available_locations = sorted(df["location"].dropna().unique())
+            if "location" in line_df.columns:
+                available_locations = sorted(line_df["location"].dropna().unique())
                 
                 if len(available_locations) == 0:
                     st.warning("⚠️ No location data available. Make sure to sync Categories and Items.")
@@ -3312,18 +3662,19 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     )
                     
                     # Filter by selected location
-                    location_df = df[df["location"] == selected_log_location].copy()
+                    location_df = line_df[line_df["location"] == selected_log_location].copy()
+                    location_receipt_df = receipt_df[receipt_df["location"] == selected_log_location].copy()
                     
                     if location_df.empty:
                         st.warning(f"No transactions found for {selected_log_location}")
                     else:
                         # Summary metrics for selected location
                         col1, col2, col3, col4 = st.columns(4)
-                        if "signed_net" in location_df.columns:
-                            col1.metric("Total Sales", f"{location_df['signed_net'].sum():,.0f}")
+                        if "signed_net" in location_receipt_df.columns:
+                            col1.metric("Total Sales", f"{location_receipt_df['signed_net'].sum():,.0f}")
                         else:
                             col1.metric("Total Sales", f"{location_df['line_total'].sum():,.0f}")
-                        col2.metric("Transactions", location_df['bill_number'].nunique())
+                        col2.metric("Transactions", location_receipt_df['bill_number'].nunique())
                         col3.metric("Items Sold", f"{location_df['quantity'].sum():,.0f}")
                         col4.metric("Unique Customers", location_df['customer_id'].nunique())
                         
@@ -3466,8 +3817,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             )
             
             # Get unique customers
-            if 'customer_name' in df.columns:
-                customer_list = df[['customer_id', 'customer_name']].drop_duplicates()
+            if 'customer_name' in receipt_df.columns:
+                customer_list = receipt_df[['customer_id', 'customer_name']].drop_duplicates()
                 customer_list = customer_list[customer_list['customer_name'].notna()]
                 
                 # Filter by search
@@ -3518,9 +3869,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.markdown("### 📅 Select Invoice Period")
                 
                 # Get customer's transaction date range
-                customer_df = df[df['customer_id'] == selected_customer_id]
-                cust_min_date = customer_df['day'].min()
-                cust_max_date = customer_df['day'].max()
+                customer_line_df = line_df[line_df['customer_id'] == selected_customer_id]
+                customer_receipt_df = receipt_df[receipt_df['customer_id'] == selected_customer_id]
+                cust_min_date = customer_line_df['day'].min()
+                cust_max_date = customer_line_df['day'].max()
                 
                 col1, col2 = st.columns([2, 2])
                 
@@ -3574,9 +3926,13 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.session_state.show_invoice = True
                     
                     # Filter customer data for invoice period
-                    invoice_df = customer_df[
-                        (customer_df['day'] >= invoice_start) & 
-                        (customer_df['day'] <= invoice_end)
+                    invoice_df = customer_line_df[
+                        (customer_line_df['day'] >= invoice_start) & 
+                        (customer_line_df['day'] <= invoice_end)
+                    ].copy()
+                    invoice_receipt_df = customer_receipt_df[
+                        (customer_receipt_df['day'] >= invoice_start) &
+                        (customer_receipt_df['day'] <= invoice_end)
                     ].copy()
                     
                     if invoice_df.empty:
@@ -3599,24 +3955,33 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             st.markdown(f"""
                             **Invoice Date:** {datetime.now().strftime('%Y-%m-%d')}  
                             **Period:** {invoice_start} to {invoice_end}  
-                            **Total Transactions:** {invoice_df['bill_number'].nunique()}
+                            **Total Transactions:** {invoice_receipt_df['bill_number'].nunique()}
                             """)
                         
                         st.markdown("---")
                         
-                        # Invoice summary metrics
+                        # Invoice summary metrics (trusted receipt-grain money totals)
                         col1, col2, col3, col4 = st.columns(4)
-                        if "signed_net" in invoice_df.columns:
-                            total_amount = invoice_df['signed_net'].sum()
-                        else:
-                            total_amount = invoice_df['line_total'].sum()
-                        total_items = invoice_df['quantity'].sum()
-                        num_transactions = invoice_df['bill_number'].nunique()
+                        invoice_kpis = compute_sales_kpis(invoice_receipt_df, invoice_df)
+                        total_amount = invoice_kpis["total_sales"]
+                        total_items = invoice_kpis["total_items"]
+                        num_transactions = invoice_kpis["transactions"]
                         
                         col1.metric("💰 Total Amount", f"{total_amount:,.2f} THB")
                         col2.metric("📦 Items Purchased", f"{int(total_items)}")
                         col3.metric("🧾 Transactions", num_transactions)
                         col4.metric("📍 Locations Visited", invoice_df['location'].nunique() if 'location' in invoice_df.columns else 0)
+
+                        invoice_monitor = build_reconciliation_monitor(invoice_receipt_df, invoice_df)
+                        if invoice_monitor.get("ok"):
+                            st.success("✅ Invoice totals passed receipt-vs-line reconciliation checks.")
+                        else:
+                            st.error(
+                                "⚠️ Invoice integrity check failed. "
+                                f"Sales gap: {invoice_monitor.get('sales_gap', 0):,.2f}, "
+                                f"Discount gap: {invoice_monitor.get('discount_gap', 0):,.2f}, "
+                                f"Txn gap: {invoice_monitor.get('txn_gap', 0)}"
+                            )
                         
                         st.markdown("---")
                         
@@ -3660,7 +4025,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                                 'price': 'first',  # Get unit price
                                 'quantity': 'sum',
                                 'signed_net': 'sum',
-                                'bill_number': 'count'
+                                'bill_number': 'nunique'
                             }).reset_index()
                             product_summary.columns = ['Product', 'Unit Price', 'Total Qty', 'Total Amount', 'Times Purchased']
                         else:
@@ -3668,7 +4033,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                                 'price': 'first',  # Get unit price
                                 'quantity': 'sum',
                                 'line_total': 'sum',
-                                'bill_number': 'count'
+                                'bill_number': 'nunique'
                             }).reset_index()
                             product_summary.columns = ['Product', 'Unit Price', 'Total Qty', 'Total Amount', 'Times Purchased']
                         product_summary = product_summary.sort_values('Total Amount', ascending=False)
@@ -3682,12 +4047,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         # Payment breakdown if available
                         if 'payment_name' in invoice_df.columns:
                             st.markdown("### 💳 Payment Methods Used")
-                            if "signed_net" in invoice_df.columns:
-                                payment_summary = invoice_df.groupby('payment_name')['signed_net'].sum().reset_index()
-                                payment_summary.columns = ['Payment Method', 'Amount']
-                            else:
-                                payment_summary = invoice_df.groupby('payment_name')['line_total'].sum().reset_index()
-                                payment_summary.columns = ['Payment Method', 'Amount']
+                            payment_summary = invoice_receipt_df.groupby('payment_name')['signed_net'].sum().reset_index()
+                            payment_summary.columns = ['Payment Method', 'Amount']
                             payment_summary = payment_summary.sort_values('Amount', ascending=False)
                             
                             col1, col2 = st.columns(2)
@@ -3845,8 +4206,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         return "📦 อื่นๆ (Other)"
                 
                 # Apply categorization
-                df_ice = df.copy()
+                df_ice = line_df.copy()
                 df_ice['ice_category'] = df_ice['item'].apply(categorize_ice_product)
+                receipt_ice = receipt_df.copy()
+                receipt_ice['day'] = pd.to_datetime(receipt_ice['day'])
                 
                 # === LOCATION TABLE WITH FORECASTS ===
                 st.markdown("### 📊 Ice Forecast by Location")
@@ -3860,8 +4223,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 
                 for location in locations:
                     location_df = df_ice[df_ice['location'] == location].copy()
+                    location_receipt_df = receipt_ice[receipt_ice['location'] == location].copy()
                     location_df['day'] = pd.to_datetime(location_df['day'])
                     location_df = location_df.sort_values('day')
+                    location_receipt_df = location_receipt_df.sort_values('day')
                     
                     # Get unique ice categories for this location
                     ice_categories = location_df['ice_category'].unique()
@@ -3895,17 +4260,17 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             location_forecast[ice_type] = 0.0
                     
                     # Calculate total sales 7-day average
-                    if len(location_df) >= 7:
-                        if "signed_net" in location_df.columns:
-                            daily_sales = location_df.groupby('day')['signed_net'].sum().reset_index()
+                    if len(location_receipt_df) >= 7:
+                        if "signed_net" in location_receipt_df.columns:
+                            daily_sales = location_receipt_df.groupby('day')['signed_net'].sum().reset_index()
                             daily_sales['ma_7d'] = daily_sales['signed_net'].rolling(window=7, min_periods=1).mean()
                         else:
                             daily_sales = location_df.groupby('day')['line_total'].sum().reset_index()
                             daily_sales['ma_7d'] = daily_sales['line_total'].rolling(window=7, min_periods=1).mean()
                         location_forecast['Total Sales (7d avg)'] = round(daily_sales['ma_7d'].iloc[-1], 0)
                     else:
-                        if "signed_net" in location_df.columns:
-                            location_forecast['Total Sales (7d avg)'] = round(location_df['signed_net'].mean(), 0)
+                        if "signed_net" in location_receipt_df.columns:
+                            location_forecast['Total Sales (7d avg)'] = round(location_receipt_df['signed_net'].mean(), 0)
                         else:
                             location_forecast['Total Sales (7d avg)'] = round(location_df['line_total'].mean(), 0)
                     
@@ -3946,8 +4311,11 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     
                     # Filter data for selected location
                     location_detail_df = df_ice[df_ice['location'] == selected_location].copy()
+                    location_detail_receipt_df = receipt_ice[receipt_ice['location'] == selected_location].copy()
                     location_detail_df['day'] = pd.to_datetime(location_detail_df['day'])
+                    location_detail_receipt_df['day'] = pd.to_datetime(location_detail_receipt_df['day'])
                     location_detail_df = location_detail_df.sort_values('day')
+                    location_detail_receipt_df = location_detail_receipt_df.sort_values('day')
                     
                     # Calculate 7-day moving averages for each ice type
                     ice_types = ["🧊 ป่น (Crushed Ice)", "🧊 หลอดเล็ก (Small Tube)", "🧊 หลอดใหญ่ (Large Tube)", "📦 อื่นๆ (Other)"]
@@ -3955,8 +4323,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     # Create charts for each ice type - Full width
                     
                     # Total orders trend - Full width
-                    if "signed_net" in location_detail_df.columns:
-                        daily_totals = location_detail_df.groupby('day')['signed_net'].sum().reset_index()
+                    if "signed_net" in location_detail_receipt_df.columns:
+                        daily_totals = location_detail_receipt_df.groupby('day')['signed_net'].sum().reset_index()
                         daily_totals['ma_7d'] = daily_totals['signed_net'].rolling(window=7, min_periods=1).mean()
                         daily_totals = daily_totals.rename(columns={'signed_net': 'total'})
                     else:
@@ -4004,6 +4372,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     latest_date = location_detail_df['day'].max()
                     week_ago = latest_date - pd.Timedelta(days=7)
                     recent_data = location_detail_df[location_detail_df['day'] >= week_ago]
+                    recent_receipt_data = location_detail_receipt_df[location_detail_receipt_df['day'] >= week_ago]
                     
                     if not recent_data.empty:
                         col1, col2, col3, col4 = st.columns(4)
@@ -4020,8 +4389,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         
                         with col2:
                             # Calculate daily average sales
-                            if "signed_net" in recent_data.columns:
-                                daily_sales = recent_data.groupby('day')['signed_net'].sum().mean()
+                            if "signed_net" in recent_receipt_data.columns:
+                                daily_sales = recent_receipt_data.groupby('day')['signed_net'].sum().mean()
                             else:
                                 daily_sales = recent_data.groupby('day')['line_total'].sum().mean()
                             st.metric("2️⃣ Est Sales", f"฿{daily_sales:,.0f}")
@@ -4095,7 +4464,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.subheader(get_text("crm_dashboard"))
             
             # Check if we have data
-            if df.empty:
+            if line_df.empty:
                 st.warning("⚠️ No data available. Please load data first.")
             else:
                 # Initialize customer notes in session state
@@ -4106,22 +4475,27 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.markdown("### 🏆 Top Customers")
                 
                 # Calculate customer metrics
-                if "signed_net" in df.columns:
-                    customer_metrics = df.groupby(['customer_id', 'customer_name']).agg({
+                if "signed_net" in receipt_df.columns:
+                    customer_metrics = receipt_df.groupby(['customer_id', 'customer_name']).agg({
                         'signed_net': 'sum',
-                        'quantity': 'sum',
                         'bill_number': 'nunique',
                         'day': ['min', 'max', 'nunique']
                     }).reset_index()
-                    customer_metrics.columns = ['Customer ID', 'Customer Name', 'Total Spent', 'Total Items', 'Transactions', 'First Visit', 'Last Visit', 'Active Days']
+                    customer_metrics.columns = ['Customer ID', 'Customer Name', 'Total Spent', 'Transactions', 'First Visit', 'Last Visit', 'Active Days']
                 else:
-                    customer_metrics = df.groupby(['customer_id', 'customer_name']).agg({
+                    customer_metrics = line_df.groupby(['customer_id', 'customer_name']).agg({
                         'line_total': 'sum',
-                        'quantity': 'sum',
                         'bill_number': 'nunique',
                         'day': ['min', 'max', 'nunique']
                     }).reset_index()
-                    customer_metrics.columns = ['Customer ID', 'Customer Name', 'Total Spent', 'Total Items', 'Transactions', 'First Visit', 'Last Visit', 'Active Days']
+                    customer_metrics.columns = ['Customer ID', 'Customer Name', 'Total Spent', 'Transactions', 'First Visit', 'Last Visit', 'Active Days']
+                customer_items = line_df.groupby('customer_id', as_index=False)['quantity'].sum()
+                customer_metrics = customer_metrics.merge(
+                    customer_items.rename(columns={'customer_id': 'Customer ID', 'quantity': 'Total Items'}),
+                    on='Customer ID',
+                    how='left'
+                )
+                customer_metrics['Total Items'] = customer_metrics['Total Items'].fillna(0)
                 
                 # Calculate additional metrics
                 customer_metrics['Avg Transaction'] = customer_metrics['Total Spent'] / customer_metrics['Transactions']
@@ -4194,7 +4568,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     if pd.isna(customer_id) or pd.isna(customer_name) or customer_name == "Unknown Customer":
                         continue
                     
-                    customer_df = df[df['customer_id'] == customer_id].copy()
+                    customer_df = receipt_df[receipt_df['customer_id'] == customer_id].copy()
                     customer_df['day'] = pd.to_datetime(customer_df['day'])
                     customer_df = customer_df.sort_values('day')
                     
@@ -4333,6 +4707,325 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         else:
                             st.info("No transaction history available")
         
+        elif st.session_state.selected_tab == DATA_IMPORT_TAB:
+            st.subheader("🧪 Data Import & Reconciliation")
+            st.caption("Use this tab to import receipts, reconcile against POS summary CSV, and simulate exclusion rules.")
+
+            # Keep local state for reconciliation inputs
+            if "recon_uploaded_csv" not in st.session_state:
+                st.session_state.recon_uploaded_csv = None
+            if "recon_csv_path" not in st.session_state:
+                st.session_state.recon_csv_path = ""
+
+            st.markdown("### 1) Import Range")
+            recon_col1, recon_col2, recon_col3 = st.columns([1, 1, 1])
+            with recon_col1:
+                recon_start = st.date_input(
+                    "Start date (Bangkok)",
+                    value=st.session_state.get("sync_start_date", datetime.today().date() - timedelta(days=9)),
+                    key="recon_start_date_input",
+                )
+            with recon_col2:
+                recon_end = st.date_input(
+                    "End date (Bangkok)",
+                    value=st.session_state.get("sync_end_date", datetime.today().date()),
+                    key="recon_end_date_input",
+                )
+            with recon_col3:
+                stores_map = db.get_stores_map()
+                store_options = ["All Stores"] + [f"{name} ({sid[:8]})" for sid, name in stores_map.items()]
+                selected_store_display = st.selectbox("Store scope", store_options, key="recon_store_scope")
+                selected_store_id = None
+                if selected_store_display != "All Stores":
+                    selected_store_id = selected_store_display.split("(")[-1].replace(")", "")
+                    # Recover full ID from prefix
+                    for sid in stores_map.keys():
+                        if sid.startswith(selected_store_id):
+                            selected_store_id = sid
+                            break
+
+            mode = st.radio(
+                "Run mode",
+                ["Import + Reconcile", "Reconcile only (no new import)"],
+                horizontal=True,
+                key="recon_mode",
+            )
+
+            # CSV input
+            st.markdown("### 2) POS CSV Input")
+            st.session_state.recon_uploaded_csv = st.file_uploader(
+                "Upload POS summary CSV (Thai export format)",
+                type=["csv"],
+                key="recon_csv_upload",
+            )
+            st.session_state.recon_csv_path = st.text_input(
+                "Or local CSV path",
+                value=st.session_state.recon_csv_path,
+                placeholder="/Users/win/Downloads/sales-summary-2026-02-01-2026-02-10.csv",
+                key="recon_csv_path_input",
+            )
+
+            def _load_csv_for_reconciliation():
+                raw_csv = None
+                if st.session_state.recon_uploaded_csv is not None:
+                    raw_csv = pd.read_csv(st.session_state.recon_uploaded_csv)
+                elif st.session_state.recon_csv_path and os.path.exists(st.session_state.recon_csv_path):
+                    raw_csv = pd.read_csv(st.session_state.recon_csv_path)
+                if raw_csv is None:
+                    return None
+
+                rename_map = {
+                    "วันที่": "date",
+                    "ยอดขายรวม": "csv_gross_sales",
+                    "การคืนเงิน": "csv_refunds",
+                    "ส่วนลด": "csv_discount",
+                    "ยอดขายสุทธิ": "csv_net",
+                }
+                csv_df = raw_csv.rename(columns=rename_map)
+                needed_cols = {"date", "csv_gross_sales", "csv_refunds", "csv_net"}
+                if not needed_cols.issubset(set(csv_df.columns)):
+                    return None
+                csv_df["date"] = pd.to_datetime(csv_df["date"], dayfirst=True, errors="coerce").dt.date
+                csv_df = csv_df[csv_df["date"].notna()].copy()
+                return csv_df[["date", "csv_gross_sales", "csv_refunds", "csv_net"]]
+
+            def _get_receipt_level_df():
+                conn = db.get_connection()
+                receipts_core = pd.read_sql_query(
+                    """
+                    SELECT receipt_id, receipt_number, created_at, receipt_date, store_id, receipt_type,
+                           total_money, total_discount, source, dining_option
+                    FROM receipts
+                    """,
+                    conn,
+                )
+                payments_map = pd.read_sql_query(
+                    """
+                    SELECT receipt_id,
+                           MIN(COALESCE(payment_name, payment_type, 'Unknown')) AS payment_name
+                    FROM payments
+                    GROUP BY receipt_id
+                    """,
+                    conn,
+                )
+                conn.close()
+                out = receipts_core.merge(payments_map, on="receipt_id", how="left")
+                out["payment_name"] = out["payment_name"].fillna("Unknown")
+                out["created_at"] = pd.to_datetime(out["created_at"], utc=True, errors="coerce")
+                out["receipt_date"] = pd.to_datetime(out["receipt_date"], utc=True, errors="coerce")
+                out["event_ts"] = out["receipt_date"].fillna(out["created_at"])
+                out["day_bkk"] = out["event_ts"].dt.tz_convert("Asia/Bangkok").dt.date
+                out = out[(out["day_bkk"] >= recon_start) & (out["day_bkk"] <= recon_end)]
+                if selected_store_id:
+                    out = out[out["store_id"] == selected_store_id]
+                out["receipt_net"] = out["total_money"].fillna(0) - out["total_discount"].fillna(0)
+                out["signed_net"] = out.apply(
+                    lambda x: -x["receipt_net"] if str(x["receipt_type"]).lower() == "refund" else x["receipt_net"],
+                    axis=1,
+                )
+                return out
+
+            def _guardrail_import(receipts_payload):
+                conn = db.get_connection()
+                existing_core_query = """
+                    SELECT receipt_id, receipt_number, store_id, created_at, receipt_date, total_money
+                    FROM receipts
+                    WHERE DATE(COALESCE(receipt_date, created_at)) >= ? AND DATE(COALESCE(receipt_date, created_at)) <= ?
+                """
+                params = [recon_start.isoformat(), recon_end.isoformat()]
+                if selected_store_id:
+                    existing_core_query += " AND store_id = ?"
+                    params.append(selected_store_id)
+                existing_core = pd.read_sql_query(existing_core_query, conn, params=params)
+                conn.close()
+
+                existing_receipt_ids = set(existing_core["receipt_id"].dropna().astype(str).tolist())
+                existing_number_keys = set(
+                    zip(
+                        existing_core["store_id"].fillna("").astype(str),
+                        existing_core["receipt_number"].fillna("").astype(str),
+                    )
+                )
+                existing_time_amount_store_keys = set(
+                    zip(
+                        existing_core["created_at"].fillna("").astype(str),
+                        existing_core["total_money"].fillna(0).astype(float).round(2),
+                        existing_core["store_id"].fillna("").astype(str),
+                    )
+                )
+
+                unique_receipts = []
+                duplicate_by_id = 0
+                duplicate_by_number = 0
+                time_amount_collisions = 0
+                for r in receipts_payload:
+                    rid = str(r.get("id") or r.get("receipt_number") or "")
+                    rnum = str(r.get("receipt_number") or "")
+                    rstore = str(r.get("store_id") or "")
+                    rcreated = str(r.get("created_at") or "")
+                    rtotal = round(float(r.get("total_money", 0) or 0), 2)
+
+                    if rid and rid in existing_receipt_ids:
+                        duplicate_by_id += 1
+                        continue
+                    if rnum and (rstore, rnum) in existing_number_keys:
+                        duplicate_by_number += 1
+                        continue
+                    if (rcreated, rtotal, rstore) in existing_time_amount_store_keys:
+                        time_amount_collisions += 1
+
+                    unique_receipts.append(r)
+                    if rid:
+                        existing_receipt_ids.add(rid)
+                    if rnum:
+                        existing_number_keys.add((rstore, rnum))
+                return unique_receipts, duplicate_by_id, duplicate_by_number, time_amount_collisions
+
+            if st.button("▶️ Run Import/Reconciliation", type="primary", key="run_recon_workflow"):
+                if recon_start > recon_end:
+                    st.error("Start date must be <= end date.")
+                else:
+                    if mode == "Import + Reconcile":
+                        with st.spinner("Importing receipts with guardrails..."):
+                            fetched = fetch_all_receipts(LOYVERSE_TOKEN, recon_start, recon_end, selected_store_id)
+                            if fetched:
+                                unique_receipts, dup_id, dup_num, weak_collisions = _guardrail_import(fetched)
+                                saved = db.save_receipts(unique_receipts)
+                                db.update_sync_time("receipts", f"{saved} receipts (recon tab)")
+                                st.success(f"Imported {saved} receipts")
+                                st.info(f"Skipped duplicates -> by ID: {dup_id}, by receipt number: {dup_num}")
+                                if weak_collisions > 0:
+                                    st.info(
+                                        f"Same-time/same-amount collisions detected: {weak_collisions} "
+                                        "(kept, not auto-removed)."
+                                    )
+                            else:
+                                st.warning("No receipts fetched for selected range.")
+
+                    receipt_df = _get_receipt_level_df()
+                    if receipt_df.empty:
+                        st.warning("No DB receipts in selected range.")
+                    else:
+                        # DB daily aggregates
+                        sale_only = receipt_df[receipt_df["receipt_type"].str.upper() == "SALE"]
+                        refund_only = receipt_df[receipt_df["receipt_type"].str.upper() == "REFUND"]
+                        db_daily = pd.DataFrame({"date": sorted(receipt_df["day_bkk"].unique())})
+                        db_daily = db_daily.merge(
+                            sale_only.groupby("day_bkk", as_index=False).agg(db_gross_sales=("total_money", "sum")).rename(columns={"day_bkk": "date"}),
+                            on="date",
+                            how="left",
+                        ).merge(
+                            refund_only.groupby("day_bkk", as_index=False).agg(db_refunds=("total_money", "sum")).rename(columns={"day_bkk": "date"}),
+                            on="date",
+                            how="left",
+                        ).merge(
+                            receipt_df.groupby("day_bkk", as_index=False).agg(db_signed_net=("signed_net", "sum"), db_receipts=("receipt_id", "nunique")).rename(columns={"day_bkk": "date"}),
+                            on="date",
+                            how="left",
+                        )
+                        for col in ["db_gross_sales", "db_refunds", "db_signed_net", "db_receipts"]:
+                            db_daily[col] = db_daily[col].fillna(0)
+
+                        csv_daily = _load_csv_for_reconciliation()
+                        if csv_daily is not None:
+                            recon_daily = csv_daily.merge(db_daily, on="date", how="outer").sort_values("date")
+                            recon_daily["delta_gross"] = recon_daily["db_gross_sales"] - recon_daily["csv_gross_sales"]
+                            recon_daily["delta_refunds"] = recon_daily["db_refunds"] - recon_daily["csv_refunds"]
+                            recon_daily["delta_net"] = recon_daily["db_signed_net"] - recon_daily["csv_net"]
+
+                            st.markdown("### 3) Daily Reconciliation")
+                            st.dataframe(recon_daily, use_container_width=True, hide_index=True)
+
+                            m1, m2, m3 = st.columns(3)
+                            m1.metric("Total Net Delta (DB-CSV)", f"{recon_daily['delta_net'].sum():,.0f}")
+                            m2.metric("Total Gross Delta (DB-CSV)", f"{recon_daily['delta_gross'].sum():,.0f}")
+                            m3.metric("Total Refund Delta (DB-CSV)", f"{recon_daily['delta_refunds'].sum():,.0f}")
+
+                            st.markdown("### 4) Delta Diagnostics")
+                            dcol1, dcol2, dcol3 = st.columns(3)
+                            with dcol1:
+                                st.markdown("**By Receipt Type (DB)**")
+                                st.dataframe(
+                                    receipt_df.groupby("receipt_type", as_index=False).agg(receipts=("receipt_id", "nunique"), signed_net=("signed_net", "sum")),
+                                    use_container_width=True,
+                                    hide_index=True,
+                                )
+                            with dcol2:
+                                st.markdown("**By Store (DB)**")
+                                st.dataframe(
+                                    receipt_df.groupby("store_id", as_index=False).agg(receipts=("receipt_id", "nunique"), signed_net=("signed_net", "sum")),
+                                    use_container_width=True,
+                                    hide_index=True,
+                                )
+                            with dcol3:
+                                st.markdown("**By Payment (DB)**")
+                                st.dataframe(
+                                    receipt_df.groupby("payment_name", as_index=False).agg(receipts=("receipt_id", "nunique"), signed_net=("signed_net", "sum")).sort_values("signed_net", ascending=False).head(20),
+                                    use_container_width=True,
+                                    hide_index=True,
+                                )
+
+                            st.markdown("### 5) Candidate Exclusion Set (Heuristic)")
+                            day_options = sorted([d for d in recon_daily["date"].dropna().tolist()])
+                            selected_day = st.selectbox("Target day for exclusion suggestion", day_options, key="recon_target_day")
+                            day_row = recon_daily[recon_daily["date"] == selected_day]
+                            if not day_row.empty:
+                                day_delta = float(day_row["delta_net"].iloc[0])
+                                st.write(f"Delta on {selected_day}: **{day_delta:,.0f}** (DB - CSV)")
+                                if day_delta > 0:
+                                    # Suggest receipts to exclude to close positive delta.
+                                    day_sales = receipt_df[
+                                        (receipt_df["day_bkk"] == selected_day)
+                                        & (receipt_df["receipt_type"].str.upper() == "SALE")
+                                    ][["receipt_id", "receipt_number", "created_at", "store_id", "payment_name", "signed_net"]].copy()
+                                    day_sales = day_sales.sort_values("signed_net", ascending=False)
+                                    day_sales["cum_net"] = day_sales["signed_net"].cumsum()
+                                    suggestion = day_sales[day_sales["cum_net"] <= day_delta + 500].head(50)
+                                    st.caption("Greedy candidate set (largest sale receipts first):")
+                                    st.dataframe(suggestion, use_container_width=True, hide_index=True)
+                                else:
+                                    st.info("No positive delta for selected day; exclusion not needed.")
+
+                            st.markdown("### 6) Exclusion Simulator")
+                            sim_col1, sim_col2, sim_col3 = st.columns(3)
+                            with sim_col1:
+                                exclude_stores = st.multiselect(
+                                    "Exclude stores",
+                                    sorted(receipt_df["store_id"].dropna().unique().tolist()),
+                                    key="sim_exclude_stores",
+                                )
+                            with sim_col2:
+                                exclude_types = st.multiselect(
+                                    "Exclude receipt types",
+                                    sorted(receipt_df["receipt_type"].dropna().unique().tolist()),
+                                    key="sim_exclude_types",
+                                )
+                            with sim_col3:
+                                exclude_payments = st.multiselect(
+                                    "Exclude payments",
+                                    sorted(receipt_df["payment_name"].dropna().unique().tolist()),
+                                    key="sim_exclude_payments",
+                                )
+
+                            simulated = receipt_df.copy()
+                            if exclude_stores:
+                                simulated = simulated[~simulated["store_id"].isin(exclude_stores)]
+                            if exclude_types:
+                                simulated = simulated[~simulated["receipt_type"].isin(exclude_types)]
+                            if exclude_payments:
+                                simulated = simulated[~simulated["payment_name"].isin(exclude_payments)]
+
+                            sim_daily = simulated.groupby("day_bkk", as_index=False).agg(sim_signed_net=("signed_net", "sum")).rename(columns={"day_bkk": "date"})
+                            sim_join = recon_daily.merge(sim_daily, on="date", how="left")
+                            sim_join["sim_signed_net"] = sim_join["sim_signed_net"].fillna(0)
+                            sim_join["sim_delta_net"] = sim_join["sim_signed_net"] - sim_join["csv_net"]
+                            st.dataframe(sim_join[["date", "csv_net", "db_signed_net", "sim_signed_net", "delta_net", "sim_delta_net"]], use_container_width=True, hide_index=True)
+                            st.metric("Simulated Total Net Delta", f"{sim_join['sim_delta_net'].sum():,.0f}")
+                        else:
+                            st.warning("CSV not found or invalid format. Upload or provide a valid POS summary CSV path.")
+                            st.markdown("DB daily totals (without CSV):")
+                            st.dataframe(db_daily, use_container_width=True, hide_index=True)
+
         # --- Download ---
         st.markdown("---")
         col1, col2 = st.columns([3, 1])

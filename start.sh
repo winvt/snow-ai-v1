@@ -11,10 +11,10 @@ export STREAMLIT_BROWSER_GATHER_USAGE_STATS=${STREAMLIT_BROWSER_GATHER_USAGE_STA
 
 # Initialize database first
 echo "🔧 Initializing database..."
-python3 init_database.py
+python3 scripts/init_db.py
 if [ $? -ne 0 ]; then
     echo "❌ Database initialization failed, trying to create empty database..."
-    python3 setup_empty_database.py
+    python3 scripts/setup_db.py
     if [ $? -ne 0 ]; then
         echo "❌ Database setup failed"
         exit 1
