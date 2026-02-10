@@ -1806,6 +1806,11 @@ if sync_data:
     # Use the sync date range from the new controls
     sync_start_date = st.session_state.get('sync_start_date', datetime.today() - timedelta(days=30))
     sync_end_date = st.session_state.get('sync_end_date', datetime.today())
+    # Normalize DB date filters to date-only values for all sync modes.
+    if hasattr(sync_start_date, 'date'):
+        sync_start_date = sync_start_date.date()
+    if hasattr(sync_end_date, 'date'):
+        sync_end_date = sync_end_date.date()
     
     # Handle precise timestamps for sync missing data
     if st.session_state.get('is_sync_missing', False):
@@ -1837,16 +1842,12 @@ if sync_data:
                 api_end = sync_end_datetime
             except Exception as e:
                 # Fallback: use Bangkok calendar dates for API (same as custom sync)
-                _start = sync_start_date.date() if hasattr(sync_start_date, 'date') else sync_start_date
-                _end = sync_end_date.date() if hasattr(sync_end_date, 'date') else sync_end_date
-                api_start = _start
-                api_end = _end
+                api_start = sync_start_date
+                api_end = sync_end_date
         else:
             # Fallback: use Bangkok calendar dates for API
-            _start = sync_start_date.date() if hasattr(sync_start_date, 'date') else sync_start_date
-            _end = sync_end_date.date() if hasattr(sync_end_date, 'date') else sync_end_date
-            api_start = _start
-            api_end = _end
+            api_start = sync_start_date
+            api_end = sync_end_date
         
         # Clear the flag
         st.session_state.is_sync_missing = False
@@ -1855,10 +1856,6 @@ if sync_data:
         # Pass DATE objects so fetch_all_receipts converts Bangkok -> UTC correctly.
         # (Previously we passed naive datetime and it was treated as UTC, missing
         # 00:00-06:59 Bangkok and misaligning with POS export.)
-        if hasattr(sync_start_date, 'date'):
-            sync_start_date = sync_start_date.date()
-        if hasattr(sync_end_date, 'date'):
-            sync_end_date = sync_end_date.date()
         api_start = sync_start_date
         api_end = sync_end_date
     
