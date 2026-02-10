@@ -8,6 +8,7 @@ export STREAMLIT_SERVER_PORT=${PORT:-8501}
 export STREAMLIT_SERVER_ADDRESS=${STREAMLIT_SERVER_ADDRESS:-0.0.0.0}
 export STREAMLIT_SERVER_HEADLESS=${STREAMLIT_SERVER_HEADLESS:-true}
 export STREAMLIT_BROWSER_GATHER_USAGE_STATS=${STREAMLIT_BROWSER_GATHER_USAGE_STATS:-false}
+export STREAMLIT_THEME_BASE=${STREAMLIT_THEME_BASE:-light}
 
 # Initialize database first
 echo "🔧 Initializing database..."
@@ -27,5 +28,6 @@ streamlit run app.py \
   --server.port=$STREAMLIT_SERVER_PORT \
   --server.address=$STREAMLIT_SERVER_ADDRESS \
   --server.headless=$STREAMLIT_SERVER_HEADLESS \
-  --browser.gatherUsageStats=$STREAMLIT_BROWSER_GATHER_USAGE_STATS
+  --browser.gatherUsageStats=$STREAMLIT_BROWSER_GATHER_USAGE_STATS \
+  --theme.base=$STREAMLIT_THEME_BASE
 

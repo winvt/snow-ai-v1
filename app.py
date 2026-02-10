@@ -178,6 +178,10 @@ TRANSLATIONS = {
         "settings_sync_header": "Sync Settings",
         "settings_sync_last_date": "Sync from last date",
         "settings_sync_last_date_help": "Intelligently sync from the latest stored transaction up to now.",
+        "settings_sync_metadata": "Sync metadata",
+        "settings_sync_metadata_help": "Fetch customers, payment types, stores, employees, categories, and items.",
+        "settings_sync_metadata_running": "Syncing metadata...",
+        "settings_sync_metadata_done": "Metadata sync complete: {total} records updated.",
         "settings_custom_range": "Custom range",
         "settings_store_filter": "Store ID filter (optional)",
         "settings_store_filter_help": "Leave empty to sync all stores.",
@@ -362,6 +366,10 @@ TRANSLATIONS = {
         "settings_sync_header": "การตั้งค่าการซิงค์",
         "settings_sync_last_date": "ซิงค์จากวันที่ล่าสุด",
         "settings_sync_last_date_help": "ซิงค์อย่างชาญฉลาดจากรายการล่าสุดที่จัดเก็บไว้จนถึงปัจจุบัน",
+        "settings_sync_metadata": "ซิงค์เมทาดาทา",
+        "settings_sync_metadata_help": "ดึงข้อมูลลูกค้า ประเภทการชำระเงิน สาขา พนักงาน หมวดหมู่ และสินค้า",
+        "settings_sync_metadata_running": "กำลังซิงค์เมทาดาทา...",
+        "settings_sync_metadata_done": "ซิงค์เมทาดาทาเสร็จสิ้น: อัปเดต {total} รายการ",
         "settings_custom_range": "ช่วงวันที่กำหนดเอง",
         "settings_store_filter": "กรองด้วย Store ID (ไม่บังคับ)",
         "settings_store_filter_help": "เว้นว่างไว้เพื่อซิงค์ทุกสาขา",
@@ -1239,7 +1247,7 @@ def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250, re
     while True:
         page_count += 1
         if status_text is not None:
-            status_text.text(f"Fetching page {page_count}...")
+            status_text.text(f"Pages loaded: {page_count - 1} | Receipts loaded: {len(all_receipts)}")
         
         if cursor:
             params["cursor"] = cursor
@@ -1259,13 +1267,15 @@ def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250, re
             
             all_receipts.extend(receipts)
             cursor = data.get("cursor")
+            if status_text is not None:
+                status_text.text(f"Pages loaded: {page_count} | Receipts loaded: {len(all_receipts)}")
             
             if progress_bar is not None:
                 progress_bar.progress(min(page_count * 20, 100))
             
             if not cursor:
                 if status_text is not None:
-                    status_text.text(f"✅ Completed! Found {len(all_receipts)} receipts")
+                    status_text.text(f"✅ Completed! Pages loaded: {page_count} | Receipts loaded: {len(all_receipts)}")
                 break
                 
         except Exception as e:
@@ -1630,6 +1640,44 @@ if st.session_state.selected_tab == SETTINGS_TAB:
             st.session_state.is_sync_missing = True
             st.info(f"{sync_msg} ({sync_start} -> {sync_end})")
 
+        if st.button(
+            get_text("settings_sync_metadata"),
+            help=get_text("settings_sync_metadata_help"),
+            key="settings_sync_metadata_btn",
+            use_container_width=True,
+        ):
+            with st.spinner(get_text("settings_sync_metadata_running")):
+                total_synced = 0
+
+                customers = fetch_all_customers(LOYVERSE_TOKEN)
+                if customers:
+                    total_synced += db.save_customers(customers)
+
+                payment_types = fetch_all_payment_types(LOYVERSE_TOKEN)
+                if payment_types:
+                    total_synced += db.save_payment_types(payment_types)
+
+                stores = fetch_all_stores(LOYVERSE_TOKEN)
+                if stores:
+                    total_synced += db.save_stores(stores)
+
+                employees = fetch_all_employees(LOYVERSE_TOKEN)
+                if employees:
+                    total_synced += db.save_employees(employees)
+
+                categories = fetch_all_categories(LOYVERSE_TOKEN)
+                if categories:
+                    total_synced += db.save_categories(categories)
+
+                items = fetch_all_items(LOYVERSE_TOKEN)
+                if items:
+                    total_synced += db.save_items(items)
+
+                ref_data.refresh()
+
+            st.success(get_text("settings_sync_metadata_done", total=total_synced))
+            st.rerun()
+
     with sync_col2:
         st.markdown(f"**{get_text('settings_custom_range')}**")
         custom_col1, custom_col2 = st.columns(2)
@@ -1699,6 +1747,17 @@ if st.session_state.selected_tab == SETTINGS_TAB:
             st.error(message)
         else:
             st.info(message)
+
+    # Sync fetch status indicator (shown above Sync Results & Debug)
+    if st.session_state.get("trigger_sync", False):
+        st.caption("Fetching receipts from Loyverse API...")
+    latest_report = st.session_state.get("last_sync_report") or {}
+    fetch_debug = latest_report.get("fetch_debug") or {}
+    if fetch_debug:
+        pages = fetch_debug.get("pages_fetched")
+        receipts_loaded = fetch_debug.get("receipts_found")
+        if pages is not None and receipts_loaded is not None:
+            st.caption(f"Pages loaded: {pages} | Receipts loaded: {receipts_loaded}")
 
     st.markdown("---")
 
