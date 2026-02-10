@@ -20,64 +20,64 @@ except ImportError:
 # ===== TRANSLATION DICTIONARIES =====
 TRANSLATIONS = {
     "English": {
-        "load_database": "💾 Load Database",
-        "loaded_success": "✅ Loaded {total_receipts} receipts, {line_items} line items",
-        "no_cached_data": "⚠️ No cached data. Use Settings to sync data first.",
-        "navigation": "📑 Navigation",
-        "daily_sales": "📅 Daily Sales",
-        "by_location": "📍 By Location", 
-        "by_product": "📦 By Product",
-        "by_customer": "👥 By Customer",
-        "credit": "💳 Credit",
-        "interactive_data": "📊 Interactive Data",
-        "transaction_log": "📋 Transaction Log",
-        "customer_invoice": "🧾 Customer Invoice",
-        "ice_forecast": "🧊 Ice Forecast",
-        "crm": "👥 CRM",
-        "settings_preferences": "⚙️ Settings & Preferences",
-        "date_range_selector": "Date Range Selector",
-        "quick_shortcuts": "Quick Shortcuts:",
-        "today": "📅 Today",
-        "yesterday": "📅 Yesterday",
-        "last_3_days": "📅 Last 3 Days",
-        "last_week": "📅 Last Week",
-        "last_2_weeks": "📅 Last 2 Weeks",
-        "last_30_days": "📅 Last 30 Days",
-        "this_week": "📅 This Week",
-        "this_month": "📅 This Month",
-        "last_month": "📅 Last Month",
-        "last_3_months": "📅 Last 3 Months",
-        "this_year": "📅 This Year",
-        "all_data": "📅 All Data",
-        "start_date": "📅 Start Date:",
-        "end_date": "📅 End Date:",
-        "apply_range": "🔍 Apply Range",
-        "current_selection": "Current Selection: {start_date} to {end_date} ({days} days)",
-        "api_information": "ℹ️ API Information",
+        "load_database": "Load Database",
+        "loaded_success": "Loaded {total_receipts} receipts, {line_items} line items",
+        "no_cached_data": "No cached data. Use Settings to sync data first.",
+        "navigation": "Navigation",
+        "daily_sales": "Daily Sales",
+        "by_location": "By Location", 
+        "by_product": "By Product",
+        "by_customer": "By Customer",
+        "credit": "Credit",
+        "interactive_data": "Interactive Data",
+        "transaction_log": "Transaction Log",
+        "customer_invoice": "Customer Invoice",
+        "ice_forecast": "Ice Forecast",
+        "crm": "CRM",
+        "settings_preferences": "Settings",
+        "date_range_selector": "Date Range",
+        "quick_shortcuts": "Quick Shortcuts",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "last_3_days": "Last 3 Days",
+        "last_week": "Last Week",
+        "last_2_weeks": "Last 2 Weeks",
+        "last_30_days": "Last 30 Days",
+        "this_week": "This Week",
+        "this_month": "This Month",
+        "last_month": "Last Month",
+        "last_3_months": "Last 3 Months",
+        "this_year": "This Year",
+        "all_data": "All Data",
+        "start_date": "Start Date",
+        "end_date": "End Date",
+        "apply_range": "Apply",
+        "current_selection": "{start_date} to {end_date} ({days} days)",
+        "api_information": "API Information",
         "viewing_data_from": "Viewing data from",
-        "daily_sales_analysis": "📅 Daily Sales Analysis",
-        "sales_by_location": "📍 Sales by Location (ประเภท)",
-        "product_analysis": "📈 Product Analysis",
-        "customer_analysis": "👥 Customer Analysis",
-        "credit_management": "💳 Credit Management Dashboard",
-        "interactive_data_explorer": "📊 Interactive Data Explorer",
-        "transaction_log": "📋 Transaction Log by Location",
-        "customer_invoice_generator": "🧾 Customer Invoice Generator",
-        "ice_forecast_dashboard": "🧊 Ice Forecast Dashboard",
-        "crm_dashboard": "👥 Customer Relationship Management",
+        "daily_sales_analysis": "Daily Sales Analysis",
+        "sales_by_location": "Sales by Location",
+        "product_analysis": "Product Analysis",
+        "customer_analysis": "Customer Analysis",
+        "credit_management": "Credit Management",
+        "interactive_data_explorer": "Interactive Data Explorer",
+        "transaction_log": "Transaction Log",
+        "customer_invoice_generator": "Customer Invoice Generator",
+        "ice_forecast_dashboard": "Ice Forecast",
+        "crm_dashboard": "Customer Relationship Management",
         
         # Password Authentication
-        "login_required": "🔐 Snow AI Dashboard - Login Required",
+        "login_required": "Snow AI Dashboard",
         "enter_password": "Enter password to access dashboard",
         "password_placeholder": "Enter password...",
-        "login_button": "🔓 Login",
-        "clear_button": "🗑️ Clear",
-        "incorrect_password": "❌ Incorrect password. Please try again",
-        "contact_admin": "💡 Contact administrator for access information",
-        "logout": "🚪 Logout",
+        "login_button": "Sign In",
+        "clear_button": "Clear",
+        "incorrect_password": "Incorrect password. Please try again.",
+        "contact_admin": "Contact administrator for access information",
+        "logout": "Sign Out",
         
         # Settings & Preferences
-        "appearance": "🎨 Appearance",
+        "appearance": "Appearance",
         "theme_mode": "Theme Mode",
         "light": "Light",
         "dark": "Dark",
@@ -86,78 +86,182 @@ TRANSLATIONS = {
         "medium": "Medium",
         "large": "Large",
         "compact_mode": "Compact Mode",
-        "data_management": "💾 Data Management",
-        "sync_receipts": "🔄 Sync Receipts from API",
-        "sync_missing_data": "🔄 Sync Missing Data",
-        "sync_all_metadata": "🔄 Sync All Metadata",
-        "extended_sync_options": "📊 Extended Sync Options",
-        "custom_date_range_sync": "📅 Custom Date Range for Sync",
-        "display_preferences": "🎯 Display Preferences",
-        "data_backup": "💾 Data Backup",
-        "api_connection": "🔌 API & Connection",
-        "sync_data_operations": "🔄 Data Sync & Operations",
-        "advanced_options": "⚙️ Advanced Options",
-        "maintenance": "🔧 Maintenance"
+        "data_management": "Data Management",
+        "sync_receipts": "Sync Receipts from API",
+        "sync_missing_data": "Sync Missing Data",
+        "sync_all_metadata": "Sync All Metadata",
+        "extended_sync_options": "Extended Sync Options",
+        "custom_date_range_sync": "Custom Date Range Sync",
+        "display_preferences": "Display Preferences",
+        "data_backup": "Data Backup",
+        "api_connection": "API & Connection",
+        "sync_data_operations": "Data Sync & Operations",
+        "advanced_options": "Advanced Options",
+        "maintenance": "Maintenance",
+        
+        # Key Metrics
+        "key_metrics": "Key Metrics",
+        "total_sales": "Total Sales",
+        "total_items": "Total Items",
+        "unique_customers": "Unique Customers",
+        "avg_transaction_value": "Avg Transaction Value",
+        "sales_growth": "Sales Growth",
+        "sales_overview": "Sales Overview",
+        "daily_discounts": "Daily Discounts",
+        "day_of_week_analysis": "Day of Week Analysis",
+        "time_period_analysis": "Time Period Analysis",
+        
+        # Product Analysis
+        "product_category_summary": "Product Category Summary",
+        "sales_distribution": "Sales Distribution",
+        "category_summary_table": "Category Summary Table",
+        "sales_by_category": "Sales by Category",
+        "all_products_by_category": "All Products by Category",
+        "edit_product_categories": "Edit Product Categories",
+        "select_product_to_edit": "Select product to edit:",
+        "change_category_to": "Change category to:",
+        "current_product_breakdown": "Current Product Breakdown",
+        
+        # Common terms
+        "date": "Date",
+        "sales": "Sales",
+        "quantity": "Quantity",
+        "amount": "Amount",
+        "total": "Total",
+        "average": "Average",
+        "growth": "Growth",
+        "transactions": "Transactions",
+        "customers": "Customers",
+        "products": "Products",
+        "locations": "Locations",
+        "categories": "Categories",
+        "discounts": "Discounts",
+        "refunds": "Refunds",
+        "net_sales": "Net Sales",
+        "gross_sales": "Gross Sales",
+        "items_sold": "Items Sold",
+        "active_days": "Active Days",
+        "first_visit": "First Visit",
+        "last_visit": "Last Visit",
+        "total_spent": "Total Spent",
+        "avg_per_transaction": "Avg per Transaction",
+        "avg_items_per_transaction": "Avg Items per Transaction",
+        "peak_hours": "Peak Hours",
+        "slowest_hours": "Slowest Hours",
+        "forecast": "Forecast",
+        "trend": "Trend",
+        "analysis": "Analysis",
+        "summary": "Summary",
+        "details": "Details",
+        "overview": "Overview",
+        "breakdown": "Breakdown",
+        "distribution": "Distribution",
+        "comparison": "Comparison",
+        "performance": "Performance",
+        "insights": "Insights",
+        "recommendations": "Recommendations",
+        
+        # KPI Metrics
+        "avg_daily_sales": "Avg Daily Sales",
+        "avg_transaction": "Avg Transaction",
+        "avg_items_per_day": "Avg Items / Day",
+        "avg_customers_per_day": "Avg Customers / Day",
+        "total_sales_period": "Total Sales (Period)",
+        "total_items_period": "Total Items (Period)",
+        "unique_customers_period": "Unique Customers (Period)",
+        "total_transactions_period": "Total Transactions (Period)",
+        "sales_growth_period": "Sales Growth",
+        "transaction_growth_period": "Transaction Growth",
+        "customer_growth_period": "Customer Growth",
+        "item_growth_period": "Item Growth",
+        "settings_sync_caption": "Sync settings are prioritized for daily operations and reconciliation.",
+        "settings_sync_header": "Sync Settings",
+        "settings_sync_last_date": "Sync from last date",
+        "settings_sync_last_date_help": "Intelligently sync from the latest stored transaction up to now.",
+        "settings_custom_range": "Custom range",
+        "settings_store_filter": "Store ID filter (optional)",
+        "settings_store_filter_help": "Leave empty to sync all stores.",
+        "settings_sync_preview_caption": "Will sync {days} day(s): {start_date} -> {end_date}",
+        "settings_sync_custom_range": "Sync custom range",
+        "settings_invalid_date_range": "Start date must be before or equal to end date.",
+        "settings_sync_results": "Sync Results & Debug",
+        "settings_sync_results_empty": "No sync run yet in this session.",
+        "settings_last_mode": "Sync mode",
+        "settings_last_range": "Date range",
+        "settings_fetched_count": "Fetched",
+        "settings_saved_count": "Saved",
+        "settings_duplicates": "Duplicate skips",
+        "settings_collisions": "Collision signals",
+        "settings_new_transactions": "New transactions",
+        "settings_debug_console": "Debug console",
+        "settings_imported_snapshot": "Imported Data Snapshot",
+        "settings_db_receipts": "Receipts",
+        "settings_db_line_items": "Line items",
+        "settings_db_range": "Data range",
+        "settings_recent_imports": "Recent imported receipts",
+        "settings_no_receipts_preview": "No receipts found in database yet.",
+        "settings_basic_preferences": "Basic Preferences",
+        "settings_language": "Language"
     },
     "Thai": {
-        "load_database": "💾 โหลดฐานข้อมูล",
-        "loaded_success": "✅ โหลดเสร็จสิ้น {total_receipts} ใบเสร็จ, {line_items} รายการ",
-        "no_cached_data": "⚠️ ไม่มีข้อมูลแคช ใช้การตั้งค่าเพื่อซิงค์ข้อมูลก่อน",
-        "navigation": "📑 เมนูนำทาง",
-        "daily_sales": "📅 ยอดขายรายวัน",
-        "by_location": "📍 แยกตามสถานที่", 
-        "by_product": "📦 แยกตามสินค้า",
-        "by_customer": "👥 แยกตามลูกค้า",
-        "credit": "💳 เครดิต",
-        "interactive_data": "📊 ข้อมูลแบบโต้ตอบ",
-        "transaction_log": "📋 บันทึกการทำรายการ",
-        "customer_invoice": "🧾 ใบแจ้งหนี้ลูกค้า",
-        "ice_forecast": "🧊 พยากรณ์น้ำแข็ง",
-        "crm": "👥 CRM",
-        "settings_preferences": "⚙️ การตั้งค่าและความชอบ",
-        "date_range_selector": "ตัวเลือกช่วงวันที่",
-        "quick_shortcuts": "ทางลัด:",
-        "today": "📅 วันนี้",
-        "yesterday": "📅 เมื่อวาน",
-        "last_3_days": "📅 3 วันที่ผ่านมา",
-        "last_week": "📅 สัปดาห์ที่แล้ว",
-        "last_2_weeks": "📅 2 สัปดาห์ที่แล้ว",
-        "last_30_days": "📅 30 วันที่ผ่านมา",
-        "this_week": "📅 สัปดาห์นี้",
-        "this_month": "📅 เดือนนี้",
-        "last_month": "📅 เดือนที่แล้ว",
-        "last_3_months": "📅 3 เดือนที่ผ่านมา",
-        "this_year": "📅 ปีนี้",
-        "all_data": "📅 ข้อมูลทั้งหมด",
-        "start_date": "📅 วันที่เริ่มต้น:",
-        "end_date": "📅 วันที่สิ้นสุด:",
-        "apply_range": "🔍 ใช้ช่วงวันที่",
-        "current_selection": "การเลือกปัจจุบัน: {start_date} ถึง {end_date} ({days} วัน)",
-        "api_information": "ℹ️ ข้อมูล API",
+        "load_database": "โหลดฐานข้อมูล",
+        "loaded_success": "โหลดเสร็จสิ้น {total_receipts} ใบเสร็จ, {line_items} รายการ",
+        "no_cached_data": "ไม่มีข้อมูลแคช ใช้การตั้งค่าเพื่อซิงค์ข้อมูลก่อน",
+        "navigation": "เมนูนำทาง",
+        "daily_sales": "ยอดขายรายวัน",
+        "by_location": "แยกตามสถานที่", 
+        "by_product": "แยกตามสินค้า",
+        "by_customer": "แยกตามลูกค้า",
+        "credit": "เครดิต",
+        "interactive_data": "ข้อมูลแบบโต้ตอบ",
+        "transaction_log": "บันทึกการทำรายการ",
+        "customer_invoice": "ใบแจ้งหนี้ลูกค้า",
+        "ice_forecast": "พยากรณ์น้ำแข็ง",
+        "crm": "CRM",
+        "settings_preferences": "การตั้งค่า",
+        "date_range_selector": "ช่วงวันที่",
+        "quick_shortcuts": "ทางลัด",
+        "today": "วันนี้",
+        "yesterday": "เมื่อวาน",
+        "last_3_days": "3 วันที่ผ่านมา",
+        "last_week": "สัปดาห์ที่แล้ว",
+        "last_2_weeks": "2 สัปดาห์ที่แล้ว",
+        "last_30_days": "30 วันที่ผ่านมา",
+        "this_week": "สัปดาห์นี้",
+        "this_month": "เดือนนี้",
+        "last_month": "เดือนที่แล้ว",
+        "last_3_months": "3 เดือนที่ผ่านมา",
+        "this_year": "ปีนี้",
+        "all_data": "ข้อมูลทั้งหมด",
+        "start_date": "วันที่เริ่มต้น",
+        "end_date": "วันที่สิ้นสุด",
+        "apply_range": "ใช้งาน",
+        "current_selection": "{start_date} ถึง {end_date} ({days} วัน)",
+        "api_information": "ข้อมูล API",
         "viewing_data_from": "กำลังดูข้อมูลจาก",
-        "daily_sales_analysis": "📅 การวิเคราะห์ยอดขายรายวัน",
-        "sales_by_location": "📍 ยอดขายแยกตามสถานที่ (ประเภท)",
-        "product_analysis": "📈 การวิเคราะห์สินค้า",
-        "customer_analysis": "👥 การวิเคราะห์ลูกค้า",
-        "credit_management": "💳 แดชบอร์ดการจัดการเครดิต",
-        "interactive_data_explorer": "📊 เครื่องมือสำรวจข้อมูลแบบโต้ตอบ",
-        "transaction_log": "📋 บันทึกการทำรายการแยกตามสถานที่",
-        "customer_invoice_generator": "🧾 เครื่องมือสร้างใบแจ้งหนี้ลูกค้า",
-        "ice_forecast_dashboard": "🧊 แดชบอร์ดพยากรณ์น้ำแข็ง",
-        "crm_dashboard": "👥 การจัดการความสัมพันธ์ลูกค้า",
+        "daily_sales_analysis": "การวิเคราะห์ยอดขายรายวัน",
+        "sales_by_location": "ยอดขายแยกตามสถานที่",
+        "product_analysis": "การวิเคราะห์สินค้า",
+        "customer_analysis": "การวิเคราะห์ลูกค้า",
+        "credit_management": "การจัดการเครดิต",
+        "interactive_data_explorer": "เครื่องมือสำรวจข้อมูลแบบโต้ตอบ",
+        "transaction_log": "บันทึกการทำรายการ",
+        "customer_invoice_generator": "เครื่องมือสร้างใบแจ้งหนี้ลูกค้า",
+        "ice_forecast_dashboard": "พยากรณ์น้ำแข็ง",
+        "crm_dashboard": "การจัดการความสัมพันธ์ลูกค้า",
         
         # Password Authentication
-        "login_required": "🔐 Snow AI Dashboard - ต้องเข้าสู่ระบบ",
+        "login_required": "Snow AI Dashboard",
         "enter_password": "กรอกรหัสผ่านเพื่อเข้าถึงแดชบอร์ด",
         "password_placeholder": "กรอกรหัสผ่าน...",
-        "login_button": "🔓 เข้าสู่ระบบ",
-        "clear_button": "🗑️ ล้าง",
-        "incorrect_password": "❌ รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่",
-        "contact_admin": "💡 ติดต่อผู้ดูแลระบบเพื่อขอข้อมูลการเข้าถึง",
-        "logout": "🚪 ออกจากระบบ",
+        "login_button": "เข้าสู่ระบบ",
+        "clear_button": "ล้าง",
+        "incorrect_password": "รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่",
+        "contact_admin": "ติดต่อผู้ดูแลระบบเพื่อขอข้อมูลการเข้าถึง",
+        "logout": "ออกจากระบบ",
         
         # Settings & Preferences
-        "appearance": "🎨 การแสดงผล",
+        "appearance": "การแสดงผล",
         "theme_mode": "โหมดธีม",
         "light": "สว่าง",
         "dark": "มืด",
@@ -166,41 +270,41 @@ TRANSLATIONS = {
         "medium": "กลาง",
         "large": "ใหญ่",
         "compact_mode": "โหมดกะทัดรัด",
-        "data_management": "💾 การจัดการข้อมูล",
-        "sync_receipts": "🔄 ซิงค์ใบเสร็จจาก API",
-        "sync_missing_data": "🔄 ซิงค์ข้อมูลที่ขาดหาย",
-        "sync_all_metadata": "🔄 ซิงค์ข้อมูลทั้งหมด",
-        "extended_sync_options": "📊 ตัวเลือกการซิงค์แบบขยาย",
-        "custom_date_range_sync": "📅 ช่วงวันที่กำหนดเองสำหรับการซิงค์",
-        "display_preferences": "🎯 การตั้งค่าการแสดงผล",
-        "data_backup": "💾 การสำรองข้อมูล",
-        "api_connection": "🔌 API และการเชื่อมต่อ",
-        "sync_data_operations": "🔄 การซิงค์และการดำเนินการข้อมูล",
-        "advanced_options": "⚙️ ตัวเลือกขั้นสูง",
-        "maintenance": "🔧 การบำรุงรักษา",
+        "data_management": "การจัดการข้อมูล",
+        "sync_receipts": "ซิงค์ใบเสร็จจาก API",
+        "sync_missing_data": "ซิงค์ข้อมูลที่ขาดหาย",
+        "sync_all_metadata": "ซิงค์ข้อมูลทั้งหมด",
+        "extended_sync_options": "ตัวเลือกการซิงค์แบบขยาย",
+        "custom_date_range_sync": "ช่วงวันที่กำหนดเองสำหรับการซิงค์",
+        "display_preferences": "การตั้งค่าการแสดงผล",
+        "data_backup": "การสำรองข้อมูล",
+        "api_connection": "API และการเชื่อมต่อ",
+        "sync_data_operations": "การซิงค์และการดำเนินการข้อมูล",
+        "advanced_options": "ตัวเลือกขั้นสูง",
+        "maintenance": "การบำรุงรักษา",
         
         # Key Metrics
-        "key_metrics": "📊 ตัวชี้วัดหลัก",
+        "key_metrics": "ตัวชี้วัดหลัก",
         "total_sales": "ยอดขายรวม",
         "total_items": "รายการรวม",
         "unique_customers": "ลูกค้าไม่ซ้ำ",
         "avg_transaction_value": "มูลค่าเฉลี่ยต่อรายการ",
         "sales_growth": "การเติบโตของยอดขาย",
-        "sales_overview": "📊 ภาพรวมยอดขาย",
-        "daily_discounts": "💸 ส่วนลดรายวัน",
-        "day_of_week_analysis": "📅 การวิเคราะห์ตามวันในสัปดาห์",
-        "time_period_analysis": "📊 การวิเคราะห์ช่วงเวลา",
+        "sales_overview": "ภาพรวมยอดขาย",
+        "daily_discounts": "ส่วนลดรายวัน",
+        "day_of_week_analysis": "การวิเคราะห์ตามวันในสัปดาห์",
+        "time_period_analysis": "การวิเคราะห์ช่วงเวลา",
         
         # Product Analysis
-        "product_category_summary": "📊 สรุปหมวดหมู่สินค้า",
-        "sales_distribution": "🥧 การกระจายยอดขาย",
-        "category_summary_table": "📋 ตารางสรุปหมวดหมู่",
-        "sales_by_category": "📊 ยอดขายแยกตามหมวดหมู่",
+        "product_category_summary": "สรุปหมวดหมู่สินค้า",
+        "sales_distribution": "การกระจายยอดขาย",
+        "category_summary_table": "ตารางสรุปหมวดหมู่",
+        "sales_by_category": "ยอดขายแยกตามหมวดหมู่",
         "all_products_by_category": "สินค้าทั้งหมดแยกตามหมวดหมู่",
-        "edit_product_categories": "📝 แก้ไขหมวดหมู่สินค้า",
+        "edit_product_categories": "แก้ไขหมวดหมู่สินค้า",
         "select_product_to_edit": "เลือกสินค้าที่จะแก้ไข:",
         "change_category_to": "เปลี่ยนหมวดหมู่เป็น:",
-        "current_product_breakdown": "📊 การแบ่งสินค้าปัจจุบัน",
+        "current_product_breakdown": "การแบ่งสินค้าปัจจุบัน",
         
         # Common terms
         "date": "วันที่",
@@ -253,7 +357,35 @@ TRANSLATIONS = {
         "sales_growth_period": "การเติบโตของยอดขาย",
         "transaction_growth_period": "การเติบโตของรายการ",
         "customer_growth_period": "การเติบโตของลูกค้า",
-        "item_growth_period": "การเติบโตของรายการ"
+        "item_growth_period": "การเติบโตของรายการ",
+        "settings_sync_caption": "ให้ความสำคัญกับการตั้งค่าซิงค์สำหรับการใช้งานประจำวันและการกระทบยอด",
+        "settings_sync_header": "การตั้งค่าการซิงค์",
+        "settings_sync_last_date": "ซิงค์จากวันที่ล่าสุด",
+        "settings_sync_last_date_help": "ซิงค์อย่างชาญฉลาดจากรายการล่าสุดที่จัดเก็บไว้จนถึงปัจจุบัน",
+        "settings_custom_range": "ช่วงวันที่กำหนดเอง",
+        "settings_store_filter": "กรองด้วย Store ID (ไม่บังคับ)",
+        "settings_store_filter_help": "เว้นว่างไว้เพื่อซิงค์ทุกสาขา",
+        "settings_sync_preview_caption": "จะซิงค์ {days} วัน: {start_date} -> {end_date}",
+        "settings_sync_custom_range": "ซิงค์ช่วงวันที่กำหนดเอง",
+        "settings_invalid_date_range": "วันที่เริ่มต้นต้องน้อยกว่าหรือเท่ากับวันที่สิ้นสุด",
+        "settings_sync_results": "ผลการซิงค์และดีบัก",
+        "settings_sync_results_empty": "ยังไม่มีการซิงค์ในเซสชันนี้",
+        "settings_last_mode": "โหมดการซิงค์",
+        "settings_last_range": "ช่วงวันที่",
+        "settings_fetched_count": "ที่ดึงมา",
+        "settings_saved_count": "ที่บันทึก",
+        "settings_duplicates": "รายการซ้ำที่ข้าม",
+        "settings_collisions": "สัญญาณชนกัน",
+        "settings_new_transactions": "ธุรกรรมใหม่",
+        "settings_debug_console": "คอนโซลดีบัก",
+        "settings_imported_snapshot": "สรุปข้อมูลที่นำเข้า",
+        "settings_db_receipts": "ใบเสร็จ",
+        "settings_db_line_items": "รายการบรรทัด",
+        "settings_db_range": "ช่วงข้อมูล",
+        "settings_recent_imports": "ใบเสร็จที่นำเข้าล่าสุด",
+        "settings_no_receipts_preview": "ยังไม่พบใบเสร็จในฐานข้อมูล",
+        "settings_basic_preferences": "การตั้งค่าพื้นฐาน",
+        "settings_language": "ภาษา"
     }
 }
 
@@ -265,13 +397,125 @@ def get_text(key, **kwargs):
     template = TRANSLATIONS[lang].get(key, TRANSLATIONS['English'].get(key, key))
     return template.format(**kwargs) if kwargs else template
 
+
+# Section/layout headings that were previously hardcoded in English.
+HEADING_TRANSLATIONS = {
+    "English": {
+        "reference_data": "Reference Data",
+        "individual_syncs": "Individual Syncs",
+        "receipt_data_management": "Receipt Data Management",
+        "query_settings": "Query Settings",
+        "location_performance_details": "Location Performance Details",
+        "location_trends_over_time": "Location Trends Over Time",
+        "peak_hours_by_location": "Peak Hours Analysis by Location",
+        "customer_details": "Customer Details",
+        "customer_segments": "Customer Segments",
+        "outstanding_by_customer": "### Outstanding Balance by Customer",
+        "credit_sales_by_location": "### Credit Sales by Location",
+        "credit_vs_cash_trend": "### Credit vs Cash Sales Trend",
+        "cash_vs_credit_overview": "### Cash vs Credit Overview",
+        "export_credit_reports": "### Export Credit Reports",
+        "quantity_vs_total_sales": "Quantity vs Total Sales",
+        "manual_checklist_upload_reconcile": "### Manual Checklist Upload & Reconciliation",
+        "reconciliation_analysis": "### Reconciliation Analysis",
+        "discrepancies_found": "#### Discrepancies Found",
+        "select_customer": "### Select Customer",
+        "select_invoice_period": "### Select Invoice Period",
+        "invoice_title": "## INVOICE",
+        "itemized_transactions": "### Itemized Transactions",
+        "summary_by_product": "### Summary by Product",
+        "payment_methods_used": "### Payment Methods Used",
+        "download_invoice": "### Download Invoice",
+        "print_view": "## PRINT VIEW",
+        "ice_forecast_by_location": "### Ice Forecast by Location",
+        "detailed_analysis_by_location": "### Detailed Analysis by Location",
+        "current_forecast_metrics": "#### Current Forecast Metrics",
+        "loading_recommendations": "#### Loading Recommendations",
+        "calculation_method": "#### Calculation Method",
+        "top_customers": "### Top Customers",
+        "customer_alerts": "### Customer Alerts",
+        "customer_management": "### Customer Management",
+        "recent_transaction_history": "**Recent Transaction History**",
+        "data_import_reconciliation": "Data Import & Reconciliation",
+        "import_range": "### 1) Import Range",
+        "pos_csv_input": "### 2) POS CSV Input",
+        "daily_reconciliation": "### 3) Daily Reconciliation",
+        "delta_diagnostics": "### 4) Delta Diagnostics",
+        "by_receipt_type_db": "**By Receipt Type (DB)**",
+        "by_store_db": "**By Store (DB)**",
+        "by_payment_db": "**By Payment (DB)**",
+        "candidate_exclusion_set": "### 5) Candidate Exclusion Set (Heuristic)",
+        "exclusion_simulator": "### 6) Exclusion Simulator",
+        "db_daily_totals_without_csv": "DB daily totals (without CSV):",
+        "import_manual_categories": "#### Import Manual Categories",
+    },
+    "Thai": {
+        "reference_data": "ข้อมูลอ้างอิง",
+        "individual_syncs": "ซิงค์รายส่วน",
+        "receipt_data_management": "การจัดการข้อมูลใบเสร็จ",
+        "query_settings": "การตั้งค่าการค้นหา",
+        "location_performance_details": "รายละเอียดประสิทธิภาพตามสถานที่",
+        "location_trends_over_time": "แนวโน้มตามสถานที่ตามเวลา",
+        "peak_hours_by_location": "วิเคราะห์ชั่วโมงเร่งด่วนแยกตามสถานที่",
+        "customer_details": "รายละเอียดลูกค้า",
+        "customer_segments": "กลุ่มลูกค้า",
+        "outstanding_by_customer": "### ยอดค้างชำระแยกตามลูกค้า",
+        "credit_sales_by_location": "### ยอดขายเครดิตแยกตามสถานที่",
+        "credit_vs_cash_trend": "### แนวโน้มยอดขายเครดิตเทียบเงินสด",
+        "cash_vs_credit_overview": "### ภาพรวมเงินสดเทียบเครดิต",
+        "export_credit_reports": "### ส่งออกรายงานเครดิต",
+        "quantity_vs_total_sales": "ปริมาณเทียบยอดขายรวม",
+        "manual_checklist_upload_reconcile": "### อัปโหลดเช็กลิสต์เพื่อตรวจสอบ",
+        "reconciliation_analysis": "### การวิเคราะห์การกระทบยอด",
+        "discrepancies_found": "#### พบความคลาดเคลื่อน",
+        "select_customer": "### เลือกลูกค้า",
+        "select_invoice_period": "### เลือกช่วงเวลาใบแจ้งหนี้",
+        "invoice_title": "## ใบแจ้งหนี้",
+        "itemized_transactions": "### รายการธุรกรรมแบบแยกรายการ",
+        "summary_by_product": "### สรุปแยกตามสินค้า",
+        "payment_methods_used": "### วิธีการชำระเงินที่ใช้",
+        "download_invoice": "### ดาวน์โหลดใบแจ้งหนี้",
+        "print_view": "## มุมมองสำหรับพิมพ์",
+        "ice_forecast_by_location": "### พยากรณ์น้ำแข็งแยกตามสถานที่",
+        "detailed_analysis_by_location": "### วิเคราะห์เชิงลึกแยกตามสถานที่",
+        "current_forecast_metrics": "#### ตัวชี้วัดพยากรณ์ปัจจุบัน",
+        "loading_recommendations": "#### คำแนะนำการโหลดสินค้า",
+        "calculation_method": "#### วิธีการคำนวณ",
+        "top_customers": "### ลูกค้าอันดับต้น",
+        "customer_alerts": "### การแจ้งเตือนลูกค้า",
+        "customer_management": "### การจัดการลูกค้า",
+        "recent_transaction_history": "**ประวัติธุรกรรมล่าสุด**",
+        "data_import_reconciliation": "นำเข้าข้อมูลและกระทบยอด",
+        "import_range": "### 1) ช่วงวันที่นำเข้า",
+        "pos_csv_input": "### 2) ข้อมูลนำเข้า CSV จาก POS",
+        "daily_reconciliation": "### 3) การกระทบยอดรายวัน",
+        "delta_diagnostics": "### 4) วิเคราะห์ผลต่าง",
+        "by_receipt_type_db": "**แยกตามประเภทใบเสร็จ (DB)**",
+        "by_store_db": "**แยกตามสาขา (DB)**",
+        "by_payment_db": "**แยกตามการชำระเงิน (DB)**",
+        "candidate_exclusion_set": "### 5) ชุดรายการที่แนะนำให้ตัดออก (ฮิวริสติก)",
+        "exclusion_simulator": "### 6) ตัวจำลองการตัดออก",
+        "db_daily_totals_without_csv": "ยอดรวมรายวันจาก DB (ไม่มี CSV):",
+        "import_manual_categories": "#### นำเข้าหมวดหมู่แบบกำหนดเอง",
+    },
+}
+
+
+def get_heading(key):
+    """Get localized UI heading text."""
+    lang = st.session_state.get("language", "English")
+    return HEADING_TRANSLATIONS.get(lang, {}).get(
+        key,
+        HEADING_TRANSLATIONS["English"].get(key, key),
+    )
+
 # ========= CONFIG =========
 LOYVERSE_TOKEN = os.getenv("LOYVERSE_TOKEN", "d18826e6c76345888204b310aaca1351")
 BASE_URL = "https://api.loyverse.com/v1.0/receipts"
 PAGE_LIMIT = 250
 # ==========================
 
-st.set_page_config(page_title="🐻‍❄️ Snow AI Dashboard", layout="wide")
+st.set_page_config(page_title="Snow AI Dashboard", layout="wide")
 
 # ========= PASSWORD AUTHENTICATION =========
 PASSWORD = "snowbomb"
@@ -282,32 +526,57 @@ if 'authenticated' not in st.session_state:
 
 # Password authentication
 if not st.session_state.authenticated:
-    st.title(get_text("login_required"))
-    st.markdown("---")
-    
+    # Inject login-specific styling
+    st.markdown("""
+    <style>
+        [data-testid="stAppViewContainer"] { background: #f8fafc; }
+        .login-container {
+            max-width: 380px;
+            margin: 80px auto 0 auto;
+            padding: 40px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+        .login-brand {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .login-brand h1 {
+            font-size: 24px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            color: #0f172a;
+            margin: 0 0 4px 0;
+        }
+        .login-brand p {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
     # Center the login form
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1.2, 1.6, 1.2])
     
     with col2:
-        st.markdown(f"### {get_text('enter_password')}")
-        password_input = st.text_input("Password", type="password", placeholder=get_text("password_placeholder"))
+        st.markdown("""
+        <div class="login-brand">
+            <h1>Snow AI</h1>
+            <p>Enter your password to continue</p>
+        </div>
+        """, unsafe_allow_html=True)
+        password_input = st.text_input("Password", type="password", placeholder=get_text("password_placeholder"), label_visibility="collapsed")
         
-        col_login, col_clear = st.columns(2)
-        
-        with col_login:
-            if st.button(get_text("login_button"), type="primary", use_container_width=True):
-                if password_input == PASSWORD:
-                    st.session_state.authenticated = True
-                    st.rerun()
-                else:
-                    st.error(get_text("incorrect_password"))
-        
-        with col_clear:
-            if st.button(get_text("clear_button"), use_container_width=True):
+        if st.button(get_text("login_button"), type="primary", use_container_width=True):
+            if password_input == PASSWORD:
+                st.session_state.authenticated = True
                 st.rerun()
+            else:
+                st.error(get_text("incorrect_password"))
         
-        st.markdown("---")
-        st.info(get_text("contact_admin"))
+        st.caption(get_text("contact_admin"))
     
     # Stop execution here if not authenticated
     st.stop()
@@ -315,7 +584,7 @@ if not st.session_state.authenticated:
 # ========= MAIN APP LOGIC =========
 # Initialize session state for selected tab
 if 'selected_tab' not in st.session_state:
-    st.session_state.selected_tab = "📅 Daily Sales"  # Will be updated after language is set
+    st.session_state.selected_tab = "Daily Sales"  # Will be updated after language is set
 
 # Initialize theme
 if 'theme_mode' not in st.session_state:
@@ -325,63 +594,359 @@ if 'theme_mode' not in st.session_state:
 if 'language' not in st.session_state:
     st.session_state.language = "English"
 
-# Apply theme CSS
-if st.session_state.theme_mode == "Dark":
-    st.markdown("""
-    <style>
-        /* Dark Mode Styling */
-        .stApp {
-            background-color: #0e1117;
-            color: #fafafa;
-        }
-        .stMarkdown {
-            color: #fafafa;
-        }
-        div[data-testid="stMetricValue"] {
-            color: #fafafa;
-        }
-        .stSelectbox label, .stDateInput label, .stTextInput label {
-            color: #fafafa !important;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Apply font size
-if 'font_size' in st.session_state:
-    # Map both English and Thai font size values to CSS values
+# ========= DESIGN SYSTEM CSS =========
+# Direction: Sophistication & Trust + Data & Analysis
+# Foundation: Cool (slate), Accent: Blue, Depth: Borders-only, Radius: Sharp (4-8px)
+def get_design_system_css():
+    """Generate comprehensive design system CSS."""
+    # Font size from user preference
     font_sizes = {
-        "Small": "12px", "Medium": "14px", "Large": "16px",  # English
-        "เล็ก": "12px", "กลาง": "14px", "ใหญ่": "16px"  # Thai
+        "Small": "12px", "Medium": "14px", "Large": "16px",
+        "เล็ก": "12px", "กลาง": "14px", "ใหญ่": "16px"
     }
-    base_font = font_sizes.get(st.session_state.font_size, "14px")
-    st.markdown(f"""
+    base_font = font_sizes.get(st.session_state.get('font_size', 'Medium'), "14px")
+    compact = st.session_state.get('compact_mode', False)
+    is_dark = st.session_state.theme_mode == "Dark"
+
+    if is_dark:
+        css_vars = """
+            --bg-app: #0f172a;
+            --bg-surface: #1e293b;
+            --bg-surface-raised: #334155;
+            --border-default: rgba(255,255,255,0.08);
+            --border-subtle: rgba(255,255,255,0.05);
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --text-faint: #475569;
+            --accent: #60a5fa;
+            --accent-hover: #3b82f6;
+            --accent-subtle: rgba(96,165,250,0.12);
+            --success: #34d399;
+            --warning: #fbbf24;
+            --error: #f87171;
+            --metric-bg: #1e293b;
+        """
+    else:
+        css_vars = """
+            --bg-app: #f8fafc;
+            --bg-surface: #ffffff;
+            --bg-surface-raised: #ffffff;
+            --border-default: #e2e8f0;
+            --border-subtle: #f1f5f9;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --text-faint: #cbd5e1;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --accent-subtle: rgba(59,130,246,0.08);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --metric-bg: #ffffff;
+        """
+
+    return f"""
     <style>
+        :root {{
+            {css_vars}
+            --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+            --font-mono: "SF Mono", "Cascadia Code", "Fira Code", "JetBrains Mono", monospace;
+            --radius-sm: 4px;
+            --radius-md: 6px;
+            --radius-lg: 8px;
+            --shadow-subtle: 0 1px 2px rgba(0,0,0,0.04);
+            --transition: 150ms cubic-bezier(0.25, 1, 0.5, 1);
+        }}
+
+        /* ---- Global ---- */
         html, body, [class*="css"] {{
+            font-family: var(--font-sans);
             font-size: {base_font};
         }}
-    </style>
-    """, unsafe_allow_html=True)
+        .stApp {{
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+        }}
+        .stApp [data-testid="stHeader"] {{
+            background: transparent;
+        }}
 
-# Apply compact mode
-if st.session_state.get('compact_mode', False):
-    st.markdown("""
-    <style>
-        .block-container {
-            padding-top: 2rem !important;
-            padding-bottom: 1rem !important;
-        }
+        /* ---- Main content area ---- */
+        .block-container {{
+            padding-top: {'1.5rem' if compact else '2rem'} !important;
+            padding-bottom: {'1rem' if compact else '2rem'} !important;
+            max-width: 1200px;
+        }}
+        {''.join(['''
         .element-container {
-            margin-bottom: 0.5rem !important;
+            margin-bottom: 0.4rem !important;
         }
+        ''' if compact else ''])}
+
+        /* ---- Typography ---- */
+        h1 {{
+            font-weight: 600 !important;
+            letter-spacing: -0.02em !important;
+            color: var(--text-primary) !important;
+            font-size: 1.75rem !important;
+        }}
+        h2 {{
+            font-weight: 600 !important;
+            letter-spacing: -0.02em !important;
+            color: var(--text-primary) !important;
+            font-size: 1.35rem !important;
+        }}
+        h3 {{
+            font-weight: 600 !important;
+            letter-spacing: -0.01em !important;
+            color: var(--text-primary) !important;
+            font-size: 1.1rem !important;
+        }}
+        p, li, span {{
+            color: var(--text-secondary);
+        }}
+
+        /* ---- Sidebar ---- */
+        [data-testid="stSidebar"] {{
+            background-color: var(--bg-surface) !important;
+            border-right: 1px solid var(--border-default) !important;
+        }}
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {{
+            color: var(--text-secondary);
+            font-size: 13px;
+        }}
+        [data-testid="stSidebar"] h1 {{
+            font-size: 1.25rem !important;
+            font-weight: 600 !important;
+            letter-spacing: -0.02em !important;
+        }}
+        [data-testid="stSidebar"] h2 {{
+            font-size: 1rem !important;
+            font-weight: 500 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase;
+            letter-spacing: 0.04em !important;
+            font-size: 11px !important;
+        }}
+        [data-testid="stSidebar"] hr {{
+            border-color: var(--border-subtle) !important;
+            margin: 12px 0 !important;
+        }}
+
+        /* ---- Buttons ---- */
+        .stButton > button {{
+            border-radius: var(--radius-md) !important;
+            font-weight: 500 !important;
+            font-size: 13px !important;
+            padding: 6px 16px !important;
+            border: 1px solid var(--border-default) !important;
+            transition: all var(--transition) !important;
+            letter-spacing: 0 !important;
+        }}
+        .stButton > button[kind="primary"] {{
+            background-color: var(--accent) !important;
+            border-color: var(--accent) !important;
+            color: #ffffff !important;
+        }}
+        .stButton > button[kind="primary"]:hover {{
+            background-color: var(--accent-hover) !important;
+            border-color: var(--accent-hover) !important;
+        }}
+        .stButton > button[kind="secondary"] {{
+            background-color: var(--bg-surface) !important;
+            color: var(--text-secondary) !important;
+        }}
+        .stButton > button[kind="secondary"]:hover {{
+            background-color: var(--accent-subtle) !important;
+            color: var(--accent) !important;
+            border-color: var(--accent) !important;
+        }}
+
+        /* Sidebar nav buttons - tighter */
+        [data-testid="stSidebar"] .stButton > button {{
+            padding: 8px 12px !important;
+            font-size: 13px !important;
+            text-align: left !important;
+            justify-content: flex-start !important;
+        }}
+
+        /* ---- Metric cards ---- */
+        [data-testid="stMetric"] {{
+            background: var(--metric-bg);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-lg);
+            padding: 16px !important;
+            min-height: 116px;
+            display: flex;
+            align-items: center;
+        }}
+        [data-testid="stMetric"] > div {{
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }}
+        [data-testid="stMetricLabel"] {{
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }}
+        [data-testid="stMetricValue"] {{
+            font-family: var(--font-mono) !important;
+            font-weight: 600 !important;
+            font-size: 1.5rem !important;
+            color: var(--text-primary) !important;
+            font-variant-numeric: tabular-nums;
+        }}
+        [data-testid="stMetricDelta"] {{
+            font-family: var(--font-mono) !important;
+            font-size: 12px !important;
+            min-height: 20px;
+        }}
+
+        /* ---- Data tables ---- */
+        [data-testid="stDataFrame"] {{
+            border: 1px solid var(--border-default) !important;
+            border-radius: var(--radius-lg) !important;
+            overflow: hidden;
+        }}
+        [data-testid="stDataFrame"] td {{
+            font-family: var(--font-mono);
+            font-variant-numeric: tabular-nums;
+            font-size: 13px;
+        }}
+        [data-testid="stDataFrame"] th {{
+            font-weight: 500 !important;
+            text-transform: uppercase;
+            font-size: 11px !important;
+            letter-spacing: 0.04em;
+        }}
+
+        /* ---- Expanders ---- */
+        [data-testid="stExpander"] {{
+            border: 1px solid var(--border-default) !important;
+            border-radius: var(--radius-lg) !important;
+            background: var(--bg-surface);
+        }}
+        [data-testid="stExpander"] summary {{
+            font-weight: 500;
+            font-size: 14px;
+            color: var(--text-primary);
+        }}
+
+        /* ---- Form inputs ---- */
+        .stTextInput > div > div > input,
+        .stSelectbox > div > div,
+        .stDateInput > div > div > input {{
+            border-radius: var(--radius-md) !important;
+            border-color: var(--border-default) !important;
+            font-size: 13px !important;
+        }}
+        .stTextInput > div > div > input:focus,
+        .stDateInput > div > div > input:focus {{
+            border-color: var(--accent) !important;
+            box-shadow: 0 0 0 1px var(--accent) !important;
+        }}
+        .stTextInput label, .stSelectbox label, .stDateInput label {{
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            color: var(--text-muted) !important;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }}
+
+        /* ---- Alerts ---- */
+        .stAlert {{
+            border-radius: var(--radius-md) !important;
+            font-size: 13px !important;
+        }}
+
+        /* ---- Horizontal rules ---- */
+        hr {{
+            border-color: var(--border-subtle) !important;
+        }}
+
+        /* ---- Plotly charts ---- */
+        .js-plotly-plot {{
+            border-radius: var(--radius-lg);
+        }}
+
+        /* ---- Tabs ---- */
+        .stTabs [data-baseweb="tab-list"] {{
+            gap: 0 !important;
+            border-bottom: 1px solid var(--border-default);
+        }}
+        .stTabs [data-baseweb="tab"] {{
+            font-size: 13px !important;
+            font-weight: 500 !important;
+            padding: 8px 16px !important;
+        }}
+
+        /* ---- Quick date selector buttons ---- */
+        .date-shortcuts .stButton > button {{
+            font-size: 12px !important;
+            padding: 4px 8px !important;
+            border-radius: var(--radius-sm) !important;
+        }}
+
+        /* ---- Download buttons ---- */
+        .stDownloadButton > button {{
+            border-radius: var(--radius-md) !important;
+            font-size: 13px !important;
+        }}
+
+        /* ---- Captions ---- */
+        .stCaption {{
+            color: var(--text-muted) !important;
+            font-size: 12px !important;
+        }}
+
+        /* ---- Progress bar ---- */
+        .stProgress > div > div > div {{
+            background-color: var(--accent) !important;
+        }}
+
+        /* ---- Selectbox/multiselect ---- */
+        [data-baseweb="select"] {{
+            border-radius: var(--radius-md) !important;
+        }}
+
+        /* ---- Success/Info/Warning/Error boxes ---- */
+        div[data-testid="stNotification"] {{
+            border-radius: var(--radius-md) !important;
+            font-size: 13px;
+        }}
     </style>
-    """, unsafe_allow_html=True)
+    """
+
+# Inject the design system
+st.markdown(get_design_system_css(), unsafe_allow_html=True)
+
+# Plotly chart theme - consistent with design system
+CHART_LAYOUT = dict(
+    font=dict(family="-apple-system, BlinkMacSystemFont, Inter, Segoe UI, sans-serif", size=12, color="#475569"),
+    title=dict(font=dict(size=14, color="#0f172a"), x=0, xanchor="left"),
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    xaxis=dict(gridcolor="#f1f5f9", linecolor="#e2e8f0", tickfont=dict(size=11, color="#64748b")),
+    yaxis=dict(gridcolor="#f1f5f9", linecolor="#e2e8f0", tickfont=dict(size=11, color="#64748b")),
+    margin=dict(l=48, r=16, t=40, b=40),
+    colorway=["#3b82f6", "#64748b", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899"],
+    hoverlabel=dict(bgcolor="#0f172a", font_size=12, font_color="#f1f5f9"),
+)
 
 # ===== TRANSLATION DICTIONARIES =====
 
 def initialize_selected_tab():
     """Initialize selected tab with proper translation"""
-    if st.session_state.get('selected_tab') in ["📅 Daily Sales", "📅 ยอดขายรายวัน"]:
+    if st.session_state.get('selected_tab') in ["📅 Daily Sales", "📅 ยอดขายรายวัน", "Daily Sales", "ยอดขายรายวัน"]:
         st.session_state.selected_tab = get_text("daily_sales")
+    if st.session_state.get('selected_tab') in ["Settings", "การตั้งค่า"]:
+        st.session_state.selected_tab = get_text("settings_preferences")
 
 # ===== FUNCTION DEFINITIONS (Must be before use) =====
 
@@ -611,7 +1176,7 @@ class LoyverseImporter:
             return False
 
 # --- Helper: API call with pagination for receipts ---
-def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250):
+def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250, render_ui=True, debug_sink=None):
     headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
     
     # Handle both date and datetime objects
@@ -649,22 +1214,32 @@ def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250):
     if store_id:
         params["store_id"] = store_id
 
+    if debug_sink is not None:
+        debug_sink["date_range_gmt7"] = {"start": str(start_date), "end": str(end_date)}
+        debug_sink["api_range_utc"] = {
+            "start": start_datetime_utc.strftime("%Y-%m-%d %H:%M:%S"),
+            "end": end_datetime_utc.strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        debug_sink["store_filter"] = store_id if store_id else "All stores"
+
     # Debug console output
-    with st.expander("🔍 Debug Console", expanded=False):
-        st.write(f"**Token:** {token[:10]}...{token[-10:]}")
-        st.write(f"**Date Range (GMT+7):** {start_date} to {end_date}")
-        st.write(f"**API Range (UTC):** {start_datetime_utc.strftime('%Y-%m-%d %H:%M:%S')} to {end_datetime_utc.strftime('%Y-%m-%d %H:%M:%S')}")
-        st.write(f"**Store Filter:** {store_id if store_id else 'All stores'}")
+    if render_ui:
+        with st.expander("🔍 Debug Console", expanded=False):
+            st.write(f"**Token:** {token[:10]}...{token[-10:]}")
+            st.write(f"**Date Range (GMT+7):** {start_date} to {end_date}")
+            st.write(f"**API Range (UTC):** {start_datetime_utc.strftime('%Y-%m-%d %H:%M:%S')} to {end_datetime_utc.strftime('%Y-%m-%d %H:%M:%S')}")
+            st.write(f"**Store Filter:** {store_id if store_id else 'All stores'}")
     
     all_receipts = []
     cursor = None
     page_count = 0
-    progress_bar = st.progress(0)
-    status_text = st.empty()
+    progress_bar = st.progress(0) if render_ui else None
+    status_text = st.empty() if render_ui else None
 
     while True:
         page_count += 1
-        status_text.text(f"Fetching page {page_count}...")
+        if status_text is not None:
+            status_text.text(f"Fetching page {page_count}...")
         
         if cursor:
             params["cursor"] = cursor
@@ -673,7 +1248,10 @@ def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250):
             res = requests.get(BASE_URL, headers=headers, params=params)
             
             if res.status_code != 200:
-                st.error(f"❌ **Error {res.status_code}:** {res.text}")
+                if render_ui:
+                    st.error(f"❌ **Error {res.status_code}:** {res.text}")
+                if debug_sink is not None:
+                    debug_sink["error"] = f"Error {res.status_code}: {res.text}"
                 break
                 
             data = res.json()
@@ -682,17 +1260,26 @@ def fetch_all_receipts(token, start_date, end_date, store_id=None, limit=250):
             all_receipts.extend(receipts)
             cursor = data.get("cursor")
             
-            progress_bar.progress(min(page_count * 20, 100))
+            if progress_bar is not None:
+                progress_bar.progress(min(page_count * 20, 100))
             
             if not cursor:
-                status_text.text(f"✅ Completed! Found {len(all_receipts)} receipts")
+                if status_text is not None:
+                    status_text.text(f"✅ Completed! Found {len(all_receipts)} receipts")
                 break
                 
         except Exception as e:
-            st.error(f"❌ **Exception:** {str(e)}")
+            if render_ui:
+                st.error(f"❌ **Exception:** {str(e)}")
+            if debug_sink is not None:
+                debug_sink["error"] = f"Exception: {str(e)}"
             break
     
-    progress_bar.progress(100)
+    if progress_bar is not None:
+        progress_bar.progress(100)
+    if debug_sink is not None:
+        debug_sink["pages_fetched"] = page_count
+        debug_sink["receipts_found"] = len(all_receipts)
     return all_receipts
 
 # --- Helper: Convert UTC timestamp to GMT+7 date ---
@@ -752,6 +1339,50 @@ def parse_date_safe(date_str):
             if date_match:
                 return datetime.strptime(date_match.group(1), '%Y-%m-%d').date()
             return None
+
+
+# --- Product category mapping helpers ---
+HARDCODED_CATEGORY_OVERRIDES = {
+    "หลอด": "🧊 หลอดเล็ก (Small Tube)",
+    "ป่น20kg": "🧊 ป่น (Crushed Ice)",
+    "coolcorner": "🧊 หลอดเล็ก (Small Tube)",
+    "น้ําแข็งถุงใส13kg": "🧊 หลอดเล็ก (Small Tube)",
+    "น้ำแข็งถุงใส13kg": "🧊 หลอดเล็ก (Small Tube)",
+    "ถุงใส20kg": "🧊 หลอดเล็ก (Small Tube)",
+    "eatamare20kg": "🧊 หลอดเล็ก (Small Tube)",
+    "ถุงใส13kg": "🧊 หลอดเล็ก (Small Tube)",
+    "บดซีฟู๊ด": "🧊 ป่น (Crushed Ice)",
+    "ถุงใส": "🧊 หลอดเล็ก (Small Tube)",
+}
+
+
+def normalize_product_name(product_name):
+    if pd.isna(product_name):
+        return ""
+    return re.sub(r"[\s\.\-_/]+", "", str(product_name).lower())
+
+
+def categorize_ice_product_name(product_name, manual_categories=None):
+    """Categorize products using manual overrides, hardcoded map, then keyword fallback."""
+    if pd.isna(product_name):
+        return "📦 อื่นๆ (Other)"
+
+    product_raw = str(product_name)
+    if manual_categories and product_raw in manual_categories:
+        return manual_categories[product_raw]
+
+    product_key = normalize_product_name(product_raw)
+    if product_key in HARDCODED_CATEGORY_OVERRIDES:
+        return HARDCODED_CATEGORY_OVERRIDES[product_key]
+
+    product_str = product_raw.lower()
+    if "ป่น" in product_str:
+        return "🧊 ป่น (Crushed Ice)"
+    if "หลอดเล็ก" in product_str or ("หลอด" in product_str and "เล็ก" in product_str):
+        return "🧊 หลอดเล็ก (Small Tube)"
+    if "หลอดใหญ่" in product_str or ("หลอด" in product_str and "ใหญ่" in product_str):
+        return "🧊 หลอดใหญ่ (Large Tube)"
+    return "📦 อื่นๆ (Other)"
 
 # --- Helper: Get smart sync date range ---
 def get_smart_sync_range(db):
@@ -850,64 +1481,62 @@ if 'ref_data' not in st.session_state:
         st.session_state.ref_data = ReferenceData(db)
 ref_data = st.session_state.ref_data
 
+# Ensure customer map is always initialized for customer analysis/rendering.
+if 'customer_map' not in st.session_state:
+    st.session_state.customer_map = db.get_customer_map() or {}
+customer_map = st.session_state.get('customer_map', {})
+
+# Ensure manual product categories are always available across tabs.
+if 'manual_categories' not in st.session_state:
+    st.session_state.manual_categories = db.get_manual_categories() or {}
+
 # Initialize selected tab with proper translation
 initialize_selected_tab()
 
 # ========== SIDEBAR NAVIGATION ==========
-st.sidebar.title("🐻‍❄️ Snow AI")
+st.sidebar.markdown("""
+<div style="padding: 4px 0 8px 0;">
+    <span style="font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text-primary, #0f172a);">Snow AI</span>
+</div>
+""", unsafe_allow_html=True)
 
-# Logout button
-if st.sidebar.button(get_text("logout"), key="logout_btn", use_container_width=True, type="secondary"):
-    st.session_state.authenticated = False
-    st.rerun()
-
-st.sidebar.markdown("---")
-
-# Load Database button right under title
-if st.sidebar.button(get_text("load_database"), key="load_db_main", use_container_width=True, type="primary"):
-    try:
-        # Verify database tables exist first
-        if not db.verify_tables_exist():
-            st.sidebar.error("❌ Database tables not initialized. Please check the deployment logs.")
-            st.stop()
-        
-        # Load ALL data from database (not filtered by date range)
-        df = db.get_receipts_dataframe()
-        
-        if not df.empty:
-            st.session_state.receipts_df = df
-            total_receipts = db.get_receipt_count()
-            st.sidebar.success(get_text("loaded_success", total_receipts=total_receipts, line_items=len(df)))
-        else:
-            st.sidebar.warning(get_text("no_cached_data"))
-            st.sidebar.info("💡 Go to Settings tab to sync data from Loyverse API")
-    except Exception as e:
-        st.sidebar.error(f"❌ Database error: {str(e)}")
-        st.sidebar.info("💡 Try refreshing the page or check the deployment logs.")
-
-# Language switch buttons
-# Create two columns for the language buttons
-lang_col1, lang_col2 = st.sidebar.columns(2)
+# Load Database + Language row
+load_col, lang_col1, lang_col2 = st.sidebar.columns([2, 1, 1])
+with load_col:
+    if st.button(get_text("load_database"), key="load_db_main", use_container_width=True, type="primary"):
+        try:
+            if not db.verify_tables_exist():
+                st.sidebar.error("Database tables not initialized.")
+                st.stop()
+            df = db.get_receipts_dataframe()
+            if not df.empty:
+                st.session_state.receipts_df = df
+                total_receipts = db.get_receipt_count()
+                st.sidebar.success(get_text("loaded_success", total_receipts=total_receipts, line_items=len(df)))
+            else:
+                st.sidebar.warning(get_text("no_cached_data"))
+        except Exception as e:
+            st.sidebar.error(f"Database error: {str(e)}")
 
 with lang_col1:
-    if st.button("🇺🇸 English", key="lang_english", 
+    if st.button("EN", key="lang_english", 
                 type="primary" if st.session_state.language == "English" else "secondary",
                 use_container_width=True):
         st.session_state.language = "English"
         st.rerun()
 
 with lang_col2:
-    if st.button("🇹🇭 ไทย", key="lang_thai",
+    if st.button("TH", key="lang_thai",
                 type="primary" if st.session_state.language == "Thai" else "secondary", 
                 use_container_width=True):
         st.session_state.language = "Thai"
         st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.subheader(get_text("navigation"))
 
 # Dedicated import/reconciliation workspace
-DATA_IMPORT_TAB = "🧪 Data Import & Reconciliation"
+DATA_IMPORT_TAB = "Data Import & Reconciliation"
+SETTINGS_TAB = get_text("settings_preferences")
 
 # Tab navigation buttons
 tabs = [
@@ -921,7 +1550,6 @@ tabs = [
     get_text("customer_invoice"),
     get_text("ice_forecast"),
     get_text("crm"),
-    DATA_IMPORT_TAB
 ]
 
 for tab in tabs:
@@ -932,593 +1560,322 @@ for tab in tabs:
 
 st.sidebar.markdown("---")
 
-# Settings section at the bottom - Comprehensive Data Management & Customization
-with st.sidebar.expander(get_text("settings_preferences"), expanded=False):
-    
-    # === VISUAL SETTINGS ===
-    st.markdown(f"### {get_text('appearance')}")
-    
-    # Initialize theme in session state
+# Logout at bottom
+if st.sidebar.button(get_text("logout"), key="logout_btn", use_container_width=True, type="secondary"):
+    st.session_state.authenticated = False
+    st.rerun()
+
+# Keep Settings button directly below Sign Out
+if st.sidebar.button(
+    get_text("settings_preferences"),
+    key="open_settings_btn",
+    use_container_width=True,
+    type="primary" if st.session_state.selected_tab == SETTINGS_TAB else "secondary",
+):
+    st.session_state.selected_tab = SETTINGS_TAB
+    st.rerun()
+
+if st.sidebar.button(
+    DATA_IMPORT_TAB,
+    key="open_reconciliation_btn",
+    use_container_width=True,
+    type="primary" if st.session_state.selected_tab == DATA_IMPORT_TAB else "secondary",
+):
+    st.session_state.selected_tab = DATA_IMPORT_TAB
+    st.rerun()
+
+with st.sidebar.expander("Sync", expanded=False):
+    if st.button(
+        get_text("settings_sync_last_date"),
+        key="sidebar_sync_last_date_btn",
+        use_container_width=True,
+        type="primary",
+    ):
+        sync_start, sync_end, sync_msg = get_smart_sync_range(db)
+        st.session_state.sync_start_date = sync_start
+        st.session_state.sync_end_date = sync_end
+        st.session_state.sync_mode = "last_date"
+        st.session_state.trigger_sync = True
+        st.session_state.is_sync_missing = True
+        st.session_state.sync_status_banner = {
+            "level": "info",
+            "message": f"{sync_msg} ({sync_start} -> {sync_end})",
+        }
+
+# Full Settings tab - sync-first, simplified layout
+if st.session_state.selected_tab == SETTINGS_TAB:
+    st.subheader(get_text("settings_preferences"))
+    st.caption(get_text("settings_sync_caption"))
+
+    if "last_sync_report" not in st.session_state:
+        st.session_state.last_sync_report = None
+
+    # 1) Sync Settings
+    st.markdown(f"### {get_text('settings_sync_header')}")
+
+    sync_col1, sync_col2 = st.columns([1, 2])
+    with sync_col1:
+        if st.button(
+            get_text("settings_sync_last_date"),
+            help=get_text("settings_sync_last_date_help"),
+            key="settings_sync_last_date_btn",
+            use_container_width=True,
+            type="primary",
+        ):
+            sync_start, sync_end, sync_msg = get_smart_sync_range(db)
+            st.session_state.sync_start_date = sync_start
+            st.session_state.sync_end_date = sync_end
+            st.session_state.sync_mode = "last_date"
+            st.session_state.trigger_sync = True
+            st.session_state.is_sync_missing = True
+            st.info(f"{sync_msg} ({sync_start} -> {sync_end})")
+
+    with sync_col2:
+        st.markdown(f"**{get_text('settings_custom_range')}**")
+        custom_col1, custom_col2 = st.columns(2)
+        default_start = st.session_state.get("sync_start_date", datetime.today().date() - timedelta(days=30))
+        if hasattr(default_start, "date"):
+            default_start = default_start.date()
+        default_end = st.session_state.get("sync_end_date", datetime.today().date())
+        if hasattr(default_end, "date"):
+            default_end = default_end.date()
+
+        with custom_col1:
+            sync_start = st.date_input(
+                get_text("start_date"),
+                value=default_start,
+                min_value=datetime(2020, 1, 1).date(),
+                max_value=datetime.today().date(),
+                key="settings_sync_start_date",
+            )
+        with custom_col2:
+            sync_end = st.date_input(
+                get_text("end_date"),
+                value=default_end,
+                min_value=datetime(2020, 1, 1).date(),
+                max_value=datetime.today().date(),
+                key="settings_sync_end_date",
+            )
+
+        sync_store_filter = st.text_input(
+            get_text("settings_store_filter"),
+            value=st.session_state.get("sync_store_filter", ""),
+            help=get_text("settings_store_filter_help"),
+            key="settings_store_filter",
+        )
+        st.session_state.sync_store_filter = sync_store_filter
+
+        st.session_state.sync_start_date = sync_start
+        st.session_state.sync_end_date = sync_end
+        st.caption(
+            get_text(
+                "settings_sync_preview_caption",
+                start_date=sync_start.isoformat(),
+                end_date=sync_end.isoformat(),
+                days=(sync_end - sync_start).days + 1,
+            )
+        )
+        if st.button(
+            get_text("settings_sync_custom_range"),
+            key="settings_sync_custom_btn",
+            use_container_width=True,
+        ):
+            if sync_start > sync_end:
+                st.error(get_text("settings_invalid_date_range"))
+            else:
+                st.session_state.sync_mode = "custom_range"
+                st.session_state.trigger_sync = True
+                st.session_state.is_sync_missing = False
+
+    sync_status = st.session_state.get("sync_status_banner")
+    if sync_status and sync_status.get("message"):
+        level = sync_status.get("level", "info")
+        message = sync_status.get("message")
+        if level == "success":
+            st.success(message)
+        elif level == "warning":
+            st.warning(message)
+        elif level == "error":
+            st.error(message)
+        else:
+            st.info(message)
+
+    st.markdown("---")
+
+    # 2) Sync Results & Debug
+    st.markdown(f"### {get_text('settings_sync_results')}")
+    last_sync_report = st.session_state.get("last_sync_report")
+    if last_sync_report:
+        rcol1, rcol2, rcol3 = st.columns(3)
+        rcol1.metric(get_text("settings_last_mode"), last_sync_report.get("mode", "-"))
+        rcol2.metric(get_text("settings_fetched_count"), f"{last_sync_report.get('fetched_count', 0):,}")
+        rcol3.metric(get_text("settings_saved_count"), f"{last_sync_report.get('saved_count', 0):,}")
+
+        rcol4, rcol5, rcol6 = st.columns(3)
+        rcol4.metric(get_text("settings_duplicates"), f"{last_sync_report.get('duplicate_skips', 0):,}")
+        rcol5.metric(get_text("settings_collisions"), f"{last_sync_report.get('collision_signals', 0):,}")
+        rcol6.metric(get_text("settings_new_transactions"), f"{last_sync_report.get('new_transactions', 0):,}")
+
+        st.caption(
+            f"{get_text('settings_last_range')}: "
+            f"{last_sync_report.get('sync_start_date', '-')}"
+            f" -> {last_sync_report.get('sync_end_date', '-')}"
+        )
+
+        with st.expander(get_text("settings_debug_console"), expanded=False):
+            st.json(last_sync_report)
+    else:
+        st.info(get_text("settings_sync_results_empty"))
+
+    with st.expander("API Endpoints Used", expanded=False):
+        token_preview = f"{LOYVERSE_TOKEN[:10]}...{LOYVERSE_TOKEN[-10:]}" if LOYVERSE_TOKEN else "Not configured"
+        st.markdown(f"""
+### **Fetch Receipts**
+**Endpoint:** `GET /v1.0/receipts`  
+**Called when:** You run sync/import actions
+
+**Parameters:**
+- `created_at_min` - Start date/time (UTC)
+- `created_at_max` - End date/time (UTC)
+- `limit` - 250 receipts per page
+- `store_id` - Optional store filter
+- `cursor` - For pagination
+
+**Returns:** Receipt data including:
+- Receipt details (number, date, total)
+- Line items (products, quantities, prices)
+- Payments (payment types, amounts)
+- Customer IDs, store IDs, employee IDs
+
+---
+
+### **Fetch Customers**
+**Endpoint:** `GET /v1.0/customers`  
+**Called when:** Customer sync/load operations
+
+**Parameters:**
+- `limit` - 250 customers per page
+- `cursor` - For pagination
+
+**Returns:** Customer data including:
+- Customer ID (UUID)
+- Customer name
+- Customer code (numeric POS ID)
+- Email, phone, address
+- Visit history, total spent
+
+---
+
+### **Authentication**
+- Uses Bearer Token: `{token_preview}`
+- All requests include `Authorization` header
+
+### **Data Processing**
+1. Fetches all receipts in date range (with pagination)
+2. Flattens nested JSON into flat table structure
+3. Maps customer UUIDs to names
+4. Calculates aggregations for charts
+
+### **Full Documentation**
+See `API_REFERENCE.md` for complete details, response examples, and curl commands.
+""")
+
+    st.markdown("---")
+
+    # 3) Imported Data Snapshot
+    st.markdown(f"### {get_text('settings_imported_snapshot')}")
+    try:
+        conn = db.get_connection()
+        receipt_count_df = pd.read_sql_query("SELECT COUNT(*) AS c FROM receipts", conn)
+        line_count_df = pd.read_sql_query("SELECT COUNT(*) AS c FROM line_items", conn)
+        recent_receipts = pd.read_sql_query(
+            """
+            SELECT
+                receipt_number,
+                store_id,
+                receipt_type,
+                total_money,
+                total_discount,
+                COALESCE(receipt_date, created_at) AS event_ts
+            FROM receipts
+            ORDER BY COALESCE(receipt_date, created_at) DESC
+            LIMIT 20
+            """,
+            conn,
+        )
+        conn.close()
+        db_date_range = db.get_date_range()
+
+        snapshot_col1, snapshot_col2, snapshot_col3 = st.columns(3)
+        snapshot_col1.metric(get_text("settings_db_receipts"), f"{int(receipt_count_df['c'].iloc[0]):,}")
+        snapshot_col2.metric(get_text("settings_db_line_items"), f"{int(line_count_df['c'].iloc[0]):,}")
+        if db_date_range and db_date_range[0] and db_date_range[1]:
+            snapshot_col3.metric(get_text("settings_db_range"), f"{db_date_range[0][:10]} -> {db_date_range[1][:10]}")
+        else:
+            snapshot_col3.metric(get_text("settings_db_range"), "-")
+
+        st.markdown(f"**{get_text('settings_recent_imports')}**")
+        if recent_receipts.empty:
+            st.info(get_text("settings_no_receipts_preview"))
+        else:
+            st.dataframe(recent_receipts, use_container_width=True, hide_index=True)
+    except Exception as e:
+        st.warning(f"Snapshot unavailable: {str(e)}")
+
+    st.markdown("---")
+
+    # 4) Basic Preferences
+    st.markdown(f"### {get_text('settings_basic_preferences')}")
+
+    # Theme selector
     if 'theme_mode' not in st.session_state:
         st.session_state.theme_mode = "Light"
-    
-    # Theme selector
+
     col1, col2 = st.columns(2)
     with col1:
-        if st.button(f"☀️ {get_text('light')}", use_container_width=True, 
+        if st.button(get_text('light'), use_container_width=True, 
                     type="primary" if st.session_state.theme_mode == "Light" else "secondary"):
             st.session_state.theme_mode = "Light"
-            st.info("💡 Light mode active")
+            st.rerun()
     
     with col2:
-        if st.button(f"🌙 {get_text('dark')}", use_container_width=True,
+        if st.button(get_text('dark'), use_container_width=True,
                     type="primary" if st.session_state.theme_mode == "Dark" else "secondary"):
             st.session_state.theme_mode = "Dark"
-            st.info("🌙 Dark mode active (refresh to apply)")
-    
-    # Chart color scheme
-    if 'color_scheme' not in st.session_state:
-        st.session_state.color_scheme = "Default"
-    
-    color_scheme = st.selectbox(
-        "📊 Chart Color Scheme",
-        ["Default", "Blues", "Greens", "Reds", "Purples", "Viridis", "Plasma", "Rainbow"],
-        index=["Default", "Blues", "Greens", "Reds", "Purples", "Viridis", "Plasma", "Rainbow"].index(st.session_state.color_scheme),
-        key="color_scheme_select"
-    )
-    st.session_state.color_scheme = color_scheme
-    
-    # Font size
-    if 'font_size' not in st.session_state:
-        st.session_state.font_size = get_text("medium")
-    
-    font_size_options = [get_text("small"), get_text("medium"), get_text("large")]
-    font_size = st.radio(
-        f"🔤 {get_text('font_size')}",
-        font_size_options,
-        index=font_size_options.index(st.session_state.font_size) if st.session_state.font_size in font_size_options else 1,
-        horizontal=True,
-        key="font_size_select"
-    )
-    st.session_state.font_size = font_size
-    
-    st.markdown("---")
-    
-    # === DATA MANAGEMENT ===
-    st.markdown(f"### {get_text('data_management')}")
-    
-    # Database info
-    try:
-        db_stats = db.get_database_stats()
-        col1, col2 = st.columns(2)
-        with col1:
-            st.metric(f"💾 {get_text('customers')}", db_stats['customers'])
-            st.metric(f"📍 {get_text('locations')}", db_stats['categories'])
-        with col2:
-            st.metric("🧾 Receipts", db_stats['receipts'])
-            st.metric(f"📦 {get_text('products')}", db_stats['items'])
-    except Exception as e:
-        st.error(f"❌ Database error: {str(e)}")
-        st.info("💡 Database tables may not be initialized. Check deployment logs.")
-        db_stats = {'customers': 0, 'receipts': 0, 'categories': 0, 'items': 0, 'date_range': [None, None]}
-    
-    if db_stats['date_range'][0]:
-        st.caption(f"📅 Data: {db_stats['date_range'][0][:10]} to {db_stats['date_range'][1][:10]}")
-    
-    st.markdown("---")
-    st.subheader("📚 Reference Data")
-    
-    # Sync all metadata button
-    if st.button(get_text("sync_all_metadata"), help="Fetch customers, payment types, stores, employees", key="sync_all_meta"):
-        with st.spinner("Syncing all reference data..."):
-            total_synced = 0
-            
-            # Fetch customers
-            customers = fetch_all_customers(LOYVERSE_TOKEN)
-            if customers:
-                count = db.save_customers(customers)
-                db.update_sync_time('customers', f"{count} customers")
-                total_synced += count
-            
-            # Fetch payment types
-            payment_types = fetch_all_payment_types(LOYVERSE_TOKEN)
-            if payment_types:
-                count = db.save_payment_types(payment_types)
-                db.update_sync_time('payment_types', f"{count} payment types")
-                total_synced += count
-            
-            # Fetch stores
-            stores = fetch_all_stores(LOYVERSE_TOKEN)
-            if stores:
-                count = db.save_stores(stores)
-                db.update_sync_time('stores', f"{count} stores")
-                total_synced += count
-            
-            # Fetch employees
-            employees = fetch_all_employees(LOYVERSE_TOKEN)
-            if employees:
-                count = db.save_employees(employees)
-                db.update_sync_time('employees', f"{count} employees")
-                total_synced += count
-            
-            # Fetch categories (your 23 locations!)
-            categories = fetch_all_categories(LOYVERSE_TOKEN)
-            if categories:
-                count = db.save_categories(categories)
-                db.update_sync_time('categories', f"{count} categories/locations")
-                total_synced += count
-                st.info(f"📍 Found {count} location categories!")
-            
-            # Fetch items (to link products to locations)
-            items = fetch_all_items(LOYVERSE_TOKEN)
-            if items:
-                count = db.save_items(items)
-                db.update_sync_time('items', f"{count} items")
-                total_synced += count
-            
-            # Refresh reference data
-            ref_data.refresh()
-            
-            st.success(f"✅ Synced {total_synced} total records!")
-            st.success(f"📍 Your {len(categories)} locations are now mapped!")
             st.rerun()
 
-    # Show reference data status
-    status = ref_data.get_status_summary()
-    categories_count = db.get_category_count()
-    items_count = db.get_item_count()
-
-    if status['total'] > 0 or categories_count > 0:
-        st.info(f"📊 Loaded: {status['customers']} customers, {status['payment_types']} payments, {status['stores']} stores, {status['employees']} employees")
-        if categories_count > 0:
-            st.success(f"📍 Locations: {categories_count} categories, {items_count} items")
-        missing = ref_data.get_missing_data_types()
-        if missing:
-            st.warning(f"⚠️ Missing: {', '.join(missing)}")
-    else:
-        st.warning("⚠️ No reference data loaded. Click 'Sync All Metadata' to fetch.")
-
-    st.markdown("---")
-    st.subheader("👥 Individual Syncs")
-
-    # Fetch customers when button is clicked
-    col1, col2 = st.columns(2)
-    with col1:
-        fetch_new = st.button("🔄 Sync Customers", help="Fetch latest from API", key="sync_customers_btn")
-    with col2:
-        load_cached = st.button("💾 Load Cached", help="Load from local database", key="load_cached_btn")
-
-    if fetch_new:
-        with st.spinner("Fetching customer data from Loyverse API..."):
-            customers = fetch_all_customers(LOYVERSE_TOKEN)
-        
-        if customers:
-            # Save to database
-            saved_count = db.save_customers(customers)
-            db.update_sync_time('customers', f"{saved_count} customers")
-            
-            st.success(f"✅ Synced {saved_count} customers to database")
-            
-            # Load from database
-            customer_map = db.get_customer_map()
-            st.session_state.customer_map = customer_map
-            
-            # Show preview
-            customer_df = db.get_all_customers().head(5)
-            st.dataframe(customer_df[['customer_id', 'name']].head(5), hide_index=True)
-            total = db.get_customer_count()
-            if total > 5:
-                st.caption(f"... and {total - 5} more")
-        else:
-            st.warning("⚠️ No customers found or API error")
-
-    if load_cached:
-        customer_count = db.get_customer_count()
-        if customer_count > 0:
-            customer_map = db.get_customer_map()
-            st.session_state.customer_map = customer_map
-            st.success(f"✅ Loaded {customer_count} customers from database")
-        else:
-            st.warning("⚠️ No cached customers. Click 'Sync Customers' first.")
-
-    # Get customer map from session state or database
-    if 'customer_map' not in st.session_state:
-        customer_map = db.get_customer_map()
-        if customer_map:
-            st.session_state.customer_map = customer_map
-    else:
-        customer_map = st.session_state.get('customer_map', {})
-    
-    st.markdown("---")
-    st.subheader("📊 Receipt Data Management")
-    
-    # Show current database stats with date range
-    date_range = db.get_date_range()
-    if date_range and date_range[0] and date_range[1]:
-        st.info(f"📊 **Current Database:** {db_stats['receipts']} receipts, {db_stats['customers']} customers | **Date Range:** {date_range[0]} to {date_range[1]}")
-    else:
-        st.info(f"📊 **Current Database:** {db_stats['receipts']} receipts, {db_stats['customers']} customers | **No data yet**")
-    
-    # Sync options with better date range controls
-    st.markdown("#### 🔄 Sync Receipts from API")
-    
-    # Help information
-    with st.expander("ℹ️ Sync Options Help", expanded=False):
-        st.markdown("""
-        **🔄 Sync Missing Data** - Intelligently syncs from your latest data to today  
-        **📅 Sync Last Week** - Downloads last 7 days of receipts  
-        **📅 Sync Last Month** - Downloads last 30 days of receipts  
-        **📅 Sync Last 3 Months** - Downloads last 90 days of receipts  
-        **📅 Sync All Historical Data** - Downloads ALL historical data (may take time)  
-        
-        💡 **Tip:** Use "Sync Missing Data" for regular updates - it's the smartest option!
-        """)
-    
-    # Quick sync buttons - Enhanced with new options
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("🔄 Sync Missing Data", help="Sync from latest data to current date", key="sync_missing_btn"):
-            start_date, end_date, message = get_smart_sync_range(db)
-            st.session_state.sync_start_date = start_date
-            st.session_state.sync_end_date = end_date
-            st.session_state.trigger_sync = True
-            st.session_state.is_sync_missing = True  # Flag for precise timestamp handling
-            st.info(f"📅 {message} - Syncing from {start_date} to {end_date}")
-    
-    with col2:
-        if st.button("📅 Sync Last Week", help="Download last 7 days of receipts", key="sync_week_btn"):
-            end_date = datetime.today()
-            start_date = end_date - timedelta(days=7)
-            st.session_state.sync_start_date = start_date.date()
-            st.session_state.sync_end_date = end_date.date()
-            st.session_state.trigger_sync = True
-    
-    with col3:
-        if st.button("📅 Sync Last Month", help="Download last 30 days of receipts", key="sync_month_btn"):
-            end_date = datetime.today()
-            start_date = end_date - timedelta(days=30)
-            st.session_state.sync_start_date = start_date.date()
-            st.session_state.sync_end_date = end_date.date()
-            st.session_state.trigger_sync = True
-    
-    # Additional sync options
-    st.markdown("#### 📊 Extended Sync Options")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("📅 Sync Last 3 Months", help="Download last 3 months of receipts", key="sync_3months_btn"):
-            end_date = datetime.today()
-            start_date = end_date - timedelta(days=90)
-            st.session_state.sync_start_date = start_date.date()
-            st.session_state.sync_end_date = end_date.date()
-            st.session_state.trigger_sync = True
-    
-    with col2:
-        if st.button("📅 Sync All Historical Data", help="Download ALL historical receipts (may take a while)", key="sync_all_historical_btn"):
-            # Set date range to cover a wide historical period
-            end_date = datetime.today()
-            start_date = datetime(2020, 1, 1)  # Go back to 2020
-            st.session_state.sync_start_date = start_date.date()
-            st.session_state.sync_end_date = end_date.date()
-            st.session_state.trigger_sync = True
-            st.warning("⚠️ This may take several minutes for large datasets!")
-    
-    with col3:
-        # Show current database date range
-        date_range = db.get_date_range()
-        if date_range and date_range[0] and date_range[1]:
-            st.info(f"📊 **Current Data:** {date_range[0]} to {date_range[1]}")
-        else:
-            st.warning("📊 **No data in database**")
-    
-    # Manual date range for sync
-    st.markdown("#### 📅 Custom Date Range for Sync")
-    col1, col2 = st.columns(2)
-    with col1:
-        # Default to 30 days ago, but allow any date
-        default_start = st.session_state.get('sync_start_date', datetime.today() - timedelta(days=30))
-        if isinstance(default_start, datetime):
-            default_start = default_start.date()
-        sync_start = st.date_input(
-            "Start Date", 
-            value=default_start,
-            min_value=datetime(2020, 1, 1).date(),  # Allow going back to 2020
-            max_value=datetime.today().date(),
-            key="sync_start_date_input"
-        )
-    with col2:
-        # Default to today
-        default_end = st.session_state.get('sync_end_date', datetime.today())
-        if isinstance(default_end, datetime):
-            default_end = default_end.date()
-        sync_end = st.date_input(
-            "End Date", 
-            value=default_end,
-            min_value=datetime(2020, 1, 1).date(),  # Allow going back to 2020
-            max_value=datetime.today().date(),
-            key="sync_end_date_input"
-        )
-    
-    # Store sync dates in session state
-    st.session_state.sync_start_date = sync_start
-    st.session_state.sync_end_date = sync_end
-    
-    # Sync and load buttons
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("🔄 Sync Custom Range", help=f"Download receipts from {sync_start} to {sync_end}", key="sync_custom_btn"):
-            st.session_state.trigger_sync = True
-    with col2:
-        if st.button("💾 Load Database", help="Load all cached data from database", key="load_receipts_btn"):
-            st.session_state.trigger_load = True
-    with col3:
-        if st.button("🗑️ Clear Database", help="Clear all cached data", key="clear_db_btn"):
-            st.session_state.trigger_clear = True
-    
-    # Show sync range info
-    days_range = (sync_end - sync_start).days + 1
-    st.caption(f"📊 Will sync {days_range} days of data from {sync_start} to {sync_end}")
-
-    st.markdown("---")
-    
-    # === DISPLAY PREFERENCES ===
-    st.markdown("### 🎯 Display Preferences")
-    
-    # Initialize preferences
-    if 'show_tooltips' not in st.session_state:
-        st.session_state.show_tooltips = True
-    if 'decimal_places' not in st.session_state:
-        st.session_state.decimal_places = 0
-    if 'date_format' not in st.session_state:
-        st.session_state.date_format = "YYYY-MM-DD"
-    
-    # Tooltips toggle
-    show_tooltips = st.checkbox(
-        "💬 Show Help Tooltips",
-        value=st.session_state.show_tooltips,
-        key="tooltips_checkbox"
+    # Language selector
+    language = st.radio(
+        get_text("settings_language"),
+        ["English", "Thai"],
+        index=0 if st.session_state.language == "English" else 1,
+        horizontal=True,
+        key="settings_language_radio",
     )
-    st.session_state.show_tooltips = show_tooltips
-    
-    # Decimal places
-    decimal_places = st.select_slider(
-        "💰 Decimal Places for Currency",
-        options=[0, 1, 2],
-        value=st.session_state.decimal_places,
-        key="decimal_slider"
-    )
-    st.session_state.decimal_places = decimal_places
-    st.caption(f"Example: ฿1,234.{('00' if decimal_places == 2 else '0' if decimal_places == 1 else '')}")
-    
-    # Date format
-    date_format = st.selectbox(
-        "📅 Date Format",
-        ["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY"],
-        index=["YYYY-MM-DD", "DD/MM/YYYY", "MM/DD/YYYY"].index(st.session_state.date_format),
-        key="date_format_select"
-    )
-    st.session_state.date_format = date_format
-    
-    # Chart animation
-    if 'chart_animation' not in st.session_state:
-        st.session_state.chart_animation = True
-    
-    chart_animation = st.checkbox(
-        "✨ Animate Charts",
-        value=st.session_state.chart_animation,
-        key="animation_checkbox"
-    )
-    st.session_state.chart_animation = chart_animation
-    
-    st.markdown("---")
-    
-    # === DATA BACKUP & EXPORT ===
-    st.markdown("### 💾 Data Backup")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📤 Export All Data", use_container_width=True, help="Export complete database as CSV"):
-            all_data = db.get_receipts_dataframe()
-            if not all_data.empty:
-                csv = all_data.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    "⬇️ Download",
-                    csv,
-                    f"loyverse_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    "text/csv",
-                    key="download_backup"
-                )
-                st.success(f"✅ {len(all_data)} records ready")
-            else:
-                st.warning("No data to export")
-    
-    with col2:
-        if st.button("🗄️ Database Info", use_container_width=True):
-            import os
-            if os.path.exists('loyverse_data.db'):
-                size = os.path.getsize('loyverse_data.db') / (1024 * 1024)  # MB
-                st.info(f"📊 Database Size: {size:.2f} MB")
-            else:
-                st.warning("Database file not found")
-    
-    # Auto-backup toggle
-    if 'auto_backup' not in st.session_state:
-        st.session_state.auto_backup = False
-    
-    auto_backup = st.checkbox(
-        "🔄 Auto-backup on sync (saves to backup/ folder)",
-        value=st.session_state.auto_backup,
-        key="auto_backup_checkbox"
-    )
-    st.session_state.auto_backup = auto_backup
-    
-    st.markdown("---")
-    
-    # === API SETTINGS ===
-    st.markdown("### 🔌 API & Connection")
-    
-    # Show API status
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        st.caption(f"🔑 Token: {LOYVERSE_TOKEN[:8]}...{LOYVERSE_TOKEN[-8:]}")
-    with col2:
-        st.caption("✅ Connected")
-    
-    # Cache settings
-    if 'cache_ttl' not in st.session_state:
-        st.session_state.cache_ttl = 300  # 5 minutes
-    
-    cache_ttl = st.select_slider(
-        "⏱️ Cache Duration (seconds)",
-        options=[60, 300, 600, 1800, 3600],
-        value=st.session_state.cache_ttl,
-        format_func=lambda x: f"{x//60} min" if x < 3600 else f"{x//3600} hr",
-        key="cache_ttl_slider"
-    )
-    st.session_state.cache_ttl = cache_ttl
-    
-    st.markdown("---")
-    st.subheader("📅 Query Settings")
-    
-    query_start_date = st.date_input("Sync Start Date", datetime.today() - timedelta(days=7), key="query_start_date")
-    query_end_date = st.date_input("Sync End Date", datetime.today(), key="query_end_date")
-    query_store_filter = st.text_input("Store ID Filter (optional)", "", key="query_store_filter")
-    
-    st.markdown("---")
-    
-    # === SYNC & DATA OPERATIONS ===
-    st.markdown("### 🔄 Sync & Data Operations")
-    
-    # Test API Connection
-    if st.button("🧪 Test API Connection", key="test_api_btn"):
-        st.write("🔍 **Testing API Connection...**")
-        headers = {"Authorization": f"Bearer {LOYVERSE_TOKEN}", "Accept": "application/json"}
-        
-        # Test with a simple request first
-        test_params = {
-            "created_at_min": "2024-01-01T00:00:00.000Z",
-            "created_at_max": "2024-12-31T23:59:59.000Z",
-            "limit": 1
-        }
-        
-        st.write(f"**Test Token:** {LOYVERSE_TOKEN[:10]}...{LOYVERSE_TOKEN[-10:]}")
-        st.write(f"**Test URL:** {BASE_URL}")
-        st.write(f"**Test Params:** {test_params}")
-        
-        try:
-            res = requests.get(BASE_URL, headers=headers, params=test_params)
-            st.write(f"**Test Response Status:** {res.status_code}")
-            st.write(f"**Test Response Headers:** {dict(res.headers)}")
-            st.write(f"**Test Response Text:** {res.text}")
-            
-            if res.status_code == 200:
-                st.success("✅ API connection successful!")
-                data = res.json()
-                st.write(f"**Response Data:** {data}")
-            else:
-                st.error(f"❌ API connection failed: {res.status_code}")
-                
-        except Exception as e:
-            st.error(f"❌ Exception during test: {str(e)}")
-    
-    st.markdown("---")
-    
-    # === ADVANCED SETTINGS ===
-    st.markdown("### ⚙️ Advanced Options")
-    
-    # Performance settings
-    if 'default_rows' not in st.session_state:
-        st.session_state.default_rows = 100
-    
-    default_rows = st.number_input(
-        "📊 Default Table Rows",
-        min_value=10,
-        max_value=500,
-        value=st.session_state.default_rows,
-        step=10,
-        key="default_rows_input",
-        help="Default number of rows to display in tables"
-    )
-    st.session_state.default_rows = default_rows
-    
-    # Auto-refresh
-    if 'auto_refresh' not in st.session_state:
-        st.session_state.auto_refresh = False
-    
-    auto_refresh = st.checkbox(
-        "🔄 Auto-refresh data every 5 minutes",
-        value=st.session_state.auto_refresh,
-        key="auto_refresh_checkbox",
-        help="Automatically reload data in background"
-    )
-    st.session_state.auto_refresh = auto_refresh
-    
-    # Compact mode
-    if 'compact_mode' not in st.session_state:
-        st.session_state.compact_mode = False
-    
-    compact_mode = st.checkbox(
-        "📐 Compact Mode (reduce spacing)",
-        value=st.session_state.compact_mode,
-        key="compact_mode_checkbox"
-    )
-    st.session_state.compact_mode = compact_mode
-    
-    # Show debug info
-    if 'show_debug' not in st.session_state:
-        st.session_state.show_debug = False
-    
-    show_debug = st.checkbox(
-        "🐛 Show Debug Information",
-        value=st.session_state.show_debug,
-        key="debug_checkbox"
-    )
-    st.session_state.show_debug = show_debug
-    
-    st.markdown("---")
-    
-    # === RESET & MAINTENANCE ===
-    st.markdown("### 🔧 Maintenance")
-    
-    # Reset preferences
-    if st.button("🔄 Reset All Preferences", use_container_width=True, help="Reset visual and display settings to defaults"):
-        st.session_state.theme_mode = "Light"
-        st.session_state.color_scheme = "Default"
-        st.session_state.font_size = get_text("medium")
-        st.session_state.decimal_places = 0
-        st.session_state.date_format = "YYYY-MM-DD"
-        st.session_state.chart_animation = True
-        st.session_state.default_rows = 100
-        st.session_state.auto_refresh = False
-        st.session_state.compact_mode = False
-        st.session_state.show_debug = False
-        st.success("✅ Preferences reset to defaults!")
+    if language != st.session_state.language:
+        st.session_state.language = language
         st.rerun()
-    
-    # Clear cache
-    if st.button("🗑️ Clear Streamlit Cache", use_container_width=True, help="Clear all cached data and functions"):
-        st.cache_data.clear()
-        st.success("✅ Cache cleared!")
-        st.rerun()
-    
-    st.markdown("---")
-    st.caption("💡 **Tip:** Visual settings apply globally to all tabs")
-    st.caption("⚙️ **Version:** 2.1 | **Tests:** 115/115 passing")
 
 # Store settings values in session state for use outside the expander
-if 'query_start_date' in st.session_state:
-    start_date = st.session_state.query_start_date
+if 'sync_start_date' in st.session_state:
+    start_date = st.session_state.sync_start_date
 else:
     start_date = datetime.today() - timedelta(days=7)
-    
-if 'query_end_date' in st.session_state:
-    end_date = st.session_state.query_end_date
+
+if 'sync_end_date' in st.session_state:
+    end_date = st.session_state.sync_end_date
 else:
     end_date = datetime.today()
-    
-if 'query_store_filter' in st.session_state:
-    store_filter = st.session_state.query_store_filter
+
+if 'sync_store_filter' in st.session_state:
+    store_filter = st.session_state.sync_store_filter
 else:
     store_filter = ""
+
+
+def set_sync_status(level, message):
+    """Persist sync banner so it renders under settings sync buttons."""
+    st.session_state.sync_status_banner = {"level": level, "message": message}
 
 # ========== MAIN CONTENT ==========
 
@@ -1530,264 +1887,125 @@ except Exception as e:
     st.info("💡 Database tables may not be initialized. Check deployment logs.")
     db_stats = {'customers': 0, 'receipts': 0, 'categories': 0, 'items': 0, 'date_range': [None, None]}
 
-# Enhanced Date Selector
-st.markdown(f"### 📅 {get_text('date_range_selector')}")
+if st.session_state.selected_tab != SETTINGS_TAB:
+    # Enhanced Date Selector
+    st.markdown(f"### {get_text('date_range_selector')}")
 
-if db_stats['date_range'][0]:
-    min_date = pd.to_datetime(db_stats['date_range'][0]).date()
-    max_date = pd.to_datetime(db_stats['date_range'][1]).date()
-    
-    # Initialize session state for date selector
-    if 'date_selector_start' not in st.session_state:
-        st.session_state.date_selector_start = max_date - timedelta(days=7)
-    if 'date_selector_end' not in st.session_state:
-        st.session_state.date_selector_end = max_date
-    
-    # Ensure session state values are within valid range
-    st.session_state.date_selector_start = max(min_date, min(max_date, st.session_state.date_selector_start))
-    st.session_state.date_selector_end = max(min_date, min(max_date, st.session_state.date_selector_end))
-    
-    # Quick shortcut buttons
-    st.markdown(f"**{get_text('quick_shortcuts')}**")
-    
-    # First row of shortcuts
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    
-    with col1:
-        if st.button(get_text("today"), key="quick_today", help="Select today only"):
-            st.session_state.date_selector_start = max_date
+    if db_stats['date_range'][0]:
+        min_date = pd.to_datetime(db_stats['date_range'][0]).date()
+        max_date = pd.to_datetime(db_stats['date_range'][1]).date()
+
+        # Initialize session state for date selector
+        if 'date_selector_start' not in st.session_state:
+            st.session_state.date_selector_start = max_date - timedelta(days=7)
+        if 'date_selector_end' not in st.session_state:
             st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = max_date
-            st.session_state.view_end_date = max_date
+
+        # Ensure session state values are within valid range
+        st.session_state.date_selector_start = max(min_date, min(max_date, st.session_state.date_selector_start))
+        st.session_state.date_selector_end = max(min_date, min(max_date, st.session_state.date_selector_end))
+
+        # Quick shortcut buttons - split into two rows for better spacing/readability
+        def _apply_quick_range(quick_start, quick_end):
+            st.session_state.date_selector_start = quick_start
+            st.session_state.date_selector_end = quick_end
+            st.session_state.view_start_date = quick_start
+            st.session_state.view_end_date = quick_end
             st.rerun()
-    
-    with col2:
-        if st.button(get_text("yesterday"), key="quick_yesterday", help="Select yesterday only"):
-            yesterday = max_date - timedelta(days=1)
-            st.session_state.date_selector_start = yesterday
-            st.session_state.date_selector_end = yesterday
-            st.session_state.view_start_date = yesterday
-            st.session_state.view_end_date = yesterday
-            st.rerun()
-    
-    with col3:
-        if st.button(get_text("last_3_days"), key="quick_last_3_days", help="Select last 3 days"):
-            start_date = max(min_date, max_date - timedelta(days=2))
-            st.session_state.date_selector_start = start_date
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = start_date
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    with col4:
-        if st.button(get_text("last_week"), key="quick_last_week", help="Select last 7 days"):
-            start_date = max(min_date, max_date - timedelta(days=6))
-            st.session_state.date_selector_start = start_date
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = start_date
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    with col5:
-        if st.button(get_text("last_2_weeks"), key="quick_last_2_weeks", help="Select last 14 days"):
-            start_date = max(min_date, max_date - timedelta(days=13))
-            st.session_state.date_selector_start = start_date
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = start_date
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    with col6:
-        if st.button(get_text("last_30_days"), key="quick_last_30_days", help="Select last 30 days"):
-            start_date = max(min_date, max_date - timedelta(days=29))
-            st.session_state.date_selector_start = start_date
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = start_date
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    # Second row of shortcuts
-    col1, col2, col3, col4, col5, col6 = st.columns(6)
-    
-    with col1:
-        if st.button(get_text("this_week"), key="quick_this_week", help="Select this week (Mon-Sun)"):
-            # Get Monday of current week (weekday() returns 0 for Monday, 6 for Sunday)
-            days_since_monday = max_date.weekday()  # 0=Monday, 1=Tuesday, ..., 6=Sunday
-            week_start = max_date - timedelta(days=days_since_monday)
-            st.session_state.date_selector_start = week_start
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = week_start
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    with col2:
-        if st.button(get_text("this_month"), key="quick_this_month", help="Select from start of month"):
-            month_start = max_date.replace(day=1)
-            st.session_state.date_selector_start = month_start
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = month_start
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    with col3:
-        if st.button(get_text("last_month"), key="quick_last_month", help="Select entire last month"):
-            # Calculate last month
-            if max_date.month == 1:
-                last_month_start = max_date.replace(year=max_date.year-1, month=12, day=1)
-            else:
-                last_month_start = max_date.replace(month=max_date.month-1, day=1)
-            
-            # Get last day of last month
-            if last_month_start.month == 12:
-                next_month = last_month_start.replace(year=last_month_start.year+1, month=1, day=1)
-            else:
-                next_month = last_month_start.replace(month=last_month_start.month+1, day=1)
-            last_month_end = next_month - timedelta(days=1)
-            
-            st.session_state.date_selector_start = last_month_start
-            st.session_state.date_selector_end = last_month_end
-            st.session_state.view_start_date = last_month_start
-            st.session_state.view_end_date = last_month_end
-            st.rerun()
-    
-    with col4:
-        if st.button(get_text("last_3_months"), key="quick_last_3_months", help="Select last 3 months"):
-            # Calculate 3 months ago
-            if max_date.month <= 3:
+
+        row1_col1, row1_col2, row1_col3, row1_col4 = st.columns(4)
+        with row1_col1:
+            if st.button(get_text("today"), key="quick_today", use_container_width=True):
+                _apply_quick_range(max_date, max_date)
+        with row1_col2:
+            if st.button(get_text("yesterday"), key="quick_yesterday", use_container_width=True):
+                yesterday = max_date - timedelta(days=1)
+                _apply_quick_range(yesterday, yesterday)
+        with row1_col3:
+            if st.button(get_text("last_week"), key="quick_last_week", use_container_width=True):
+                week_start = max(min_date, max_date - timedelta(days=6))
+                _apply_quick_range(week_start, max_date)
+        with row1_col4:
+            if st.button(get_text("this_month"), key="quick_this_month", use_container_width=True):
+                month_start = max_date.replace(day=1)
+                _apply_quick_range(month_start, max_date)
+
+        row2_col1, row2_col2, row2_col3, row2_col4 = st.columns(4)
+        with row2_col1:
+            if st.button(get_text("last_month"), key="quick_last_month", use_container_width=True):
                 if max_date.month == 1:
-                    start_month = 10
+                    last_month_start = max_date.replace(year=max_date.year - 1, month=12, day=1)
+                else:
+                    last_month_start = max_date.replace(month=max_date.month - 1, day=1)
+                if last_month_start.month == 12:
+                    next_month = last_month_start.replace(year=last_month_start.year + 1, month=1, day=1)
+                else:
+                    next_month = last_month_start.replace(month=last_month_start.month + 1, day=1)
+                last_month_end = next_month - timedelta(days=1)
+                _apply_quick_range(last_month_start, last_month_end)
+        with row2_col2:
+            if st.button(get_text("last_3_months"), key="quick_last_3_months", use_container_width=True):
+                if max_date.month <= 3:
+                    start_month = max_date.month + 9
                     start_year = max_date.year - 1
-                elif max_date.month == 2:
-                    start_month = 11
-                    start_year = max_date.year - 1
-                else:  # month == 3
-                    start_month = 12
-                    start_year = max_date.year - 1
-            else:
-                start_month = max_date.month - 3
-                start_year = max_date.year
-            
-            three_months_start = max_date.replace(year=start_year, month=start_month, day=1)
-            st.session_state.date_selector_start = three_months_start
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = three_months_start
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    with col5:
-        if st.button(get_text("this_year"), key="quick_this_year", help="Select from start of year"):
-            year_start = max_date.replace(month=1, day=1)
-            st.session_state.date_selector_start = year_start
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = year_start
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    with col6:
-        if st.button(get_text("all_data"), key="quick_all_data", help="Select all available data"):
-            st.session_state.date_selector_start = min_date
-            st.session_state.date_selector_end = max_date
-            st.session_state.view_start_date = min_date
-            st.session_state.view_end_date = max_date
-            st.rerun()
-    
-    st.markdown("---")
-    
-    # Date range inputs
-    col1, col2, col3 = st.columns([2, 2, 1])
-    
-    with col1:
-        start_date = st.date_input(
-            get_text("start_date"),
-            value=st.session_state.date_selector_start,
-            min_value=min_date,
-            max_value=max_date,
-            key="enhanced_start_date"
-        )
-    
-    with col2:
-        end_date = st.date_input(
-            get_text("end_date"),
-            value=st.session_state.date_selector_end,
-            min_value=min_date,
-            max_value=max_date,
-            key="enhanced_end_date"
-        )
-    
-    with col3:
-        st.write("")  # Spacing
-        st.write("")  # Spacing
-        if st.button(get_text("apply_range"), key="apply_date_range", type="primary"):
-            # Store selected dates in session state
-            st.session_state.view_start_date = start_date
-            st.session_state.view_end_date = end_date
-            st.session_state.date_selector_start = start_date
-            st.session_state.date_selector_end = end_date
-            st.rerun()
-    
-    # Show current selection
-    if 'view_start_date' in st.session_state and 'view_end_date' in st.session_state:
-        days_diff = (st.session_state.view_end_date - st.session_state.view_start_date).days + 1
-        st.success(f"📊 **{get_text('current_selection', start_date=st.session_state.view_start_date.strftime('%Y-%m-%d'), end_date=st.session_state.view_end_date.strftime('%Y-%m-%d'), days=days_diff)}**")
-    
-else:
-    st.info("📅 No cached data. Load data first to use date navigator.")
+                else:
+                    start_month = max_date.month - 3
+                    start_year = max_date.year
+                three_months_start = max_date.replace(year=start_year, month=start_month, day=1)
+                _apply_quick_range(three_months_start, max_date)
+        with row2_col3:
+            if st.button(get_text("this_year"), key="quick_this_year", use_container_width=True):
+                year_start = max_date.replace(month=1, day=1)
+                _apply_quick_range(year_start, max_date)
+        with row2_col4:
+            if st.button(get_text("all_data"), key="quick_all_data", use_container_width=True):
+                _apply_quick_range(min_date, max_date)
 
-st.markdown("---")
+        # Date range inputs
+        col1, col2, col3 = st.columns([2, 2, 1])
 
-# API Info button
-if st.button(get_text("api_information")):
-    with st.expander("📡 API Endpoints Used", expanded=True):
-        st.markdown("""
-        ### **1️⃣ Fetch Receipts**
-        **Endpoint:** `GET /v1.0/receipts`  
-        **Called when:** You click "🔄 Load Data"
-        
-        **Parameters:**
-        - `created_at_min` - Start date (from sidebar)
-        - `created_at_max` - End date (from sidebar)
-        - `limit` - 250 receipts per page
-        - `store_id` - Optional store filter
-        - `cursor` - For pagination
-        
-        **Returns:** Receipt data including:
-        - Receipt details (number, date, total)
-        - Line items (products, quantities, prices)
-        - Payments (payment types, amounts)
-        - Customer IDs, store IDs, employee IDs
-        
-        ---
-        
-        ### **2️⃣ Fetch Customers**
-        **Endpoint:** `GET /v1.0/customers`  
-        **Called when:** You click "👥 Fetch Customer Names"
-        
-        **Parameters:**
-        - `limit` - 250 customers per page
-        - `cursor` - For pagination
-        
-        **Returns:** Customer data including:
-        - Customer ID (UUID)
-        - Customer name
-        - Customer code (numeric POS ID)
-        - Email, phone, address
-        - Visit history, total spent
-        
-        ---
-        
-        ### **🔐 Authentication**
-        - Uses Bearer Token: `{token[:10]}...{token[-10:]}`
-        - All requests include `Authorization` header
-        
-        ### **📦 Data Processing**
-        1. Fetches all receipts in date range (with pagination)
-        2. Flattens nested JSON into flat table structure
-        3. Maps customer UUIDs to names
-        4. Calculates aggregations for charts
-        
-        ### **📄 Full Documentation**
-        See `API_REFERENCE.md` for complete details, response examples, and curl commands.
-        """.format(token=LOYVERSE_TOKEN))
+        with col1:
+            start_date = st.date_input(
+                get_text("start_date"),
+                value=st.session_state.date_selector_start,
+                min_value=min_date,
+                max_value=max_date,
+                key="enhanced_start_date"
+            )
+
+        with col2:
+            end_date = st.date_input(
+                get_text("end_date"),
+                value=st.session_state.date_selector_end,
+                min_value=min_date,
+                max_value=max_date,
+                key="enhanced_end_date"
+            )
+
+        with col3:
+            st.write("")  # Spacing
+            st.write("")  # Spacing
+            if st.button(get_text("apply_range"), key="apply_date_range", type="primary"):
+                # Store selected dates in session state
+                st.session_state.view_start_date = start_date
+                st.session_state.view_end_date = end_date
+                st.session_state.date_selector_start = start_date
+                st.session_state.date_selector_end = end_date
+                st.rerun()
+
+        # Show current selection as a subtle caption
+        if 'view_start_date' in st.session_state and 'view_end_date' in st.session_state:
+            days_diff = (st.session_state.view_end_date - st.session_state.view_start_date).days + 1
+            st.caption(
+                get_text(
+                    'current_selection',
+                    start_date=st.session_state.view_start_date.strftime('%Y-%m-%d'),
+                    end_date=st.session_state.view_end_date.strftime('%Y-%m-%d'),
+                    days=days_diff,
+                )
+            )
+    else:
+        st.info("No cached data. Load data first to use date navigator.")
 
 # Handle data loading button actions from settings
 sync_data = st.session_state.get('trigger_sync', False)
@@ -1811,6 +2029,23 @@ if sync_data:
         sync_start_date = sync_start_date.date()
     if hasattr(sync_end_date, 'date'):
         sync_end_date = sync_end_date.date()
+    sync_mode = st.session_state.get("sync_mode", "custom_range")
+    sync_report = {
+        "mode": sync_mode,
+        "sync_start_date": sync_start_date.isoformat(),
+        "sync_end_date": sync_end_date.isoformat(),
+        "store_filter": store_filter or "",
+        "fetched_count": 0,
+        "saved_count": 0,
+        "duplicate_skips": 0,
+        "duplicate_by_id": 0,
+        "duplicate_by_receipt_number": 0,
+        "collision_signals": 0,
+        "existing_count": 0,
+        "new_count": 0,
+        "new_transactions": 0,
+    }
+    set_sync_status("info", f"🔄 Syncing receipts from {sync_start_date} to {sync_end_date}")
     
     # Handle precise timestamps for sync missing data
     if st.session_state.get('is_sync_missing', False):
@@ -1858,8 +2093,7 @@ if sync_data:
         # 00:00-06:59 Bangkok and misaligning with POS export.)
         api_start = sync_start_date
         api_end = sync_end_date
-    
-    st.info(f"🔄 **Syncing receipts from {sync_start_date} to {sync_end_date}**")
+    sync_report["api_range"] = {"start": str(api_start), "end": str(api_end)}
     
     # Check what's already in database for this range (DB stores UTC; we query by date strings)
     existing_df = db.get_receipts_dataframe(
@@ -1868,9 +2102,21 @@ if sync_data:
         store_id=store_filter if store_filter else None
     )
     existing_count = len(existing_df) if not existing_df.empty else 0
+    sync_report["existing_count"] = existing_count
     
+    fetch_debug = {}
     with st.spinner(f"Fetching receipts from API ({sync_start_date} to {sync_end_date})..."):
-        receipts = fetch_all_receipts(LOYVERSE_TOKEN, api_start, api_end, store_filter)
+        receipts = fetch_all_receipts(
+            LOYVERSE_TOKEN,
+            api_start,
+            api_end,
+            store_filter,
+            render_ui=False,
+            debug_sink=fetch_debug,
+        )
+    sync_report["fetch_debug"] = fetch_debug
+    set_sync_status("info", f"🔍 Fetch completed: found {len(receipts) if receipts else 0} receipts.")
+    sync_report["fetched_count"] = len(receipts) if receipts else 0
     
     if receipts:
         # --- DEDUP GUARDRAILS ---
@@ -1935,20 +2181,15 @@ if sync_data:
                 existing_number_keys.add((receipt_store, receipt_number))
 
         skipped_duplicates = duplicate_by_id_count + duplicate_by_number_count
-        if skipped_duplicates > 0:
-            st.warning(
-                f"⚠️ Skipped {skipped_duplicates} duplicates "
-                f"(by ID: {duplicate_by_id_count}, by receipt number: {duplicate_by_number_count})"
-            )
-        if suspicious_time_amount_collisions > 0:
-            st.info(
-                f"ℹ️ Detected {suspicious_time_amount_collisions} same-time/same-amount collisions "
-                "in existing data. Guardrail kept them for review (not auto-deduped)."
-            )
-            
+        sync_report["duplicate_skips"] = skipped_duplicates
+        sync_report["duplicate_by_id"] = duplicate_by_id_count
+        sync_report["duplicate_by_receipt_number"] = duplicate_by_number_count
+        sync_report["collision_signals"] = suspicious_time_amount_collisions
         # Save to database (INSERT OR REPLACE = merge/upsert)
         saved_count = db.save_receipts(unique_receipts)
         db.update_sync_time('receipts', f"{saved_count} receipts")
+        sync_report["saved_count"] = saved_count
+        sync_report["unique_receipts_count"] = len(unique_receipts)
 
         # Post-sync integrity guardrail: duplicate receipt numbers in range.
         conn = db.get_connection()
@@ -1983,23 +2224,25 @@ if sync_data:
             store_id=store_filter if store_filter else None
         )
         new_count = len(new_df) if not new_df.empty else 0
+        sync_report["new_count"] = new_count
+        sync_report["new_transactions"] = max(0, new_count - existing_count)
         
         if new_count > existing_count:
-            st.success(f"✅ Added {new_count - existing_count} new transactions!")
-            st.info(f"📊 Total in database: {db.get_receipt_count()} receipts")
-            st.info(f"📅 Synced date range: {sync_start_date} to {sync_end_date}")
+            set_sync_status("success", f"✅ Added {new_count - existing_count} new transactions.")
         else:
-            st.success(f"✅ Updated {saved_count} receipts (no new data)")
-            st.info(f"📅 Date range: {sync_start_date} to {sync_end_date}")
+            set_sync_status("success", f"✅ Sync completed. Updated {saved_count} receipts (no new data).")
         
         # Load ALL data from database (not just this date range)
         df = db.get_receipts_dataframe()
         st.session_state.receipts_df = df
     else:
-        st.warning(f"⚠️ No receipts found in range {sync_start_date} to {sync_end_date}")
-        st.caption("💡 Try expanding the date range or check if data exists in Loyverse")
+        set_sync_status("warning", f"⚠️ No receipts found in range {sync_start_date} to {sync_end_date}.")
+        sync_report["status"] = "no_receipts_found"
+    
+    st.session_state.last_sync_report = sync_report
     
     st.session_state.trigger_sync = False
+    st.rerun()
 
 # Load from database
 if load_db:
@@ -2018,7 +2261,7 @@ if load_db:
     st.session_state.trigger_load = False
 
 # Check if we have data to display
-if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
+if st.session_state.selected_tab != SETTINGS_TAB and 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
     df = st.session_state.receipts_df
     
     if not df.empty:
@@ -2091,29 +2334,29 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
 
         # --- Sidebar filters ---
         st.sidebar.markdown("---")
-        st.sidebar.subheader("🔍 Data Filters")
+        st.sidebar.subheader("Filters")
         
-        # Location filter (ประเภท)
+        # Location filter
         if "location" in df.columns:
             unique_locations = sorted(df["location"].dropna().unique())
-            selected_location = st.sidebar.selectbox("📍 Filter by Location (ประเภท)", ["All"] + list(unique_locations))
+            selected_location = st.sidebar.selectbox("Location", ["All"] + list(unique_locations))
             if selected_location != "All":
                 df = df[df["location"] == selected_location]
         
         unique_stores = sorted(df["store_id"].dropna().unique())
-        selected_store = st.sidebar.selectbox("🏪 Filter by Store", ["All"] + list(unique_stores))
+        selected_store = st.sidebar.selectbox("Store", ["All"] + list(unique_stores))
         if selected_store != "All":
             df = df[df["store_id"] == selected_store]
 
         # Use payment_name (readable) if available, otherwise fall back to bill_type
         if "payment_name" in df.columns:
             unique_payments = sorted(df["payment_name"].dropna().unique())
-            selected_payment = st.sidebar.selectbox("💳 Filter by Payment Type", ["All"] + list(unique_payments))
+            selected_payment = st.sidebar.selectbox("Payment Type", ["All"] + list(unique_payments))
             if selected_payment != "All":
                 df = df[df["payment_name"] == selected_payment]
         else:
             unique_payments = sorted(df["bill_type"].dropna().unique())
-            selected_payment = st.sidebar.selectbox("💳 Filter by Payment Type", ["All"] + list(unique_payments))
+            selected_payment = st.sidebar.selectbox("Payment Type", ["All"] + list(unique_payments))
             if selected_payment != "All":
                 df = df[df["bill_type"] == selected_payment]
 
@@ -2264,12 +2507,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             bags_per_day = total_items
 
         col1, col2, col3, col4 = st.columns(4)
-        col1.metric("💰 Total Sales", f"{total_sales:,.0f}")
-        col2.metric("📦 Items Sold", f"{total_items:,.0f}")
-        col3.metric("👥 Unique Customers", f"{unique_customers}")
-        col4.metric("📅 Bags/Day", f"{bags_per_day:.1f}", help=f"Average bags sold per day over {days_in_period} days")
+        col1.metric("Total Sales", f"฿{total_sales:,.0f}")
+        col2.metric("Items Sold", f"{total_items:,.0f}")
+        col3.metric("Unique Customers", f"{unique_customers}")
+        col4.metric("Bags / Day", f"{bags_per_day:.1f}", help=f"Average bags sold per day over {days_in_period} days")
 
-        with st.expander("🛡️ Aggregation Integrity Monitor", expanded=False):
+        with st.expander("Aggregation Integrity Monitor", expanded=False):
             monitor = build_reconciliation_monitor(receipt_df, line_df)
             if monitor.get("ok"):
                 st.success("Receipt-grain totals are consistent with rebuilt line->receipt totals.")
@@ -2349,7 +2592,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             with col1:
                 st.metric(
-                    f"💰 {get_text('avg_daily_sales')}", 
+                    get_text('avg_daily_sales'), 
                     f"฿{avg_daily_sales:,.0f}",
                     delta=f"{sales_delta:+.1f}%" if sales_delta != 0 else None,
                     help="Average sales per day in selected period"
@@ -2357,21 +2600,25 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             with col2:
                 st.metric(
-                    f"🧾 {get_text('avg_transaction')}", 
+                    get_text('avg_transaction'), 
                     f"฿{avg_transaction_value:,.0f}",
+                    delta=" ",
+                    delta_color="off",
                     help="Average value per transaction"
                 )
             
             with col3:
                 st.metric(
-                    f"📦 {get_text('avg_items_per_day')}", 
+                    get_text('avg_items_per_day'), 
                     f"{avg_items_per_day:,.0f}",
+                    delta=" ",
+                    delta_color="off",
                     help="Average items sold per day"
                 )
             
             with col4:
                 st.metric(
-                    f"👥 {get_text('avg_customers_per_day')}", 
+                    get_text('avg_customers_per_day'), 
                     f"{avg_customers_per_day:,.0f}",
                     delta=f"{trans_delta:+.1f}%" if trans_delta != 0 else None,
                     help="Average unique customers per day"
@@ -2393,11 +2640,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 daily_sales = line_df.groupby("day")["line_total"].sum().reset_index().rename(columns={"line_total":"total"})
             
             fig = px.bar(daily_sales, x="day", y="total", title="Daily Sales Trend (Net Sales)", 
-                        text_auto=True, color="total",
-                        color_continuous_scale="Blues",
+                        text_auto=True,
                         labels={"total": "Total Sales", "day": "Date"})
-            fig.update_traces(textposition='outside')
-            fig.update_layout(showlegend=False, height=500)
+            fig.update_traces(textposition='outside', marker_color="#3b82f6")
+            fig.update_layout(**CHART_LAYOUT, showlegend=False, height=450)
             st.plotly_chart(fig, use_container_width=True)
             
             # Show discount information if available
@@ -2414,11 +2660,9 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         st.markdown(f"#### {get_text('daily_discounts')}")
                         fig_discounts = px.bar(daily_discounts, x="day", y="discounts", 
                                              title="Daily Discounts Applied",
-                                             color="discounts",
-                                             color_continuous_scale="Reds",
                                              text_auto=True)
-                        fig_discounts.update_traces(textposition='outside')
-                        fig_discounts.update_layout(showlegend=False, height=400)
+                        fig_discounts.update_traces(textposition='outside', marker_color="#ef4444")
+                        fig_discounts.update_layout(**CHART_LAYOUT, showlegend=False, height=350)
                         st.plotly_chart(fig_discounts, use_container_width=True)
                 else:
                     st.info("ℹ️ **No discounts found in the data**")
@@ -2450,8 +2694,8 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                           title="Sales Trend Line",
                           markers=True,
                           hover_data=["Items Sold", "Transactions"])
-            fig2.update_traces(line_color='#1f77b4', line_width=3)
-            fig2.update_layout(height=500)
+            fig2.update_traces(line_color='#3b82f6', line_width=2, marker=dict(size=5))
+            fig2.update_layout(**CHART_LAYOUT, height=400)
             st.plotly_chart(fig2, use_container_width=True)
             
             st.markdown("---")
@@ -2505,12 +2749,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             with col1:
                 best_day = dow_sales.loc[dow_sales['avg_per_occurrence'].idxmax(), 'day_of_week']
                 best_day_sales = dow_sales.loc[dow_sales['avg_per_occurrence'].idxmax(), 'avg_per_occurrence']
-                st.metric("🏆 Best Day", best_day, f"฿{best_day_sales:,.0f} avg")
+                st.metric("Best Day", best_day, f"฿{best_day_sales:,.0f} avg")
             
             with col2:
                 worst_day = dow_sales.loc[dow_sales['avg_per_occurrence'].idxmin(), 'day_of_week']
                 worst_day_sales = dow_sales.loc[dow_sales['avg_per_occurrence'].idxmin(), 'avg_per_occurrence']
-                st.metric("📉 Slowest Day", worst_day, f"฿{worst_day_sales:,.0f} avg")
+                st.metric("Slowest Day", worst_day, f"฿{worst_day_sales:,.0f} avg")
             
             with col3:
                 weekend_days = dow_sales[dow_sales['day_of_week'].isin(['Saturday', 'Sunday'])]
@@ -2518,7 +2762,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 weekend_avg = weekend_days['avg_per_occurrence'].mean() if len(weekend_days) > 0 else 0
                 weekday_avg = weekday_days['avg_per_occurrence'].mean() if len(weekday_days) > 0 else 0
                 diff_pct = ((weekend_avg - weekday_avg) / weekday_avg * 100) if weekday_avg > 0 else 0
-                st.metric("🎉 Weekend vs Weekday", f"{diff_pct:+.1f}%", 
+                st.metric("Weekend vs Weekday", f"{diff_pct:+.1f}%", 
                          f"Weekend: ฿{weekend_avg:,.0f}")
             
             # Charts
@@ -2532,12 +2776,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     y='avg_per_occurrence',
                     title='Average Sales by Day of Week',
                     labels={'day_of_week': 'Day', 'avg_per_occurrence': 'Average Sales'},
-                    color='avg_per_occurrence',
-                    color_continuous_scale='Viridis',
                     text_auto=True
                 )
-                fig_dow.update_traces(texttemplate='฿%{y:,.0f}', textposition='outside')
-                fig_dow.update_layout(showlegend=False, xaxis_tickangle=-45)
+                fig_dow.update_traces(texttemplate='฿%{y:,.0f}', textposition='outside', marker_color="#3b82f6")
+                fig_dow.update_layout(**CHART_LAYOUT, showlegend=False, xaxis_tickangle=-45)
                 st.plotly_chart(fig_dow, use_container_width=True)
             
             with col2:
@@ -2550,12 +2792,11 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     labels={'value': 'Count', 'day_of_week': 'Day', 'variable': 'Metric'},
                     barmode='group'
                 )
-                fig_dow_multi.update_layout(xaxis_tickangle=-45, legend_title_text='')
+                fig_dow_multi.update_layout(**CHART_LAYOUT, xaxis_tickangle=-45, legend_title_text='')
                 st.plotly_chart(fig_dow_multi, use_container_width=True)
             
             # Detailed table
-            with st.expander("📋 Detailed Day of Week Statistics"):
-                # Prepare display dataframe
+            with st.expander("Detailed Day of Week Statistics"):
                 display_dow = dow_sales[['day_of_week', 'total_sales', 'avg_per_occurrence', 'transactions', 'customers', 'items', 'days_count']].copy()
                 display_dow.columns = ['Day', 'Total Sales', 'Avg per Day', 'Transactions', 'Customers', 'Items Sold', 'Days in Period']
                 display_dow['Total Sales'] = display_dow['Total Sales'].apply(lambda x: f"฿{x:,.0f}")
@@ -2564,13 +2805,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.dataframe(display_dow, use_container_width=True, hide_index=True)
             
             # Insights
-            st.info(f"""
-            **💡 Insights:**
-            - **{best_day}** is your busiest day with an average of ฿{best_day_sales:,.0f} in sales
-            - **{worst_day}** is the slowest day - consider running promotions
-            - Weekend sales are **{diff_pct:+.1f}%** {'higher' if diff_pct > 0 else 'lower'} than weekdays on average
-            - Total days analyzed: {total_days} days
-            """)
+            st.caption(f"""**{best_day}** is busiest (฿{best_day_sales:,.0f} avg) · **{worst_day}** is slowest · Weekend sales {diff_pct:+.1f}% vs weekdays · {total_days} days analyzed""")
 
         elif st.session_state.selected_tab == get_text("by_location"):
             st.subheader(get_text("sales_by_location"))
@@ -2634,27 +2869,73 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.plotly_chart(fig_pie2, use_container_width=True)
                 
                 # Location details table
-                st.subheader("📊 Location Performance Details")
+                st.subheader(get_heading("location_performance_details"))
                 location_sales["Avg Transaction"] = location_sales["Total Sales"] / location_sales["Transactions"]
                 location_sales["Avg Items/Transaction"] = location_sales["Items Sold"] / location_sales["Transactions"]
                 st.dataframe(location_sales.sort_values("Total Sales", ascending=False), 
                            use_container_width=True, hide_index=True)
                 
                 # Location trends over time
-                st.subheader("📈 Location Trends Over Time")
+                st.subheader(get_heading("location_trends_over_time"))
                 if "signed_net" in receipt_df.columns:
                     location_daily = receipt_df.groupby(["day", "location"])["signed_net"].sum().reset_index().rename(columns={"signed_net":"total"})
                 else:
                     location_daily = line_df.groupby(["day", "location"])["line_total"].sum().reset_index().rename(columns={"line_total":"total"})
-                fig_trend = px.line(location_daily, x="day", y="total", color="location",
-                                   title="Daily Sales Trend by Location (Net Sales)",
-                                   markers=True)
+
+                # Use 7-day moving average to smooth daily volatility by location.
+                location_daily["day"] = pd.to_datetime(location_daily["day"], errors="coerce")
+                location_daily = location_daily.dropna(subset=["day"]).sort_values(["location", "day"])
+                location_daily["ma_7d"] = (
+                    location_daily
+                    .groupby("location")["total"]
+                    .transform(lambda s: s.rolling(window=7, min_periods=1).mean())
+                )
+
+                fig_trend = px.line(
+                    location_daily,
+                    x="day",
+                    y="ma_7d",
+                    color="location",
+                    title="7-Day Moving Average Sales Trend by Location (Net Sales)",
+                    markers=True,
+                    labels={"ma_7d": "7-Day Avg Sales", "day": "Date"},
+                )
                 st.plotly_chart(fig_trend, use_container_width=True)
+
+                # Alert if latest 7-day average declines by >30% vs previous 7-day window.
+                decline_alerts = []
+                for loc, loc_df in location_daily.groupby("location"):
+                    loc_df = loc_df.sort_values("day")
+                    if len(loc_df) < 14:
+                        continue
+                    latest_window = loc_df.tail(7)["total"]
+                    previous_window = loc_df.tail(14).head(7)["total"]
+                    latest_avg = float(latest_window.mean())
+                    previous_avg = float(previous_window.mean())
+                    if previous_avg <= 0:
+                        continue
+                    decline_pct = ((latest_avg - previous_avg) / previous_avg) * 100
+                    if decline_pct <= -30:
+                        decline_alerts.append(
+                            {
+                                "Location": loc,
+                                "Previous 7d Avg": previous_avg,
+                                "Latest 7d Avg": latest_avg,
+                                "Change %": decline_pct,
+                            }
+                        )
+
+                if decline_alerts:
+                    alert_df = pd.DataFrame(decline_alerts).sort_values("Change %")
+                    st.error("⚠️ Sales decline alert: one or more locations dropped more than 30% in the last week.")
+                    st.dataframe(alert_df, use_container_width=True, hide_index=True)
+                else:
+                    st.success("✅ No location has declined by more than 30% in the last 7-day window.")
                 
                 st.markdown("---")
                 
                 # === PEAK HOURS ANALYSIS ===
-                st.subheader("🕐 Peak Hours Analysis by Location")
+                st.subheader(get_heading("peak_hours_by_location"))
                 
                 # Extract hour from timestamp
                 df_hours_line = line_df.copy()
@@ -2857,25 +3138,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             # Categorize products into 3 main types
             def categorize_product(product_name):
                 """Categorize products into main 3 types"""
-                if pd.isna(product_name):
-                    return "📦 อื่นๆ (Other)"
-                
-                # Check manual categories first (user overrides)
-                if product_name in st.session_state.manual_categories:
-                    return st.session_state.manual_categories[product_name]
-                
-                # Auto-detect category
-                product_str = str(product_name).lower()
-                
-                # Check for each category
-                if "ป่น" in product_str:
-                    return "🧊 ป่น (Crushed Ice)"
-                elif "หลอดเล็ก" in product_str or ("หลอด" in product_str and "เล็ก" in product_str):
-                    return "🧊 หลอดเล็ก (Small Tube)"
-                elif "หลอดใหญ่" in product_str or ("หลอด" in product_str and "ใหญ่" in product_str):
-                    return "🧊 หลอดใหญ่ (Large Tube)"
-                else:
-                    return "📦 อื่นๆ (Other)"
+                return categorize_ice_product_name(
+                    product_name,
+                    manual_categories=st.session_state.manual_categories,
+                )
             
             # Apply categorization
             df_products = line_df.copy()
@@ -2903,18 +3169,18 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             with col1:
                 main_categories = category_sales[~category_sales['Category'].str.contains('อื่นๆ')]
                 main_sales = main_categories['Total Sales'].sum()
-                st.metric("💰 Main Products Sales", f"฿{main_sales:,.0f}", 
+                st.metric("Main Products Sales", f"฿{main_sales:,.0f}", 
                          f"{(main_sales/total_sales_sum*100):.1f}% of total")
             
             with col2:
                 top_category = category_sales.iloc[0]['Category']
                 top_sales = category_sales.iloc[0]['Total Sales']
-                st.metric("🏆 Top Category", top_category.split()[1], 
+                st.metric("Top Category", top_category.split()[1], 
                          f"฿{top_sales:,.0f}")
             
             with col3:
                 total_quantity = category_sales['Quantity'].sum()
-                st.metric("📦 Total Quantity", f"{total_quantity:,.0f} units")
+                st.metric("Total Quantity", f"{total_quantity:,.0f} units")
             
             with col4:
                 avg_price = total_sales_sum / total_quantity if total_quantity > 0 else 0
@@ -3123,7 +3389,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     )
                 
                 # Import manual categories
-                st.markdown("#### 📤 Import Manual Categories")
+                st.markdown(get_heading("import_manual_categories"))
                 uploaded_file = st.file_uploader(
                     "Upload JSON file with manual categories",
                     type=['json'],
@@ -3217,7 +3483,11 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 
                 # Visualization
                 # Use customer name for display if available
-                display_col = "Customer Name" if customer_map else "Customer ID"
+                has_customer_names = (
+                    "Customer Name" in customer_stats_sorted.columns
+                    and customer_stats_sorted["Customer Name"].fillna("").astype(str).str.strip().ne("").any()
+                )
+                display_col = "Customer Name" if has_customer_names else "Customer ID"
                 
                 fig = px.bar(customer_stats_sorted, 
                             x=sort_map[sort_by], 
@@ -3238,12 +3508,12 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 col4.metric("Avg Order Value", f"{customer_stats['Average Order Value'].mean():,.0f}")
                 
                 # Detailed customer table
-                st.subheader("📋 Customer Details")
+                st.subheader(get_heading("customer_details"))
                 st.dataframe(customer_stats_sorted.sort_values(sort_map[sort_by], ascending=False),
                            use_container_width=True, hide_index=True)
                 
                 # Customer segment analysis
-                st.subheader("📊 Customer Segments")
+                st.subheader(get_heading("customer_segments"))
                 col1, col2 = st.columns(2)
                 
                 with col1:
@@ -3292,7 +3562,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.markdown("---")
                     
                     # Outstanding by Customer
-                    st.markdown("### 👥 Outstanding Balance by Customer")
+                    st.markdown(get_heading("outstanding_by_customer"))
                     
                     if "signed_net" in credit_receipt_df.columns:
                         customer_credit = credit_receipt_df.groupby(['customer_id', 'customer_name']).agg({
@@ -3354,7 +3624,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.markdown("---")
                     
                     # Credit by Location
-                    st.markdown("### 📍 Credit Sales by Location")
+                    st.markdown(get_heading("credit_sales_by_location"))
                     
                     if 'location' in credit_receipt_df.columns:
                         if "signed_net" in credit_receipt_df.columns:
@@ -3393,7 +3663,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.markdown("---")
                     
                     # Credit vs Cash Trends
-                    st.markdown("### 📈 Credit vs Cash Sales Trend")
+                    st.markdown(get_heading("credit_vs_cash_trend"))
                     
                     # Get cash transactions
                     cash_receipt_df = receipt_df[receipt_df['payment_name'].str.contains('เงินสด', case=False, na=False)].copy()
@@ -3438,7 +3708,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.markdown("---")
                     
                     # Cash vs Credit Overview
-                    st.markdown("### 💳 Cash vs Credit Overview")
+                    st.markdown(get_heading("cash_vs_credit_overview"))
                     
                     # Calculate totals
                     total_cash = cash_daily['Cash Sales'].sum() if not cash_daily.empty else 0
@@ -3465,14 +3735,14 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     with col2:
                         # Summary metrics
                         st.metric("💵 Total Cash Sales", f"{total_cash:,.2f} THB")
-                        st.metric("💳 Total Credit Sales", f"{total_credit:,.2f} THB")
-                        st.metric("📊 Credit Ratio", f"{credit_percentage:.1f}%")
+                        st.metric("Total Credit Sales", f"{total_credit:,.2f} THB")
+                        st.metric("Credit Ratio", f"{credit_percentage:.1f}%")
                         st.metric("🎯 Total Sales", f"{grand_total:,.2f} THB")
                     
                     st.markdown("---")
                     
                     # Export options
-                    st.markdown("### 📥 Export Credit Reports")
+                    st.markdown(get_heading("export_credit_reports"))
                     
                     col1, col2, col3 = st.columns(3)
                     
@@ -3570,7 +3840,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                        height=400)
             
             # Scatter plot for correlation analysis
-            st.subheader("📈 Quantity vs Total Sales")
+            st.subheader(get_heading("quantity_vs_total_sales"))
             scatter_data = filtered_df.groupby("item").agg({
                 "quantity": "sum",
                 "line_total": "sum",
@@ -3592,7 +3862,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.subheader(get_text("transaction_log"))
             
             # CSV Upload for Manual Reconciliation
-            st.markdown("### 📤 Manual Checklist Upload & Reconciliation")
+            st.markdown(get_heading("manual_checklist_upload_reconcile"))
             st.write("Upload your manual checklist CSV to compare against API data")
             
             # Download template
@@ -3724,7 +3994,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         # Reconciliation section
                         if manual_df is not None:
                             st.markdown("---")
-                            st.markdown("### 🔍 Reconciliation Analysis")
+                            st.markdown(get_heading("reconciliation_analysis"))
                             
                             # Prepare API data for comparison (for this location)
                             api_summary = location_df.groupby(['day', 'customer_name', 'item']).agg({
@@ -3769,7 +4039,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             # Show discrepancies first
                             discrepancies = comparison[comparison['difference'] != 0].copy()
                             if not discrepancies.empty:
-                                st.markdown("#### ⚠️ Discrepancies Found")
+                                st.markdown(get_heading("discrepancies_found"))
                                 st.dataframe(
                                     discrepancies[['day', 'customer', 'product', 'api_quantity', 'manual_quantity', 'difference', 'status']],
                                     use_container_width=True,
@@ -3804,7 +4074,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             st.subheader(get_text("customer_invoice_generator"))
             
             # Customer search and selection
-            st.markdown("### 👤 Select Customer")
+            st.markdown(get_heading("select_customer"))
             
             # Search bar (full width)
             customer_search = st.text_input(
@@ -3863,7 +4133,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             
             if selected_customer_id:
                 st.markdown("---")
-                st.markdown("### 📅 Select Invoice Period")
+                st.markdown(get_heading("select_invoice_period"))
                 
                 # Get customer's transaction date range
                 customer_line_df = line_df[line_df['customer_id'] == selected_customer_id]
@@ -3936,7 +4206,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         st.warning(f"No transactions found for {selected_customer_name} between {invoice_start} and {invoice_end}")
                     else:
                         st.markdown("---")
-                        st.markdown("## 🧾 INVOICE")
+                        st.markdown(get_heading("invoice_title"))
                         
                         # Invoice header
                         col1, col2 = st.columns([2, 1])
@@ -3983,7 +4253,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         st.markdown("---")
                         
                         # Itemized list
-                        st.markdown("### 📋 Itemized Transactions")
+                        st.markdown(get_heading("itemized_transactions"))
                         
                         # Prepare invoice line items with price
                         if "signed_net" in invoice_df.columns:
@@ -4016,7 +4286,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         )
                         
                         # Summary by product
-                        st.markdown("### 📊 Summary by Product")
+                        st.markdown(get_heading("summary_by_product"))
                         if "signed_net" in invoice_df.columns:
                             product_summary = invoice_df.groupby('item').agg({
                                 'price': 'first',  # Get unit price
@@ -4043,7 +4313,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         
                         # Payment breakdown if available
                         if 'payment_name' in invoice_df.columns:
-                            st.markdown("### 💳 Payment Methods Used")
+                            st.markdown(get_heading("payment_methods_used"))
                             payment_summary = invoice_receipt_df.groupby('payment_name')['signed_net'].sum().reset_index()
                             payment_summary.columns = ['Payment Method', 'Amount']
                             payment_summary = payment_summary.sort_values('Amount', ascending=False)
@@ -4058,7 +4328,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         
                         # Download options
                         st.markdown("---")
-                        st.markdown("### 📥 Download Invoice")
+                        st.markdown(get_heading("download_invoice"))
                         
                         col1, col2, col3 = st.columns(3)
                         
@@ -4093,7 +4363,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         # Print View Modal
                         if st.session_state.get('show_print_view'):
                             st.markdown("---")
-                            st.markdown("## 🖨️ PRINT VIEW")
+                            st.markdown(get_heading("print_view"))
                             
                             # Close button
                             if st.button("❌ Close Print View"):
@@ -4123,7 +4393,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             """, unsafe_allow_html=True)
                             
                             # Itemized transactions (print version)
-                            st.markdown("### 📋 Itemized Transactions")
+                            st.markdown(get_heading("itemized_transactions"))
                             
                             # Prepare print-friendly table
                             if 'signed_net' in invoice_df.columns:
@@ -4144,7 +4414,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             st.dataframe(print_items, use_container_width=True, hide_index=True)
                             
                             # Product summary (print version)
-                            st.markdown("### 📊 Summary by Product")
+                            st.markdown(get_heading("summary_by_product"))
                             
                             if 'signed_net' in invoice_df.columns:
                                 print_summary = invoice_df.groupby('item').agg({
@@ -4188,19 +4458,10 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 # === ICE PRODUCT CATEGORIZATION ===
                 def categorize_ice_product(product_name):
                     """Categorize products into ice types"""
-                    if pd.isna(product_name):
-                        return "📦 อื่นๆ (Other)"
-                    
-                    product_str = str(product_name).lower()
-                    
-                    if "ป่น" in product_str:
-                        return "🧊 ป่น (Crushed Ice)"
-                    elif "หลอดเล็ก" in product_str or ("หลอด" in product_str and "เล็ก" in product_str):
-                        return "🧊 หลอดเล็ก (Small Tube)"
-                    elif "หลอดใหญ่" in product_str or ("หลอด" in product_str and "ใหญ่" in product_str):
-                        return "🧊 หลอดใหญ่ (Large Tube)"
-                    else:
-                        return "📦 อื่นๆ (Other)"
+                    return categorize_ice_product_name(
+                        product_name,
+                        manual_categories=st.session_state.get("manual_categories", {}),
+                    )
                 
                 # Apply categorization
                 df_ice = line_df.copy()
@@ -4209,7 +4470,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 receipt_ice['day'] = pd.to_datetime(receipt_ice['day'])
                 
                 # === LOCATION TABLE WITH FORECASTS ===
-                st.markdown("### 📊 Ice Forecast by Location")
+                st.markdown(get_heading("ice_forecast_by_location"))
                 
                 # Get unique locations
                 locations = df_ice['location'].dropna().unique()
@@ -4295,7 +4556,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.markdown("---")
                 
                 # === LOCATION SELECTOR FOR DETAILED ANALYSIS ===
-                st.markdown("### 📍 Detailed Analysis by Location")
+                st.markdown(get_heading("detailed_analysis_by_location"))
                 
                 selected_location = st.selectbox(
                     "Select Location for Detailed Analysis:",
@@ -4363,7 +4624,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.plotly_chart(fig_ice, use_container_width=True)
                     
                     # Detailed metrics
-                    st.markdown("#### 📈 Current Forecast Metrics")
+                    st.markdown(get_heading("current_forecast_metrics"))
                     
                     # Get latest 7-day averages
                     latest_date = location_detail_df['day'].max()
@@ -4411,7 +4672,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                                 st.metric("4️⃣ หลอดเล็ก (Small Tube)", "0.0")
                     
                     # Recommendation section
-                    st.markdown("#### 💡 Loading Recommendations")
+                    st.markdown(get_heading("loading_recommendations"))
                     
                     if not recent_data.empty:
                         # Calculate total ice needed using daily averages
@@ -4441,7 +4702,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                         
                         # Add explanation of calculation method
                         st.markdown("---")
-                        st.markdown("#### 📊 Calculation Method")
+                        st.markdown(get_heading("calculation_method"))
                         st.markdown("""
                         **How these forecasts are calculated:**
                         
@@ -4469,7 +4730,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                     st.session_state.customer_notes = {}
                 
                 # === TOP CUSTOMERS ANALYSIS ===
-                st.markdown("### 🏆 Top Customers")
+                st.markdown(get_heading("top_customers"))
                 
                 # Calculate customer metrics
                 if "signed_net" in receipt_df.columns:
@@ -4506,20 +4767,20 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 col1, col2, col3 = st.columns(3)
                 
                 with col1:
-                    st.metric("💰 Total Customers", len(customer_metrics))
+                    st.metric("Total Customers", len(customer_metrics))
                 
                 with col2:
                     top_customer_spent = customer_metrics['Total Spent'].iloc[0] if len(customer_metrics) > 0 else 0
-                    st.metric("🏆 Top Customer Spent", f"฿{top_customer_spent:,.0f}")
+                    st.metric("Top Customer Spent", f"฿{top_customer_spent:,.0f}")
                 
                 with col3:
                     avg_customer_value = customer_metrics['Total Spent'].mean()
-                    st.metric("📊 Avg Customer Value", f"฿{avg_customer_value:,.0f}")
+                    st.metric("Avg Customer Value", f"฿{avg_customer_value:,.0f}")
                 
                 st.markdown("---")
                 
                 # === CUSTOMER ALERTS ===
-                st.markdown("### 🚨 Customer Alerts")
+                st.markdown(get_heading("customer_alerts"))
                 
                 # Algorithm to detect sudden decreases in orders
                 def detect_customer_decline(customer_df):
@@ -4592,7 +4853,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                 st.markdown("---")
                 
                 # === CUSTOMER LIST WITH NOTES ===
-                st.markdown("### 📋 Customer Management")
+                st.markdown(get_heading("customer_management"))
                 
                 # Search and filter options
                 col1, col2, col3 = st.columns([2, 1, 1])
@@ -4687,7 +4948,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                                     st.rerun()
                         
                         # Customer transaction history
-                        st.markdown("**📊 Recent Transaction History:**")
+                        st.markdown(get_heading("recent_transaction_history"))
                         customer_transactions = df[df['customer_id'] == customer_id].copy()
                         customer_transactions = customer_transactions.sort_values('day', ascending=False)
                         
@@ -4705,7 +4966,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             st.info("No transaction history available")
         
         elif st.session_state.selected_tab == DATA_IMPORT_TAB:
-            st.subheader("🧪 Data Import & Reconciliation")
+            st.subheader(get_heading("data_import_reconciliation"))
             st.caption("Use this tab to import receipts, reconcile against POS summary CSV, and simulate exclusion rules.")
 
             # Keep local state for reconciliation inputs
@@ -4714,7 +4975,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             if "recon_csv_path" not in st.session_state:
                 st.session_state.recon_csv_path = ""
 
-            st.markdown("### 1) Import Range")
+            st.markdown(get_heading("import_range"))
             recon_col1, recon_col2, recon_col3 = st.columns([1, 1, 1])
             with recon_col1:
                 recon_start = st.date_input(
@@ -4749,7 +5010,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
             )
 
             # CSV input
-            st.markdown("### 2) POS CSV Input")
+            st.markdown(get_heading("pos_csv_input"))
             st.session_state.recon_uploaded_csv = st.file_uploader(
                 "Upload POS summary CSV (Thai export format)",
                 type=["csv"],
@@ -4930,7 +5191,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             recon_daily["delta_refunds"] = recon_daily["db_refunds"] - recon_daily["csv_refunds"]
                             recon_daily["delta_net"] = recon_daily["db_signed_net"] - recon_daily["csv_net"]
 
-                            st.markdown("### 3) Daily Reconciliation")
+                            st.markdown(get_heading("daily_reconciliation"))
                             st.dataframe(recon_daily, use_container_width=True, hide_index=True)
 
                             m1, m2, m3 = st.columns(3)
@@ -4938,31 +5199,31 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             m2.metric("Total Gross Delta (DB-CSV)", f"{recon_daily['delta_gross'].sum():,.0f}")
                             m3.metric("Total Refund Delta (DB-CSV)", f"{recon_daily['delta_refunds'].sum():,.0f}")
 
-                            st.markdown("### 4) Delta Diagnostics")
+                            st.markdown(get_heading("delta_diagnostics"))
                             dcol1, dcol2, dcol3 = st.columns(3)
                             with dcol1:
-                                st.markdown("**By Receipt Type (DB)**")
+                                st.markdown(get_heading("by_receipt_type_db"))
                                 st.dataframe(
                                     receipt_df.groupby("receipt_type", as_index=False).agg(receipts=("receipt_id", "nunique"), signed_net=("signed_net", "sum")),
                                     use_container_width=True,
                                     hide_index=True,
                                 )
                             with dcol2:
-                                st.markdown("**By Store (DB)**")
+                                st.markdown(get_heading("by_store_db"))
                                 st.dataframe(
                                     receipt_df.groupby("store_id", as_index=False).agg(receipts=("receipt_id", "nunique"), signed_net=("signed_net", "sum")),
                                     use_container_width=True,
                                     hide_index=True,
                                 )
                             with dcol3:
-                                st.markdown("**By Payment (DB)**")
+                                st.markdown(get_heading("by_payment_db"))
                                 st.dataframe(
                                     receipt_df.groupby("payment_name", as_index=False).agg(receipts=("receipt_id", "nunique"), signed_net=("signed_net", "sum")).sort_values("signed_net", ascending=False).head(20),
                                     use_container_width=True,
                                     hide_index=True,
                                 )
 
-                            st.markdown("### 5) Candidate Exclusion Set (Heuristic)")
+                            st.markdown(get_heading("candidate_exclusion_set"))
                             day_options = sorted([d for d in recon_daily["date"].dropna().tolist()])
                             selected_day = st.selectbox("Target day for exclusion suggestion", day_options, key="recon_target_day")
                             day_row = recon_daily[recon_daily["date"] == selected_day]
@@ -4983,7 +5244,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                                 else:
                                     st.info("No positive delta for selected day; exclusion not needed.")
 
-                            st.markdown("### 6) Exclusion Simulator")
+                            st.markdown(get_heading("exclusion_simulator"))
                             sim_col1, sim_col2, sim_col3 = st.columns(3)
                             with sim_col1:
                                 exclude_stores = st.multiselect(
@@ -5020,7 +5281,7 @@ if 'receipts_df' in st.session_state and not st.session_state.receipts_df.empty:
                             st.metric("Simulated Total Net Delta", f"{sim_join['sim_delta_net'].sum():,.0f}")
                         else:
                             st.warning("CSV not found or invalid format. Upload or provide a valid POS summary CSV path.")
-                            st.markdown("DB daily totals (without CSV):")
+                            st.markdown(get_heading("db_daily_totals_without_csv"))
                             st.dataframe(db_daily, use_container_width=True, hide_index=True)
 
         # --- Download ---

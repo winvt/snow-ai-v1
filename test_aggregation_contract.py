@@ -307,6 +307,28 @@ def test_randomized_daily_rollup_matches_expected_receipt_map():
     assert got_map == exp_map
 
 
+def test_weird_empty_aggregation_does_not_error():
+    """Weird case: frame missing all optional aggregate columns should still build."""
+    line_df = pd.DataFrame(
+        [
+            {"bill_number": "X-001", "day": "2026-02-20"},
+            {"bill_number": "X-001", "day": "2026-02-20"},
+            {"bill_number": "X-002", "day": "2026-02-20"},
+        ]
+    )
+    receipt_df = _build_receipt_frame(line_df)
+    assert receipt_df.shape[0] == 2
+    assert set(receipt_df.columns) == {"day", "bill_number"}
+
+
+def test_weird_missing_bill_number_returns_empty_contract_frame():
+    """Weird case: if bill_number is missing entirely, return empty contract frame."""
+    line_df = pd.DataFrame([{"day": "2026-02-20", "signed_net": 10.0}])
+    receipt_df = _build_receipt_frame(line_df)
+    assert receipt_df.empty
+    assert "bill_number" in receipt_df.columns
+
+
 def run_all():
     tests = [
         test_receipt_sales_not_line_double_counted,
@@ -319,6 +341,8 @@ def run_all():
         test_randomized_signed_net_fallback_from_receipt_total,
         test_randomized_order_invariance_for_receipt_totals,
         test_randomized_daily_rollup_matches_expected_receipt_map,
+        test_weird_empty_aggregation_does_not_error,
+        test_weird_missing_bill_number_returns_empty_contract_frame,
     ]
     failed = []
     for t in tests:

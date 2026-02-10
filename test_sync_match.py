@@ -94,6 +94,28 @@ def test_app_sync_passes_dates_not_naive_datetime():
     assert "Pass DATE objects so fetch_all_receipts" in content or "api_start = sync_start_date" in content
 
 
+def test_utc_to_bangkok_date_handles_naive_datetime_as_utc():
+    """Weird case: naive datetime is treated as UTC, then converted to Bangkok date."""
+    naive_utc = datetime(2026, 2, 1, 20, 0, 0)  # UTC naive
+    # 2026-02-01 20:00 UTC == 2026-02-02 03:00 Bangkok
+    assert utc_to_bangkok_date(naive_utc) == date(2026, 2, 2)
+
+
+def test_utc_to_bangkok_date_handles_non_utc_offset_datetime():
+    """Weird case: offset-aware datetime should normalize to UTC then Bangkok date."""
+    offset_dt = datetime.fromisoformat("2026-02-01T18:00:00+01:00")  # == 17:00 UTC
+    assert utc_to_bangkok_date(offset_dt) == date(2026, 2, 2)
+
+
+def test_bangkok_leap_day_to_utc_range():
+    """Leap-day conversion should remain exact for Bangkok->UTC boundaries."""
+    start_date = date(2024, 2, 29)
+    end_date = date(2024, 2, 29)
+    created_min, created_max = get_receipts_api_utc_range(start_date, end_date)
+    assert created_min == "2024-02-28T17:00:00.000Z", f"got {created_min}"
+    assert created_max == "2024-02-29T16:59:59.000Z", f"got {created_max}"
+
+
 def run_all():
     """Run all sync/match tests."""
     tests = [
@@ -103,6 +125,9 @@ def run_all():
         test_naive_datetime_would_be_wrong,
         test_csv_feb_1_10_reference_totals,
         test_app_sync_passes_dates_not_naive_datetime,
+        test_utc_to_bangkok_date_handles_naive_datetime_as_utc,
+        test_utc_to_bangkok_date_handles_non_utc_offset_datetime,
+        test_bangkok_leap_day_to_utc_range,
     ]
     failed = []
     for t in tests:
