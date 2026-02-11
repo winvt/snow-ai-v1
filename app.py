@@ -2,6 +2,7 @@ import requests
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import plotly.io as pio
 import os
 import re
 from datetime import datetime, timedelta
@@ -183,6 +184,7 @@ TRANSLATIONS = {
         "settings_sync_metadata_running": "Syncing metadata...",
         "settings_sync_metadata_done": "Metadata sync complete: {total} records updated.",
         "settings_custom_range": "Custom range",
+        "settings_theme_locked_light": "Theme is locked to Light on this deployment.",
         "settings_store_filter": "Store ID filter (optional)",
         "settings_store_filter_help": "Leave empty to sync all stores.",
         "settings_sync_preview_caption": "Will sync {days} day(s): {start_date} -> {end_date}",
@@ -371,6 +373,7 @@ TRANSLATIONS = {
         "settings_sync_metadata_running": "กำลังซิงค์เมทาดาทา...",
         "settings_sync_metadata_done": "ซิงค์เมทาดาทาเสร็จสิ้น: อัปเดต {total} รายการ",
         "settings_custom_range": "ช่วงวันที่กำหนดเอง",
+        "settings_theme_locked_light": "ธีมถูกล็อกเป็นโหมดสว่างสำหรับดีพลอยนี้",
         "settings_store_filter": "กรองด้วย Store ID (ไม่บังคับ)",
         "settings_store_filter_help": "เว้นว่างไว้เพื่อซิงค์ทุกสาขา",
         "settings_sync_preview_caption": "จะซิงค์ {days} วัน: {start_date} -> {end_date}",
@@ -521,6 +524,90 @@ def get_heading(key):
 LOYVERSE_TOKEN = os.getenv("LOYVERSE_TOKEN", "d18826e6c76345888204b310aaca1351")
 BASE_URL = "https://api.loyverse.com/v1.0/receipts"
 PAGE_LIMIT = 250
+FORCE_LIGHT_THEME = os.getenv("STREAMLIT_THEME_BASE", "").lower() == "light"
+
+THEME_LIGHT = "Light"
+THEME_DARK = "Dark"
+
+THEME_STYLE_TOKENS = {
+    THEME_LIGHT: {
+        "css_vars": {
+            "bg-app": "#f8fafc",
+            "bg-surface": "#ffffff",
+            "bg-surface-raised": "#ffffff",
+            "border-default": "#e2e8f0",
+            "border-subtle": "#f1f5f9",
+            "text-primary": "#0f172a",
+            "text-secondary": "#475569",
+            "text-muted": "#94a3b8",
+            "text-faint": "#cbd5e1",
+            "accent": "#3b82f6",
+            "accent-hover": "#2563eb",
+            "accent-subtle": "rgba(59,130,246,0.08)",
+            "success": "#10b981",
+            "warning": "#f59e0b",
+            "error": "#ef4444",
+            "metric-bg": "#ffffff",
+        },
+        "plotly": {
+            "template": "plotly_white",
+            "font_color": "#475569",
+            "title_color": "#0f172a",
+            "grid_color": "#f1f5f9",
+            "line_color": "#e2e8f0",
+            "tick_color": "#64748b",
+            "hover_bg": "#0f172a",
+            "hover_font": "#f1f5f9",
+        },
+    },
+    THEME_DARK: {
+        "css_vars": {
+            "bg-app": "#0b1220",
+            "bg-surface": "#162033",
+            "bg-surface-raised": "#243449",
+            "border-default": "rgba(148,163,184,0.30)",
+            "border-subtle": "rgba(148,163,184,0.18)",
+            "text-primary": "#f8fafc",
+            "text-secondary": "#d1d9e6",
+            "text-muted": "#a5b4c9",
+            "text-faint": "#8798b0",
+            "accent": "#7cb8ff",
+            "accent-hover": "#5fa5ff",
+            "accent-subtle": "rgba(124,184,255,0.20)",
+            "success": "#34d399",
+            "warning": "#fbbf24",
+            "error": "#f87171",
+            "metric-bg": "#131e31",
+        },
+        "plotly": {
+            "template": "plotly_dark",
+            "font_color": "#c7d4e6",
+            "title_color": "#f8fafc",
+            "grid_color": "#30435f",
+            "line_color": "#4e647f",
+            "tick_color": "#b3c0d4",
+            "hover_bg": "#162033",
+            "hover_font": "#f1f5f9",
+        },
+    },
+}
+
+
+def resolve_theme_mode():
+    """Single source of truth for active theme mode."""
+    if FORCE_LIGHT_THEME:
+        return THEME_LIGHT
+    mode = st.session_state.get("theme_mode", THEME_LIGHT)
+    return mode if mode in (THEME_LIGHT, THEME_DARK) else THEME_LIGHT
+
+
+def apply_theme_mode(mode):
+    """Centralized theme mutation logic."""
+    st.session_state.theme_mode = THEME_LIGHT if FORCE_LIGHT_THEME else mode
+
+
+def get_theme_styles():
+    return THEME_STYLE_TOKENS[resolve_theme_mode()]
 # ==========================
 
 st.set_page_config(page_title="Snow AI Dashboard", layout="wide")
@@ -596,7 +683,8 @@ if 'selected_tab' not in st.session_state:
 
 # Initialize theme
 if 'theme_mode' not in st.session_state:
-    st.session_state.theme_mode = "Light"
+    st.session_state.theme_mode = THEME_LIGHT
+apply_theme_mode(resolve_theme_mode())
 
 # Initialize language
 if 'language' not in st.session_state:
@@ -614,46 +702,8 @@ def get_design_system_css():
     }
     base_font = font_sizes.get(st.session_state.get('font_size', 'Medium'), "14px")
     compact = st.session_state.get('compact_mode', False)
-    is_dark = st.session_state.theme_mode == "Dark"
-
-    if is_dark:
-        css_vars = """
-            --bg-app: #0f172a;
-            --bg-surface: #1e293b;
-            --bg-surface-raised: #334155;
-            --border-default: rgba(255,255,255,0.08);
-            --border-subtle: rgba(255,255,255,0.05);
-            --text-primary: #f1f5f9;
-            --text-secondary: #94a3b8;
-            --text-muted: #64748b;
-            --text-faint: #475569;
-            --accent: #60a5fa;
-            --accent-hover: #3b82f6;
-            --accent-subtle: rgba(96,165,250,0.12);
-            --success: #34d399;
-            --warning: #fbbf24;
-            --error: #f87171;
-            --metric-bg: #1e293b;
-        """
-    else:
-        css_vars = """
-            --bg-app: #f8fafc;
-            --bg-surface: #ffffff;
-            --bg-surface-raised: #ffffff;
-            --border-default: #e2e8f0;
-            --border-subtle: #f1f5f9;
-            --text-primary: #0f172a;
-            --text-secondary: #475569;
-            --text-muted: #94a3b8;
-            --text-faint: #cbd5e1;
-            --accent: #3b82f6;
-            --accent-hover: #2563eb;
-            --accent-subtle: rgba(59,130,246,0.08);
-            --success: #10b981;
-            --warning: #f59e0b;
-            --error: #ef4444;
-            --metric-bg: #ffffff;
-        """
+    css_var_map = get_theme_styles()["css_vars"]
+    css_vars = "\n".join([f"            --{k}: {v};" for k, v in css_var_map.items()])
 
     return f"""
     <style>
@@ -712,7 +762,7 @@ def get_design_system_css():
             color: var(--text-primary) !important;
             font-size: 1.1rem !important;
         }}
-        p, li, span {{
+        p, li, [data-testid="stMarkdownContainer"] span {{
             color: var(--text-secondary);
         }}
 
@@ -722,7 +772,7 @@ def get_design_system_css():
             border-right: 1px solid var(--border-default) !important;
         }}
         [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {{
-            color: var(--text-secondary);
+            color: var(--text-primary);
             font-size: 13px;
         }}
         [data-testid="stSidebar"] h1 {{
@@ -753,6 +803,9 @@ def get_design_system_css():
             transition: all var(--transition) !important;
             letter-spacing: 0 !important;
         }}
+        .stButton > button span {{
+            color: inherit !important;
+        }}
         .stButton > button[kind="primary"] {{
             background-color: var(--accent) !important;
             border-color: var(--accent) !important;
@@ -764,7 +817,7 @@ def get_design_system_css():
         }}
         .stButton > button[kind="secondary"] {{
             background-color: var(--bg-surface) !important;
-            color: var(--text-secondary) !important;
+            color: var(--text-primary) !important;
         }}
         .stButton > button[kind="secondary"]:hover {{
             background-color: var(--accent-subtle) !important;
@@ -799,7 +852,7 @@ def get_design_system_css():
         [data-testid="stMetricLabel"] {{
             font-size: 12px !important;
             font-weight: 500 !important;
-            color: var(--text-muted) !important;
+            color: var(--text-secondary) !important;
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }}
@@ -829,6 +882,7 @@ def get_design_system_css():
         }}
         [data-testid="stDataFrame"] th {{
             font-weight: 500 !important;
+            color: var(--text-secondary) !important;
             text-transform: uppercase;
             font-size: 11px !important;
             letter-spacing: 0.04em;
@@ -853,6 +907,8 @@ def get_design_system_css():
             border-radius: var(--radius-md) !important;
             border-color: var(--border-default) !important;
             font-size: 13px !important;
+            background-color: var(--bg-surface) !important;
+            color: var(--text-primary) !important;
         }}
         .stTextInput > div > div > input:focus,
         .stDateInput > div > div > input:focus {{
@@ -862,7 +918,7 @@ def get_design_system_css():
         .stTextInput label, .stSelectbox label, .stDateInput label {{
             font-size: 12px !important;
             font-weight: 500 !important;
-            color: var(--text-muted) !important;
+            color: var(--text-secondary) !important;
             text-transform: uppercase;
             letter-spacing: 0.03em;
         }}
@@ -922,6 +978,25 @@ def get_design_system_css():
         [data-baseweb="select"] {{
             border-radius: var(--radius-md) !important;
         }}
+        [data-baseweb="select"] > div {{
+            background-color: var(--bg-surface) !important;
+            color: var(--text-primary) !important;
+            border-color: var(--border-default) !important;
+        }}
+        [data-baseweb="select"] input {{
+            color: var(--text-primary) !important;
+        }}
+        [data-baseweb="select"] svg {{
+            color: var(--text-secondary) !important;
+        }}
+        .stDateInput [data-baseweb="input"] {{
+            background-color: var(--bg-surface) !important;
+            border-color: var(--border-default) !important;
+        }}
+        .stDateInput [data-baseweb="input"] input {{
+            color: var(--text-primary) !important;
+            -webkit-text-fill-color: var(--text-primary) !important;
+        }}
 
         /* ---- Success/Info/Warning/Error boxes ---- */
         div[data-testid="stNotification"] {{
@@ -935,17 +1010,44 @@ def get_design_system_css():
 st.markdown(get_design_system_css(), unsafe_allow_html=True)
 
 # Plotly chart theme - consistent with design system
+plotly_style = get_theme_styles()["plotly"]
+pio.templates.default = plotly_style["template"]
 CHART_LAYOUT = dict(
-    font=dict(family="-apple-system, BlinkMacSystemFont, Inter, Segoe UI, sans-serif", size=12, color="#475569"),
-    title=dict(font=dict(size=14, color="#0f172a"), x=0, xanchor="left"),
+    template=pio.templates.default,
+    font=dict(
+        family="-apple-system, BlinkMacSystemFont, Inter, Segoe UI, sans-serif",
+        size=12,
+        color=plotly_style["font_color"],
+    ),
+    title=dict(font=dict(size=14, color=plotly_style["title_color"]), x=0, xanchor="left"),
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
-    xaxis=dict(gridcolor="#f1f5f9", linecolor="#e2e8f0", tickfont=dict(size=11, color="#64748b")),
-    yaxis=dict(gridcolor="#f1f5f9", linecolor="#e2e8f0", tickfont=dict(size=11, color="#64748b")),
+    xaxis=dict(
+        gridcolor=plotly_style["grid_color"],
+        linecolor=plotly_style["line_color"],
+        tickfont=dict(size=11, color=plotly_style["tick_color"]),
+    ),
+    yaxis=dict(
+        gridcolor=plotly_style["grid_color"],
+        linecolor=plotly_style["line_color"],
+        tickfont=dict(size=11, color=plotly_style["tick_color"]),
+    ),
     margin=dict(l=48, r=16, t=40, b=40),
     colorway=["#3b82f6", "#64748b", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4", "#ec4899"],
-    hoverlabel=dict(bgcolor="#0f172a", font_size=12, font_color="#f1f5f9"),
+    hoverlabel=dict(
+        bgcolor=plotly_style["hover_bg"],
+        font_size=12,
+        font_color=plotly_style["hover_font"],
+    ),
 )
+
+
+def apply_chart_layout(fig, **extra_layout):
+    """Apply centralized chart theme, then optional chart-specific layout."""
+    fig.update_layout(**CHART_LAYOUT)
+    if extra_layout:
+        fig.update_layout(**extra_layout)
+    return fig
 
 # ===== TRANSLATION DICTIONARIES =====
 
@@ -1885,23 +1987,25 @@ See `API_REFERENCE.md` for complete details, response examples, and curl command
 
     # 4) Basic Preferences
     st.markdown(f"### {get_text('settings_basic_preferences')}")
-
-    # Theme selector
-    if 'theme_mode' not in st.session_state:
-        st.session_state.theme_mode = "Light"
+    current_theme = resolve_theme_mode()
 
     col1, col2 = st.columns(2)
     with col1:
         if st.button(get_text('light'), use_container_width=True, 
-                    type="primary" if st.session_state.theme_mode == "Light" else "secondary"):
-            st.session_state.theme_mode = "Light"
+                    type="primary" if current_theme == THEME_LIGHT else "secondary"):
+            apply_theme_mode(THEME_LIGHT)
             st.rerun()
     
     with col2:
-        if st.button(get_text('dark'), use_container_width=True,
-                    type="primary" if st.session_state.theme_mode == "Dark" else "secondary"):
-            st.session_state.theme_mode = "Dark"
-            st.rerun()
+        if FORCE_LIGHT_THEME:
+            st.button(get_text('dark'), use_container_width=True, disabled=True)
+        else:
+            if st.button(get_text('dark'), use_container_width=True,
+                        type="primary" if current_theme == THEME_DARK else "secondary"):
+                apply_theme_mode(THEME_DARK)
+                st.rerun()
+    if FORCE_LIGHT_THEME:
+        st.caption(get_text("settings_theme_locked_light"))
 
     # Language selector
     language = st.radio(
@@ -2909,7 +3013,7 @@ if st.session_state.selected_tab != SETTINGS_TAB and 'receipts_df' in st.session
                             color="Total Sales",
                             color_continuous_scale="Teal",
                             text_auto=True)
-                fig.update_layout(yaxis={'categoryorder':'total ascending'}, height=600)
+                apply_chart_layout(fig, yaxis={'categoryorder':'total ascending'}, height=600)
                 st.plotly_chart(fig, use_container_width=True)
                 
                 # Pie chart
@@ -3169,7 +3273,7 @@ if st.session_state.selected_tab != SETTINGS_TAB and 'receipts_df' in st.session
                             text_auto=True
                         )
                         fig_periods.update_traces(texttemplate='฿%{x:,.0f}', textposition='outside')
-                        fig_periods.update_layout(yaxis={'categoryorder':'total ascending'})
+                        apply_chart_layout(fig_periods, yaxis={'categoryorder':'total ascending'})
                         st.plotly_chart(fig_periods, use_container_width=True)
                     
                     # Insights
@@ -3306,7 +3410,7 @@ if st.session_state.selected_tab != SETTINGS_TAB and 'receipts_df' in st.session
                 hover_data=['Quantity', 'Transactions']
             )
             fig_bar.update_traces(texttemplate='฿%{text:,.0f}', textposition='outside')
-            fig_bar.update_layout(showlegend=False, xaxis_tickangle=-45)
+            apply_chart_layout(fig_bar, showlegend=False, xaxis_tickangle=-45)
             st.plotly_chart(fig_bar, use_container_width=True)
             
             # === DETAILED BREAKDOWN (EXPANDABLE) ===
@@ -3556,7 +3660,7 @@ if st.session_state.selected_tab != SETTINGS_TAB and 'receipts_df' in st.session
                             color=sort_map[sort_by],
                             color_continuous_scale="Plasma",
                             hover_data=["Customer ID", "Customer Name", "Total Sales", "Number of Purchases", "Items Purchased", "Average Order Value"])
-                fig.update_layout(yaxis={'categoryorder':'total ascending'})
+                apply_chart_layout(fig, yaxis={'categoryorder':'total ascending'})
                 st.plotly_chart(fig, use_container_width=True)
                 
                 # Customer summary stats
@@ -3757,7 +3861,8 @@ if st.session_state.selected_tab != SETTINGS_TAB and 'receipts_df' in st.session
                                      'Credit Sales': '#EF553B',  # Red for credit
                                      'Cash Sales': '#00CC96'      # Green for cash
                                  })
-                    fig.update_layout(
+                    apply_chart_layout(
+                        fig,
                         hovermode='x unified',
                         yaxis_title='Sales Amount (THB)',
                         legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
@@ -4652,7 +4757,7 @@ if st.session_state.selected_tab != SETTINGS_TAB and 'receipts_df' in st.session
                     fig_total = px.line(daily_totals, x='day', y=['total', 'ma_7d'],
                                       title=f"Total Orders - {selected_location}",
                                       labels={'value': 'Total Sales (THB)', 'day': 'Date'})
-                    fig_total.update_layout(legend=dict(
+                    apply_chart_layout(fig_total, legend=dict(
                         orientation="h",
                         yanchor="bottom",
                         y=1.02,
@@ -4673,7 +4778,7 @@ if st.session_state.selected_tab != SETTINGS_TAB and 'receipts_df' in st.session
                                     y=[col for col in ice_breakdown_pivot.columns if '_ma7d' in col],
                                     title=f"7-Day Moving Average by Ice Type - {selected_location}",
                                     labels={'value': 'Quantity (7d avg)', 'day': 'Date'})
-                    fig_ice.update_layout(legend=dict(
+                    apply_chart_layout(fig_ice, legend=dict(
                         orientation="h",
                         yanchor="bottom",
                         y=1.02,
