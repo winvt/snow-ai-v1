@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Snow AI Delivery</title>
+    <link rel="stylesheet" href="/static/delivery.css">
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body data-liff-id="{{ liff_id }}">
+    <main class="app-shell">
+        <header class="hero">
+            <p class="eyebrow">Snow AI Delivery</p>
+            <h1>Shop Visit Photo</h1>
+            <p class="subtitle">Select a location, choose a shop, capture one photo, and send the update with geo + time.</p>
+        </header>
+
+        <section id="screen-status" class="panel">
+            <p id="status-text">Booting LIFF...</p>
+        </section>
+
+        <section id="screen-location" class="panel hidden">
+            <div class="panel-header">
+                <h2>1. Choose Location</h2>
+                <button class="ghost-button" id="refresh-locations" type="button">Refresh</button>
+            </div>
+            <div id="location-list" class="selection-list"></div>
+        </section>
+
+        <section id="screen-customer" class="panel hidden">
+            <div class="panel-header">
+                <h2>2. Choose Shop</h2>
+                <button class="ghost-button" id="back-to-locations" type="button">Back</button>
+            </div>
+            <label class="field">
+                <span>Search</span>
+                <input id="customer-search" type="search" placeholder="Search customer name, code, or phone">
+            </label>
+            <div id="customer-list" class="selection-list"></div>
+        </section>
+
+        <section id="screen-report" class="panel hidden">
+            <div class="panel-header">
+                <h2>3. Capture Report</h2>
+                <button class="ghost-button" id="back-to-customers" type="button">Back</button>
+            </div>
+            <div class="summary-card">
+                <p class="summary-label">Selected Shop</p>
+                <p id="selected-customer-name" class="summary-value">-</p>
+                <p id="selected-location-name" class="summary-subvalue">-</p>
+            </div>
+            <label class="field">
+                <span>Photo</span>
+                <input id="photo-input" accept="image/*" capture="environment" type="file">
+            </label>
+            <img id="photo-preview" class="photo-preview hidden" alt="Preview">
+            <button id="get-location" class="secondary-button" type="button">Get Current Location</button>
+            <div id="geo-status" class="geo-status">Location not captured yet.</div>
+            <button id="submit-report" class="primary-button" type="button">Upload Visit Photo</button>
+        </section>
+    </main>
+
+    <template id="location-item-template">
+        <button class="selection-item" type="button">
+            <span class="selection-title"></span>
+            <span class="selection-meta"></span>
+        </button>
+    </template>
+
+    <template id="customer-item-template">
+        <button class="selection-item" type="button">
+            <span class="selection-title"></span>
+            <span class="selection-meta"></span>
+        </button>
+    </template>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
+

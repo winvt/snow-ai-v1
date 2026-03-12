@@ -1,7 +1,7 @@
 services:
   - type: web
     name: snow-ai
-    env: python
+    runtime: python
     plan: starter
     region: singapore
     buildCommand: pip install -r requirements.txt
@@ -32,9 +32,46 @@ services:
       mountPath: /opt/render/project/src/data
       sizeGB: 1
 
+  - type: web
+    name: snow-ai-delivery
+    runtime: python
+    plan: starter
+    region: singapore
+    buildCommand: pip install -r requirements.txt
+    startCommand: ./start_delivery.sh
+    envVars:
+      - key: DELIVERY_DATABASE_URL
+        fromDatabase:
+          name: snow-ai-delivery-db
+          property: connectionString
+      - key: SOURCE_SQLITE_PATH
+        value: /opt/render/project/src/data/loyverse_data.db
+      - key: LINE_LIFF_ID
+        value: REPLACE_WITH_LINE_LIFF_ID
+      - key: LINE_CHANNEL_ID
+        value: REPLACE_WITH_LINE_CHANNEL_ID
+      - key: LINE_CHANNEL_SECRET
+        value: REPLACE_WITH_LINE_CHANNEL_SECRET
+      - key: S3_ENDPOINT
+        value: REPLACE_WITH_S3_ENDPOINT
+      - key: S3_BUCKET
+        value: REPLACE_WITH_S3_BUCKET
+      - key: S3_ACCESS_KEY_ID
+        value: REPLACE_WITH_S3_ACCESS_KEY_ID
+      - key: S3_SECRET_ACCESS_KEY
+        value: REPLACE_WITH_S3_SECRET_ACCESS_KEY
+      - key: S3_REGION
+        value: auto
+      - key: APP_BASE_URL
+        value: https://snow-ai-delivery.onrender.com
+      - key: ADMIN_PASSWORD
+        value: REPLACE_WITH_ADMIN_PASSWORD
+      - key: PYTHONUNBUFFERED
+        value: 1
+
   - type: cron
     name: daily-briefing
-    env: python
+    runtime: python
     plan: starter
     region: singapore
     schedule: "0 2 * * *"  # Runs daily at 2:00 AM UTC (9:00 AM Bangkok time)
@@ -60,3 +97,32 @@ services:
       mountPath: /opt/render/project/src/data
       sizeGB: 1
 
+  - type: cron
+    name: delivery-metadata-sync
+    runtime: python
+    plan: starter
+    region: singapore
+    schedule: "0 * * * *"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 scripts/sync_delivery_metadata.py
+    envVars:
+      - key: DELIVERY_DATABASE_URL
+        fromDatabase:
+          name: snow-ai-delivery-db
+          property: connectionString
+      - key: SOURCE_SQLITE_PATH
+        value: /opt/render/project/src/data/loyverse_data.db
+      - key: PYTHONUNBUFFERED
+        value: 1
+    disk:
+      name: snowbomb-database
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
+
+databases:
+  - name: snow-ai-delivery-db
+    plan: basic-256mb
+    region: singapore
+    databaseName: snow_ai_delivery
+    user: snow_ai_delivery
+    postgresMajorVersion: "17"

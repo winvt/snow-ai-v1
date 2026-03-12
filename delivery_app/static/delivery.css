@@ -1,0 +1,261 @@
+:root {
+    --bg: #f3efe6;
+    --panel: rgba(255, 250, 241, 0.92);
+    --ink: #1e2430;
+    --muted: #58606f;
+    --accent: #0b8f6a;
+    --accent-dark: #07684d;
+    --border: rgba(30, 36, 48, 0.12);
+    --shadow: 0 18px 40px rgba(25, 35, 28, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top left, rgba(11, 143, 106, 0.18), transparent 38%),
+        linear-gradient(180deg, #fbf5e8 0%, #f0ede5 100%);
+    color: var(--ink);
+    font-family: "Avenir Next", "Segoe UI", sans-serif;
+}
+
+.app-shell {
+    width: min(100%, 720px);
+    margin: 0 auto;
+    padding: 24px 16px 40px;
+}
+
+.admin-shell {
+    width: min(100%, 1040px);
+}
+
+.hero {
+    padding: 12px 4px 20px;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: var(--accent-dark);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.hero h1 {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3.4rem);
+    line-height: 0.96;
+}
+
+.subtitle {
+    margin: 12px 0 0;
+    color: var(--muted);
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    backdrop-filter: blur(10px);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.panel-header h2 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.selection-list {
+    display: grid;
+    gap: 10px;
+}
+
+.selection-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: 1px solid var(--border);
+    background: #fff;
+    border-radius: 18px;
+    padding: 15px 16px;
+    text-align: left;
+    color: var(--ink);
+}
+
+.selection-title {
+    font-weight: 700;
+}
+
+.selection-meta {
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.field {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 14px;
+}
+
+.field span {
+    color: var(--muted);
+    font-size: 0.88rem;
+    font-weight: 700;
+}
+
+input,
+button {
+    font: inherit;
+}
+
+input[type="search"],
+input[type="text"],
+input[type="date"],
+input[type="file"] {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    background: #fff;
+}
+
+.primary-button,
+.secondary-button,
+.ghost-button {
+    width: 100%;
+    border: 0;
+    border-radius: 999px;
+    padding: 14px 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.primary-button {
+    background: var(--accent);
+    color: #fff;
+}
+
+.secondary-button {
+    background: #ddeee8;
+    color: var(--accent-dark);
+    margin-bottom: 12px;
+}
+
+.ghost-button {
+    width: auto;
+    background: transparent;
+    color: var(--accent-dark);
+    border: 1px solid var(--border);
+}
+
+.summary-card {
+    border-radius: 20px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(11, 143, 106, 0.12), rgba(255, 255, 255, 0.92));
+    margin-bottom: 14px;
+}
+
+.summary-label {
+    margin: 0 0 4px;
+    color: var(--muted);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.summary-value {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.summary-subvalue {
+    margin: 6px 0 0;
+    color: var(--muted);
+}
+
+.photo-preview {
+    display: block;
+    width: 100%;
+    max-height: 320px;
+    object-fit: cover;
+    border-radius: 18px;
+    margin: 0 0 14px;
+}
+
+.geo-status,
+#status-text,
+#admin-status {
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.admin-filters {
+    display: grid;
+    gap: 12px;
+}
+
+.report-grid {
+    display: grid;
+    gap: 12px;
+}
+
+.report-card {
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 14px;
+    background: #fff;
+}
+
+.report-card img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 16px;
+    margin-bottom: 12px;
+}
+
+.report-card h3 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+}
+
+.report-card p {
+    margin: 0 0 4px;
+    color: var(--muted);
+}
+
+@media (min-width: 768px) {
+    .admin-filters {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        align-items: end;
+    }
+
+    .report-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
