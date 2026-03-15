@@ -81,7 +81,14 @@ def build_photo_url(settings: DeliverySettings, object_key: str) -> str:
 
 def build_default_storage(settings: DeliverySettings):
     """Construct the configured storage backend, or a disabled fallback for local imports."""
-    if settings.s3_bucket:
+    s3_values = [
+        settings.s3_bucket,
+        settings.s3_endpoint,
+        settings.s3_access_key_id,
+        settings.s3_secret_access_key,
+    ]
+    has_real_s3_config = all(value and not value.startswith("REPLACE_WITH_") for value in s3_values)
+    if has_real_s3_config:
         return S3Storage(
             endpoint=settings.s3_endpoint,
             bucket=settings.s3_bucket,
