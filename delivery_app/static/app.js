@@ -204,6 +204,10 @@ function updateGeoState(status, ready = false) {
   geoStatus.classList.toggle("is-ready", ready);
 }
 
+function formatCoordinate(value) {
+  return Number(value).toFixed(5);
+}
+
 function resetCaptureState() {
   photoInput.value = "";
   photoPreview.classList.add("hidden");
@@ -239,7 +243,10 @@ function captureGeolocation() {
         longitude: position.coords.longitude,
         accuracy: position.coords.accuracy,
       };
-      updateGeoState("GPS READY", true);
+      updateGeoState(
+        `GPS READY\n${formatCoordinate(state.geo.latitude)}, ${formatCoordinate(state.geo.longitude)}`,
+        true
+      );
       setStatus("GPS ready");
     },
     () => {
