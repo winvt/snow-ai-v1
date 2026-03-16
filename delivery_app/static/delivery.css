@@ -532,18 +532,35 @@ button {
     grid-column: 1 / -1;
 }
 
-.admin-location-field select {
-    width: 100%;
-    min-height: 164px;
-    border: 1px solid rgba(20, 99, 255, 0.12);
-    border-radius: 20px;
-    padding: 12px;
-    background: #f6f9ff;
-    color: var(--ink);
+.checkbox-grid {
+    display: grid;
+    gap: 10px;
 }
 
-.admin-location-field option {
-    padding: 8px 10px;
+.checkbox-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 50px;
+    padding: 12px 14px;
+    border: 1px solid rgba(20, 99, 255, 0.12);
+    border-radius: 18px;
+    background: #f6f9ff;
+    color: var(--ink);
+    font-weight: 700;
+}
+
+.checkbox-card input {
+    width: 18px;
+    height: 18px;
+    margin: 0;
+    accent-color: var(--accent);
+}
+
+.admin-location-field .checkbox-grid,
+.user-location-checkboxes {
+    max-height: 260px;
+    overflow: auto;
 }
 
 .report-grid {
@@ -601,7 +618,6 @@ button {
     opacity: 0.5;
 }
 
-.user-location-select,
 .user-access-mode {
     width: 100%;
     border: 1px solid rgba(20, 99, 255, 0.12);
@@ -609,10 +625,6 @@ button {
     padding: 12px;
     background: #f6f9ff;
     color: var(--ink);
-}
-
-.user-location-select {
-    min-height: 164px;
 }
 
 .user-save-button {

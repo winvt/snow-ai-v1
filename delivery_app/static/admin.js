@@ -1,7 +1,7 @@
 const reportGrid = document.getElementById("report-grid");
 const adminStatus = document.getElementById("admin-status");
 const filterForm = document.getElementById("admin-filters");
-const locationSelect = document.getElementById("location-ids");
+const locationCheckboxGrid = document.getElementById("location-ids");
 const usersGrid = document.getElementById("users-grid");
 const usersStatus = document.getElementById("users-status");
 const adminTabs = Array.from(document.querySelectorAll(".admin-tab"));
@@ -46,7 +46,7 @@ function buildMapUrl(latitude, longitude) {
 }
 
 function getSelectedLocationIds() {
-  return Array.from(locationSelect.selectedOptions).map((option) => option.value);
+  return Array.from(locationCheckboxGrid.querySelectorAll('input[type="checkbox"]:checked')).map((input) => input.value);
 }
 
 function setActiveTab(tabName) {
@@ -59,13 +59,30 @@ function setActiveTab(tabName) {
 }
 
 function populateLocations(locations) {
-  locationSelect.innerHTML = "";
+  locationCheckboxGrid.innerHTML = "";
   locations.forEach((location) => {
-    const option = document.createElement("option");
-    option.value = location.id;
-    option.textContent = location.name;
-    locationSelect.appendChild(option);
+    const label = document.createElement("label");
+    label.className = "checkbox-card";
+    label.innerHTML = `
+      <input type="checkbox" value="${location.id}">
+      <span>${location.name}</span>
+    `;
+    locationCheckboxGrid.appendChild(label);
   });
+}
+
+function buildUserLocationCheckboxes(user) {
+  return state.locations
+    .map((location) => {
+      const checked = user.allowedLocationIds.includes(location.id) ? "checked" : "";
+      return `
+        <label class="checkbox-card">
+          <input type="checkbox" value="${location.id}" ${checked}>
+          <span>${location.name}</span>
+        </label>
+      `;
+    })
+    .join("");
 }
 
 function renderReports(reports) {
@@ -97,21 +114,14 @@ function renderReports(reports) {
   });
 }
 
-function buildUserLocationOptions(user) {
-  return state.locations
-    .map((location) => {
-      const selected = user.allowedLocationIds.includes(location.id) ? "selected" : "";
-      return `<option value="${location.id}" ${selected}>${location.name}</option>`;
-    })
-    .join("");
-}
-
 function updateUserCardState(card, accessMode) {
   const locationField = card.querySelector(".user-location-field");
-  const select = card.querySelector(".user-location-select");
+  const inputs = Array.from(card.querySelectorAll('.user-location-checkboxes input[type="checkbox"]'));
   const disabled = accessMode !== "assigned";
   locationField.classList.toggle("is-disabled", disabled);
-  select.disabled = disabled;
+  inputs.forEach((input) => {
+    input.disabled = disabled;
+  });
 }
 
 function renderUsers(users) {
@@ -144,23 +154,24 @@ function renderUsers(users) {
       </label>
       <label class="field user-location-field ${user.accessMode === "assigned" ? "" : "is-disabled"}">
         <span>Locations</span>
-        <select class="user-location-select" multiple size="6" ${user.accessMode === "assigned" ? "" : "disabled"}>
-          ${buildUserLocationOptions(user)}
-        </select>
+        <div class="checkbox-grid user-location-checkboxes">
+          ${buildUserLocationCheckboxes(user)}
+        </div>
       </label>
       <button class="primary-button user-save-button" type="button">Save</button>
     `;
 
     const accessModeSelect = card.querySelector(".user-access-mode");
+    updateUserCardState(card, user.accessMode);
     accessModeSelect.addEventListener("change", (event) => {
       updateUserCardState(card, event.target.value);
     });
 
     card.querySelector(".user-save-button").addEventListener("click", async () => {
       const selectedMode = accessModeSelect.value;
-      const selectedLocationIds = Array.from(card.querySelector(".user-location-select").selectedOptions).map(
-        (option) => option.value
-      );
+      const selectedLocationIds = Array.from(
+        card.querySelectorAll('.user-location-checkboxes input[type="checkbox"]:checked')
+      ).map((input) => input.value);
       const button = card.querySelector(".user-save-button");
       button.disabled = true;
       button.textContent = "Saving...";
