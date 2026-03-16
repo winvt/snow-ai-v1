@@ -10,43 +10,56 @@
     <main class="app-shell admin-shell">
         <header class="hero">
             <p class="eyebrow">Snow AI Delivery</p>
-            <h1>Visit Reports</h1>
-            <p class="subtitle">Read-only gallery for uploaded shop visit photos.</p>
+            <h1>Admin</h1>
+            <p class="subtitle">Reports and user access control.</p>
         </header>
 
-        <section class="panel">
-            <form id="admin-filters" class="admin-filters">
-                <label class="field">
-                    <span>Date From</span>
-                    <input type="date" id="date-from" name="date_from">
-                </label>
-                <label class="field">
-                    <span>Date To</span>
-                    <input type="date" id="date-to" name="date_to">
-                </label>
-                <label class="field">
-                    <span>Location ID</span>
-                    <input type="text" id="location-id" name="location_id" placeholder="optional">
-                </label>
-                <label class="field">
-                    <span>Customer ID</span>
-                    <input type="text" id="customer-id" name="customer_id" placeholder="optional">
-                </label>
-                <label class="field">
-                    <span>LINE User ID</span>
-                    <input type="text" id="user-id" name="user_id" placeholder="optional">
-                </label>
-                <button class="primary-button" type="submit">Load Reports</button>
-            </form>
+        <nav class="admin-tabs" aria-label="Admin sections">
+            <button class="admin-tab is-active" type="button" data-tab="reports">Reports</button>
+            <button class="admin-tab" type="button" data-tab="users">Users</button>
+        </nav>
+
+        <section id="admin-tab-reports" class="admin-tab-panel">
+            <section class="panel">
+                <form id="admin-filters" class="admin-filters">
+                    <label class="field admin-location-field">
+                        <span>Locations</span>
+                        <select id="location-ids" name="location_ids" multiple size="6"></select>
+                    </label>
+                    <label class="field">
+                        <span>Date From</span>
+                        <input type="date" id="date-from" name="date_from">
+                    </label>
+                    <label class="field">
+                        <span>Date To</span>
+                        <input type="date" id="date-to" name="date_to">
+                    </label>
+                    <label class="field">
+                        <span>Customer ID</span>
+                        <input type="text" id="customer-id" name="customer_id" placeholder="optional">
+                    </label>
+                    <label class="field">
+                        <span>LINE User ID</span>
+                        <input type="text" id="user-id" name="user_id" placeholder="optional">
+                    </label>
+                    <button class="primary-button" type="submit">Load Reports</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <div id="admin-status">Loading reports...</div>
+                <div id="report-grid" class="report-grid"></div>
+            </section>
         </section>
 
-        <section class="panel">
-            <div id="admin-status">Loading reports...</div>
-            <div id="report-grid" class="report-grid"></div>
+        <section id="admin-tab-users" class="admin-tab-panel hidden">
+            <section class="panel">
+                <div id="users-status">Loading users...</div>
+                <div id="users-grid" class="users-grid"></div>
+            </section>
         </section>
     </main>
 
     <script src="/static/admin.js"></script>
 </body>
 </html>
-

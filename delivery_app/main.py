@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import List, Optional
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, Response, UploadFile, status
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
@@ -384,7 +384,7 @@ def create_app(
     def admin_reports(
         date_from: Optional[str] = None,
         date_to: Optional[str] = None,
-        location_id: Optional[str] = None,
+        location_ids: Optional[List[str]] = Query(None),
         customer_id: Optional[str] = None,
         user_id: Optional[str] = None,
         _: bool = Depends(require_admin),
@@ -397,11 +397,15 @@ def create_app(
                 db,
                 date_from=parsed_from,
                 date_to=parsed_to,
-                location_id=location_id,
+                location_ids=location_ids,
                 customer_id=customer_id,
                 user_id=user_id,
             )
         }
+
+    @app.get("/admin/locations")
+    def admin_locations(_: bool = Depends(require_admin), db: Session = Depends(get_db)):
+        return {"locations": list_locations(db)}
 
     @app.get("/admin/access/users")
     def admin_access_users(_: bool = Depends(require_admin), db: Session = Depends(get_db)):

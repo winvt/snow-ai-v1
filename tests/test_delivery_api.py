@@ -262,6 +262,66 @@ class DeliveryApiTests(unittest.TestCase):
         self.assertEqual(access_users.status_code, 200)
         self.assertGreaterEqual(len(access_users.json()["users"]), 1)
 
+    def test_admin_reports_can_filter_multiple_locations(self):
+        self._login()
+        self.client.post(
+            "/api/reports",
+            data={
+                "client_submission_id": "submission-loc-1",
+                "customer_id": "cust_1",
+                "latitude": "13.7563",
+                "longitude": "100.5018",
+                "captured_at_client": "2026-03-10T02:03:04Z",
+            },
+            files={"photo": ("shop-a.jpg", b"fake-image-bytes", "image/jpeg")},
+        )
+        self.client.post(
+            "/api/reports",
+            data={
+                "client_submission_id": "submission-loc-2",
+                "customer_id": "cust_2",
+                "latitude": "13.8563",
+                "longitude": "100.6018",
+                "captured_at_client": "2026-03-10T03:03:04Z",
+            },
+            files={"photo": ("shop-b.jpg", b"fake-image-bytes", "image/jpeg")},
+        )
+
+        credentials = base64.b64encode(b"admin:admin-pass").decode("utf-8")
+        filtered = self.client.get(
+            "/admin/reports",
+            headers={"Authorization": f"Basic {credentials}"},
+            params=[("location_ids", "loc_1"), ("location_ids", "loc_2")],
+        )
+        self.assertEqual(filtered.status_code, 200)
+        self.assertEqual(len(filtered.json()["reports"]), 2)
+
+        single_location = self.client.get(
+            "/admin/reports",
+            headers={"Authorization": f"Basic {credentials}"},
+            params=[("location_ids", "loc_2")],
+        )
+        self.assertEqual(single_location.status_code, 200)
+        self.assertEqual([row["locationId"] for row in single_location.json()["reports"]], ["loc_2"])
+
+    def test_admin_access_users_excludes_guest_and_includes_last_login(self):
+        guest_session = self.client.get("/api/session")
+        self.assertEqual(guest_session.status_code, 200)
+        self.assertTrue(guest_session.json()["guestMode"])
+
+        self._login()
+        credentials = base64.b64encode(b"admin:admin-pass").decode("utf-8")
+        response = self.client.get(
+            "/admin/access/users",
+            headers={"Authorization": f"Basic {credentials}"},
+        )
+        self.assertEqual(response.status_code, 200)
+        users = response.json()["users"]
+        self.assertEqual(len(users), 1)
+        self.assertEqual(users[0]["lineUserId"], "line-user-1")
+        self.assertIsNotNone(users[0]["lastLoginAt"])
+        self.assertNotIn("guest-preview", [user["lineUserId"] for user in users])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -160,7 +160,11 @@ def get_customer(db_session, customer_id: str) -> Optional[DeliveryCustomer]:
 
 def list_delivery_users_with_access(db_session) -> List[Dict]:
     """Return users plus their current location access state."""
-    users = db_session.execute(select(DeliveryUser).order_by(DeliveryUser.display_name.asc())).scalars().all()
+    users = db_session.execute(
+        select(DeliveryUser)
+        .where(DeliveryUser.line_user_id != GUEST_USER_ID)
+        .order_by(DeliveryUser.display_name.asc())
+    ).scalars().all()
     access_rows = db_session.execute(select(DeliveryUserLocationAccess)).scalars().all()
     access_map: Dict[str, List[str]] = {}
     for row in access_rows:
@@ -174,6 +178,7 @@ def list_delivery_users_with_access(db_session) -> List[Dict]:
             "status": user.status,
             "accessMode": user.access_mode,
             "allowedLocationIds": access_map.get(user.line_user_id, []),
+            "lastLoginAt": user.last_login_at.isoformat() if user.last_login_at else None,
         }
         for user in users
     ]
@@ -251,7 +256,7 @@ def list_reports(
     *,
     date_from: Optional[datetime],
     date_to: Optional[datetime],
-    location_id: Optional[str],
+    location_ids: Optional[List[str]],
     customer_id: Optional[str],
     user_id: Optional[str],
 ) -> List[Dict]:
@@ -272,8 +277,8 @@ def list_reports(
         stmt = stmt.where(VisitReport.received_at_server >= date_from)
     if date_to:
         stmt = stmt.where(VisitReport.received_at_server <= date_to)
-    if location_id:
-        stmt = stmt.where(VisitReport.location_id == location_id)
+    if location_ids:
+        stmt = stmt.where(VisitReport.location_id.in_(location_ids))
     if customer_id:
         stmt = stmt.where(VisitReport.customer_id == customer_id)
     if user_id:
