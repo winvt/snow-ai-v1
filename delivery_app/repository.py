@@ -73,8 +73,10 @@ def get_or_create_guest_user(db_session) -> DeliveryUser:
     return user
 
 
-def get_allowed_location_ids(db_session, user: DeliveryUser) -> Optional[List[str]]:
+def get_allowed_location_ids(db_session, user: DeliveryUser, *, enforce_access: bool = True) -> Optional[List[str]]:
     """Return allowed location ids for a user, or None when the user can access all locations."""
+    if not enforce_access:
+        return None
     if user.access_mode != "assigned":
         return None
     rows = db_session.execute(
@@ -85,19 +87,19 @@ def get_allowed_location_ids(db_session, user: DeliveryUser) -> Optional[List[st
     return [row[0] for row in rows]
 
 
-def user_can_access_location(db_session, user: DeliveryUser, location_id: str) -> bool:
+def user_can_access_location(db_session, user: DeliveryUser, location_id: str, *, enforce_access: bool = True) -> bool:
     """Check whether the user can access a specific location."""
-    allowed_location_ids = get_allowed_location_ids(db_session, user)
+    allowed_location_ids = get_allowed_location_ids(db_session, user, enforce_access=enforce_access)
     if allowed_location_ids is None:
         return True
     return location_id in set(allowed_location_ids)
 
 
-def list_locations(db_session, *, user: Optional[DeliveryUser] = None) -> List[Dict]:
+def list_locations(db_session, *, user: Optional[DeliveryUser] = None, enforce_access: bool = True) -> List[Dict]:
     """Return location picker data sorted by name."""
     stmt = select(DeliveryLocation)
     if user is not None:
-        allowed_location_ids = get_allowed_location_ids(db_session, user)
+        allowed_location_ids = get_allowed_location_ids(db_session, user, enforce_access=enforce_access)
         if allowed_location_ids is not None:
             if not allowed_location_ids:
                 return []
@@ -115,11 +117,12 @@ def list_customers(
     location_id: Optional[str],
     query: Optional[str],
     user: Optional[DeliveryUser] = None,
+    enforce_access: bool = True,
 ) -> List[Dict]:
     """Return customers optionally filtered by location and search text."""
     stmt = select(DeliveryCustomer, DeliveryLocation.name.label("location_name")).join(DeliveryLocation)
     if user is not None:
-        allowed_location_ids = get_allowed_location_ids(db_session, user)
+        allowed_location_ids = get_allowed_location_ids(db_session, user, enforce_access=enforce_access)
         if allowed_location_ids is not None:
             if not allowed_location_ids:
                 return []

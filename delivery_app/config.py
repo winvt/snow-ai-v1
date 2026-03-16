@@ -23,6 +23,8 @@ class DeliverySettings:
     photo_route_prefix: str = "/api/photos"
     max_upload_bytes: int = 10 * 1024 * 1024
     allow_guest_mode: bool = True
+    enforce_location_access: bool = False
+    bootstrap_seed_metadata: bool = True
 
 
 def _parse_bool(value: str, default: bool) -> bool:
@@ -47,4 +49,6 @@ def load_settings() -> DeliverySettings:
         admin_password=os.getenv("ADMIN_PASSWORD", "change-me"),
         source_sqlite_path=os.getenv("SOURCE_SQLITE_PATH", os.getenv("DATABASE_PATH", "loyverse_data.db")),
         allow_guest_mode=_parse_bool(os.getenv("DELIVERY_ALLOW_GUEST_MODE"), True),
+        enforce_location_access=_parse_bool(os.getenv("DELIVERY_ENFORCE_LOCATION_ACCESS"), False),
+        bootstrap_seed_metadata=_parse_bool(os.getenv("DELIVERY_BOOTSTRAP_SEED_METADATA"), True),
     )

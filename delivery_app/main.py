@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from delivery_app.auth import LineVerifier, SessionManager, hash_admin_password
 from delivery_app.config import DeliverySettings, load_settings
 from delivery_app.db import create_db_engine, create_session_factory, init_db
+from delivery_app.metadata import bootstrap_seed_metadata_if_empty
 from delivery_app.repository import (
     create_visit_report,
     GUEST_USER_ID,
@@ -111,6 +112,8 @@ def create_app(
     engine = create_db_engine(settings.delivery_database_url)
     init_db(engine)
     session_factory = session_factory or create_session_factory(engine)
+    if settings.bootstrap_seed_metadata:
+        bootstrap_seed_metadata_if_empty(session_factory)
     storage = storage or build_default_storage(settings)
     line_verifier = line_verifier or LineVerifier(settings.line_channel_id)
     session_manager = SessionManager(settings.line_channel_secret)
@@ -129,6 +132,20 @@ def create_app(
             yield db
         finally:
             db.close()
+
+    def serialize_user(user, db: Session):
+        allowed_location_ids = get_allowed_location_ids(
+            db,
+            user,
+            enforce_access=settings.enforce_location_access,
+        )
+        return {
+            "lineUserId": user.line_user_id,
+            "displayName": user.display_name,
+            "pictureUrl": user.picture_url,
+            "accessMode": user.access_mode if settings.enforce_location_access else "all",
+            "allowedLocationIds": allowed_location_ids if allowed_location_ids is not None else [],
+        }
 
     def require_user(request: Request, db: Session = Depends(get_db)):
         token = request.cookies.get(settings.session_cookie_name)
@@ -196,18 +213,11 @@ def create_app(
         if not token:
             if settings.allow_guest_mode:
                 user = get_or_create_guest_user(db)
-                allowed_location_ids = get_allowed_location_ids(db, user)
                 return {
                     "authenticated": True,
                     "guestMode": True,
                     "liffId": settings.line_liff_id,
-                    "user": {
-                        "lineUserId": user.line_user_id,
-                        "displayName": user.display_name,
-                        "pictureUrl": user.picture_url,
-                        "accessMode": user.access_mode,
-                        "allowedLocationIds": allowed_location_ids if allowed_location_ids is not None else [],
-                    },
+                    "user": serialize_user(user, db),
                 }
             return {"authenticated": False, "liffId": settings.line_liff_id}
         try:
@@ -215,50 +225,29 @@ def create_app(
         except ValueError:
             if settings.allow_guest_mode:
                 user = get_or_create_guest_user(db)
-                allowed_location_ids = get_allowed_location_ids(db, user)
                 return {
                     "authenticated": True,
                     "guestMode": True,
                     "liffId": settings.line_liff_id,
-                    "user": {
-                        "lineUserId": user.line_user_id,
-                        "displayName": user.display_name,
-                        "pictureUrl": user.picture_url,
-                        "accessMode": user.access_mode,
-                        "allowedLocationIds": allowed_location_ids if allowed_location_ids is not None else [],
-                    },
+                    "user": serialize_user(user, db),
                 }
             return {"authenticated": False, "liffId": settings.line_liff_id}
         user = get_delivery_user(db, line_user_id)
         if user is None:
             if settings.allow_guest_mode:
                 guest = get_or_create_guest_user(db)
-                allowed_location_ids = get_allowed_location_ids(db, guest)
                 return {
                     "authenticated": True,
                     "guestMode": True,
                     "liffId": settings.line_liff_id,
-                    "user": {
-                        "lineUserId": guest.line_user_id,
-                        "displayName": guest.display_name,
-                        "pictureUrl": guest.picture_url,
-                        "accessMode": guest.access_mode,
-                        "allowedLocationIds": allowed_location_ids if allowed_location_ids is not None else [],
-                    },
+                    "user": serialize_user(guest, db),
                 }
             return {"authenticated": False, "liffId": settings.line_liff_id}
-        allowed_location_ids = get_allowed_location_ids(db, user)
         return {
             "authenticated": True,
             "guestMode": user.line_user_id == GUEST_USER_ID,
             "liffId": settings.line_liff_id,
-            "user": {
-                "lineUserId": user.line_user_id,
-                "displayName": user.display_name,
-                "pictureUrl": user.picture_url,
-                "accessMode": user.access_mode,
-                "allowedLocationIds": allowed_location_ids if allowed_location_ids is not None else [],
-            },
+            "user": serialize_user(user, db),
         }
 
     @app.post("/api/session")
@@ -268,7 +257,6 @@ def create_app(
         except ValueError as exc:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=str(exc)) from exc
         user = upsert_delivery_user(db, profile)
-        allowed_location_ids = get_allowed_location_ids(db, user)
         cookie = session_manager.dumps(user.line_user_id)
         response.set_cookie(
             key=settings.session_cookie_name,
@@ -280,13 +268,7 @@ def create_app(
         )
         return {
             "authenticated": True,
-            "user": {
-                "lineUserId": user.line_user_id,
-                "displayName": user.display_name,
-                "pictureUrl": user.picture_url,
-                "accessMode": user.access_mode,
-                "allowedLocationIds": allowed_location_ids if allowed_location_ids is not None else [],
-            },
+            "user": serialize_user(user, db),
         }
 
     @app.post("/api/logout")
@@ -296,7 +278,7 @@ def create_app(
 
     @app.get("/api/locations")
     def api_locations(user=Depends(require_user), db: Session = Depends(get_db)):
-        return {"locations": list_locations(db, user=user)}
+        return {"locations": list_locations(db, user=user, enforce_access=settings.enforce_location_access)}
 
     @app.get("/api/customers")
     def api_customers(
@@ -305,9 +287,22 @@ def create_app(
         user=Depends(require_user),
         db: Session = Depends(get_db),
     ):
-        if location_id and not user_can_access_location(db, user, location_id):
+        if location_id and not user_can_access_location(
+            db,
+            user,
+            location_id,
+            enforce_access=settings.enforce_location_access,
+        ):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Location is not authorized for this user")
-        return {"customers": list_customers(db, location_id=location_id, query=q, user=user)}
+        return {
+            "customers": list_customers(
+                db,
+                location_id=location_id,
+                query=q,
+                user=user,
+                enforce_access=settings.enforce_location_access,
+            )
+        }
 
     @app.post("/api/reports")
     async def api_reports(
@@ -333,7 +328,12 @@ def create_app(
         customer = get_customer(db, customer_id)
         if customer is None:
             raise HTTPException(status_code=404, detail="Unknown customer")
-        if not user_can_access_location(db, user, customer.primary_location_id):
+        if not user_can_access_location(
+            db,
+            user,
+            customer.primary_location_id,
+            enforce_access=settings.enforce_location_access,
+        ):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Customer location is not authorized for this user")
         if not photo.filename:
             raise HTTPException(status_code=400, detail="A photo is required")

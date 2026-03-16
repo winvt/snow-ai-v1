@@ -41,17 +41,13 @@ class DeliveryApiTests(unittest.TestCase):
             app_base_url="https://delivery.example.com",
             admin_password="admin-pass",
             source_sqlite_path="loyverse_data.db",
+            bootstrap_seed_metadata=False,
         )
         self.engine = create_db_engine(self.db_url)
         init_db(self.engine)
         self.session_factory = create_session_factory(self.engine)
         self.storage = InMemoryStorage()
-        self.app = create_app(
-            self.settings,
-            session_factory=self.session_factory,
-            storage=self.storage,
-            line_verifier=StubLineVerifier(),
-        )
+        self.app = create_app(self.settings, session_factory=self.session_factory, storage=self.storage, line_verifier=StubLineVerifier())
         self.client = TestClient(self.app, base_url="https://testserver")
         self._seed_customer()
 
@@ -154,6 +150,24 @@ class DeliveryApiTests(unittest.TestCase):
         self.assertEqual(len(customers_response.json()["customers"]), 1)
 
     def test_assigned_location_access_is_enforced(self):
+        self.settings = DeliverySettings(
+            delivery_database_url=self.db_url,
+            line_liff_id="test-liff-id",
+            line_channel_id="test-channel-id",
+            line_channel_secret="test-secret",
+            s3_endpoint="",
+            s3_bucket="bucket",
+            s3_access_key_id="",
+            s3_secret_access_key="",
+            s3_region="auto",
+            app_base_url="https://delivery.example.com",
+            admin_password="admin-pass",
+            source_sqlite_path="loyverse_data.db",
+            bootstrap_seed_metadata=False,
+            enforce_location_access=True,
+        )
+        self.app = create_app(self.settings, session_factory=self.session_factory, storage=self.storage, line_verifier=StubLineVerifier())
+        self.client = TestClient(self.app, base_url="https://testserver")
         self._login()
         credentials = base64.b64encode(b"admin:admin-pass").decode("utf-8")
         assign_response = self.client.put(
@@ -192,6 +206,29 @@ class DeliveryApiTests(unittest.TestCase):
             files={"photo": ("shop.jpg", b"fake-image-bytes", "image/jpeg")},
         )
         self.assertEqual(blocked_upload.status_code, 403)
+
+    def test_assigned_location_access_is_disabled_by_default(self):
+        self._login()
+        credentials = base64.b64encode(b"admin:admin-pass").decode("utf-8")
+        assign_response = self.client.put(
+            "/admin/access/users/line-user-1/locations",
+            headers={"Authorization": f"Basic {credentials}"},
+            json={"access_mode": "assigned", "location_ids": ["loc_1"]},
+        )
+        self.assertEqual(assign_response.status_code, 200)
+
+        session_response = self.client.get("/api/session")
+        self.assertEqual(session_response.status_code, 200)
+        self.assertEqual(session_response.json()["user"]["accessMode"], "all")
+        self.assertEqual(session_response.json()["user"]["allowedLocationIds"], [])
+
+        locations_response = self.client.get("/api/locations")
+        self.assertEqual(locations_response.status_code, 200)
+        self.assertEqual(len(locations_response.json()["locations"]), 2)
+
+        customers_response = self.client.get("/api/customers", params={"location_id": "loc_2"})
+        self.assertEqual(customers_response.status_code, 200)
+        self.assertEqual(len(customers_response.json()["customers"]), 1)
 
     def test_admin_reports_requires_basic_auth_and_returns_results(self):
         self._login()

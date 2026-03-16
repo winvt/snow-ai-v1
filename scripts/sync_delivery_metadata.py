@@ -3,17 +3,14 @@
 
 from __future__ import annotations
 
-from collections import Counter
-from datetime import datetime
-import os
 import sqlite3
 from typing import Dict, List
 
 import pandas as pd
-from sqlalchemy import select
 
 from delivery_app.config import load_settings
-from delivery_app.db import DeliveryCustomer, DeliveryLocation, create_db_engine, create_session_factory, init_db
+from delivery_app.db import create_db_engine, create_session_factory, init_db
+from delivery_app.metadata import apply_delivery_metadata_payload
 from delivery_app.repository import UNASSIGNED_LOCATION_ID, UNASSIGNED_LOCATION_NAME
 
 
@@ -116,56 +113,10 @@ def sync_delivery_metadata(source_sqlite_path: str, delivery_database_url: str) 
     init_db(engine)
     session_factory = create_session_factory(engine)
     db_session = session_factory()
-    now = datetime.utcnow()
-
-    location_counts = Counter(row["primary_location_id"] for row in payload["customers"])
-    for location in payload["locations"]:
-        model = db_session.execute(
-            select(DeliveryLocation).where(DeliveryLocation.id == location["id"])
-        ).scalar_one_or_none()
-        if model is None:
-            model = DeliveryLocation(
-                id=location["id"],
-                name=location["name"],
-                source_category_id=location["source_category_id"],
-                customer_count=location_counts.get(location["id"], 0),
-                last_synced_at=now,
-            )
-            db_session.add(model)
-        else:
-            model.name = location["name"]
-            model.source_category_id = location["source_category_id"]
-            model.customer_count = location_counts.get(location["id"], 0)
-            model.last_synced_at = now
-
-    for customer in payload["customers"]:
-        model = db_session.execute(
-            select(DeliveryCustomer).where(DeliveryCustomer.customer_id == customer["customer_id"])
-        ).scalar_one_or_none()
-        if model is None:
-            model = DeliveryCustomer(
-                customer_id=customer["customer_id"],
-                name=customer["name"],
-                customer_code=customer["customer_code"],
-                phone=customer["phone"],
-                primary_location_id=customer["primary_location_id"],
-                last_synced_at=now,
-            )
-            db_session.add(model)
-        else:
-            model.name = customer["name"]
-            model.customer_code = customer["customer_code"]
-            model.phone = customer["phone"]
-            model.primary_location_id = customer["primary_location_id"]
-            model.last_synced_at = now
-
-    db_session.commit()
-    db_session.close()
-    return {
-        "locations": len(payload["locations"]),
-        "customers": len(payload["customers"]),
-        "unassigned_customers": location_counts.get(UNASSIGNED_LOCATION_ID, 0),
-    }
+    try:
+        return apply_delivery_metadata_payload(db_session, payload)
+    finally:
+        db_session.close()
 
 
 def main() -> None:
@@ -182,4 +133,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
