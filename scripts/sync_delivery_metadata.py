@@ -4,9 +4,15 @@
 from __future__ import annotations
 
 import sqlite3
+from pathlib import Path
+import sys
 from typing import Dict, List
 
 import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from delivery_app.config import load_settings
 from delivery_app.db import create_db_engine, create_session_factory, init_db

@@ -19,6 +19,7 @@ from sqlalchemy.orm import Session
 from delivery_app.auth import LineVerifier, SessionManager, hash_admin_password
 from delivery_app.config import DeliverySettings, load_settings
 from delivery_app.db import create_db_engine, create_session_factory, init_db
+from delivery_app.loyverse_sync import sync_delivery_customers_from_loyverse
 from delivery_app.metadata import bootstrap_seed_metadata_if_empty
 from delivery_app.repository import (
     create_visit_report,
@@ -184,6 +185,15 @@ def create_app(
             )
         return True
 
+    def require_sync_secret(request: Request):
+        expected_secret = settings.sync_secret.strip()
+        if not expected_secret:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Sync secret is not configured")
+        provided_secret = request.headers.get("X-Delivery-Sync-Secret", "").strip()
+        if provided_secret != expected_secret:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid sync secret")
+        return True
+
     @app.get("/healthz")
     def healthz():
         return {"status": "ok"}
@@ -206,6 +216,16 @@ def create_app(
                 "request": request,
             },
         )
+
+    @app.post("/internal/sync/customers")
+    def internal_sync_customers(
+        _: bool = Depends(require_sync_secret),
+        db: Session = Depends(get_db),
+    ):
+        if not settings.loyverse_token:
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="LOYVERSE_TOKEN is not configured")
+        result = sync_delivery_customers_from_loyverse(db, settings.loyverse_token)
+        return {"ok": True, "result": result}
 
     @app.get("/api/session")
     def get_session(request: Request, db: Session = Depends(get_db)):

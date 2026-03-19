@@ -5,7 +5,8 @@ from pathlib import Path
 
 from sqlalchemy import select
 
-from delivery_app.db import DeliveryCustomer, DeliveryLocation, create_db_engine, create_session_factory
+from delivery_app.db import DeliveryCustomer, DeliveryLocation, create_db_engine, create_session_factory, init_db
+from delivery_app.metadata import sync_delivery_customers_from_api_payload
 from delivery_app.repository import UNASSIGNED_LOCATION_ID
 from scripts.sync_delivery_metadata import sync_delivery_metadata
 
@@ -111,3 +112,56 @@ class DeliverySyncTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 
+
+class DeliveryCustomerApiSyncTests(unittest.TestCase):
+    def setUp(self):
+        self.tmpdir = tempfile.TemporaryDirectory()
+        self.target_path = Path(self.tmpdir.name) / "delivery.db"
+        engine = create_db_engine(f"sqlite:///{self.target_path}")
+        init_db(engine)
+        self.session = create_session_factory(engine)()
+        self.session.add(DeliveryLocation(id="loc_a", name="Alpha", source_category_id="loc_a", customer_count=1))
+        self.session.add(
+            DeliveryCustomer(
+                customer_id="cust_1",
+                name="Old Name",
+                customer_code="OLD",
+                phone="080",
+                primary_location_id="loc_a",
+            )
+        )
+        self.session.commit()
+
+    def tearDown(self):
+        self.session.close()
+        self.tmpdir.cleanup()
+
+    def test_api_sync_preserves_existing_location_and_adds_new_customers_as_unassigned(self):
+        result = sync_delivery_customers_from_api_payload(
+            self.session,
+            [
+                {"id": "cust_1", "name": "Fresh Name", "customer_code": "C1", "phone": "081"},
+                {"id": "cust_2", "name": "Brand New", "customer_code": "C2", "phone": "082"},
+                {"name": "Missing Id"},
+            ],
+        )
+
+        customers = {
+            row.customer_id: row
+            for row in self.session.execute(select(DeliveryCustomer)).scalars()
+        }
+        locations = {
+            row.id: row
+            for row in self.session.execute(select(DeliveryLocation)).scalars()
+        }
+
+        self.assertEqual(result["customers"], 2)
+        self.assertEqual(result["new_customers"], 1)
+        self.assertEqual(result["updated_customers"], 1)
+        self.assertEqual(result["unchanged_customers"], 0)
+        self.assertEqual(result["skipped_customers"], 1)
+        self.assertEqual(customers["cust_1"].primary_location_id, "loc_a")
+        self.assertEqual(customers["cust_1"].name, "Fresh Name")
+        self.assertEqual(customers["cust_2"].primary_location_id, UNASSIGNED_LOCATION_ID)
+        self.assertEqual(locations["loc_a"].customer_count, 1)
+        self.assertEqual(locations[UNASSIGNED_LOCATION_ID].customer_count, 1)

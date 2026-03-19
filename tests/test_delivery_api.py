@@ -1,6 +1,7 @@
 import base64
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -33,6 +34,7 @@ class DeliveryApiTests(unittest.TestCase):
             line_liff_id="test-liff-id",
             line_channel_id="test-channel-id",
             line_channel_secret="test-secret",
+            loyverse_token="test-loyverse-token",
             s3_endpoint="",
             s3_bucket="bucket",
             s3_access_key_id="",
@@ -40,6 +42,7 @@ class DeliveryApiTests(unittest.TestCase):
             s3_region="auto",
             app_base_url="https://delivery.example.com",
             admin_password="admin-pass",
+            sync_secret="sync-secret",
             source_sqlite_path="loyverse_data.db",
             bootstrap_seed_metadata=False,
         )
@@ -155,6 +158,7 @@ class DeliveryApiTests(unittest.TestCase):
             line_liff_id="test-liff-id",
             line_channel_id="test-channel-id",
             line_channel_secret="test-secret",
+            loyverse_token="test-loyverse-token",
             s3_endpoint="",
             s3_bucket="bucket",
             s3_access_key_id="",
@@ -162,6 +166,7 @@ class DeliveryApiTests(unittest.TestCase):
             s3_region="auto",
             app_base_url="https://delivery.example.com",
             admin_password="admin-pass",
+            sync_secret="sync-secret",
             source_sqlite_path="loyverse_data.db",
             bootstrap_seed_metadata=False,
             enforce_location_access=True,
@@ -321,6 +326,29 @@ class DeliveryApiTests(unittest.TestCase):
         self.assertEqual(users[0]["lineUserId"], "line-user-1")
         self.assertIsNotNone(users[0]["lastLoginAt"])
         self.assertNotIn("guest-preview", [user["lineUserId"] for user in users])
+
+    @patch("delivery_app.main.sync_delivery_customers_from_loyverse")
+    def test_internal_customer_sync_requires_secret_and_runs(self, mock_sync):
+        mock_sync.return_value = {
+            "customers": 10,
+            "new_customers": 2,
+            "updated_customers": 1,
+            "unchanged_customers": 7,
+            "skipped_customers": 0,
+            "unassigned_customers": 3,
+        }
+
+        unauthenticated = self.client.post("/internal/sync/customers")
+        self.assertEqual(unauthenticated.status_code, 401)
+
+        authenticated = self.client.post(
+            "/internal/sync/customers",
+            headers={"X-Delivery-Sync-Secret": "sync-secret"},
+        )
+        self.assertEqual(authenticated.status_code, 200)
+        self.assertTrue(authenticated.json()["ok"])
+        self.assertEqual(authenticated.json()["result"]["new_customers"], 2)
+        self.assertEqual(mock_sync.call_count, 1)
 
 
 if __name__ == "__main__":

@@ -10,6 +10,7 @@ class DeliverySettings:
     line_liff_id: str
     line_channel_id: str
     line_channel_secret: str
+    loyverse_token: str
     s3_endpoint: str
     s3_bucket: str
     s3_access_key_id: str
@@ -17,6 +18,7 @@ class DeliverySettings:
     s3_region: str
     app_base_url: str
     admin_password: str
+    sync_secret: str
     source_sqlite_path: str
     session_cookie_name: str = "delivery_session"
     session_ttl_seconds: int = 60 * 60 * 24 * 7
@@ -40,6 +42,7 @@ def load_settings() -> DeliverySettings:
         line_liff_id=os.getenv("LINE_LIFF_ID", ""),
         line_channel_id=os.getenv("LINE_CHANNEL_ID", ""),
         line_channel_secret=os.getenv("LINE_CHANNEL_SECRET", "dev-line-secret"),
+        loyverse_token=os.getenv("LOYVERSE_TOKEN", "").strip(),
         s3_endpoint=os.getenv("S3_ENDPOINT", ""),
         s3_bucket=os.getenv("S3_BUCKET", ""),
         s3_access_key_id=os.getenv("S3_ACCESS_KEY_ID", ""),
@@ -47,6 +50,7 @@ def load_settings() -> DeliverySettings:
         s3_region=os.getenv("S3_REGION", "auto"),
         app_base_url=os.getenv("APP_BASE_URL", "").rstrip("/"),
         admin_password=os.getenv("ADMIN_PASSWORD", "change-me"),
+        sync_secret=os.getenv("DELIVERY_SYNC_SECRET", "").strip(),
         source_sqlite_path=os.getenv("SOURCE_SQLITE_PATH", os.getenv("DATABASE_PATH", "loyverse_data.db")),
         allow_guest_mode=_parse_bool(os.getenv("DELIVERY_ALLOW_GUEST_MODE"), True),
         enforce_location_access=_parse_bool(os.getenv("DELIVERY_ENFORCE_LOCATION_ACCESS"), False),

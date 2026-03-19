@@ -102,22 +102,16 @@ services:
     runtime: python
     plan: starter
     region: singapore
-    schedule: "0 * * * *"
+    schedule: "0 1 * * *"
     buildCommand: pip install -r requirements.txt
-    startCommand: python3 scripts/sync_delivery_metadata.py
+    startCommand: python3 scripts/trigger_delivery_customer_sync.py
     envVars:
-      - key: DELIVERY_DATABASE_URL
-        fromDatabase:
-          name: snow-ai-delivery-db
-          property: connectionString
-      - key: SOURCE_SQLITE_PATH
-        value: /opt/render/project/src/data/loyverse_data.db
+      - key: APP_BASE_URL
+        value: https://snow-ai-delivery.onrender.com
+      - key: DELIVERY_SYNC_SECRET
+        value: REPLACE_WITH_DELIVERY_SYNC_SECRET
       - key: PYTHONUNBUFFERED
         value: 1
-    disk:
-      name: snowbomb-database
-      mountPath: /opt/render/project/src/data
-      sizeGB: 1
 
 databases:
   - name: snow-ai-delivery-db
