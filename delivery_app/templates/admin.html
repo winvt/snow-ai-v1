@@ -23,50 +23,65 @@
 
         <section id="admin-tab-reports" class="admin-tab-panel">
             <section class="panel report-workspace">
-                <form id="admin-filters" class="report-toolbar">
-                    <div class="report-toolbar-copy">
-                        <p class="toolbar-label">Recent reports</p>
-                        <div id="admin-status">Loading reports...</div>
-                    </div>
-                    <label class="field admin-location-field">
-                        <span>Locations</span>
-                        <div id="location-ids" class="chip-filter-grid"></div>
-                    </label>
-                    <div class="toolbar-fields">
-                        <label class="field">
-                            <span>Date From</span>
-                            <input type="date" id="date-from" name="date_from">
-                        </label>
-                        <label class="field">
-                            <span>Date To</span>
-                            <input type="date" id="date-to" name="date_to">
-                        </label>
-                        <label class="field">
-                            <span>Customer ID</span>
-                            <input type="text" id="customer-id" name="customer_id" placeholder="optional">
-                        </label>
-                        <label class="field">
-                            <span>LINE User ID</span>
-                            <input type="text" id="user-id" name="user_id" placeholder="optional">
-                        </label>
-                    </div>
-                    <div class="toolbar-actions">
-                        <button class="ghost-button" id="reset-filters" type="button">Clear</button>
-                        <button class="primary-button" type="submit">Load Reports</button>
-                    </div>
-                </form>
-
-                <div class="report-layout">
-                    <section class="report-feed">
-                        <div id="report-grid" class="report-grid report-photo-grid"></div>
-                    </section>
-                    <aside id="report-drawer" class="report-drawer is-empty">
-                        <div class="drawer-empty">
-                            <p class="toolbar-label">Preview</p>
-                            <h2>Select a report</h2>
-                            <p>Pick any photo to inspect the visit details.</p>
-                        </div>
+                <div class="report-shell">
+                    <aside class="report-sidebar">
+                        <form id="admin-filters" class="report-toolbar">
+                            <div class="report-toolbar-copy">
+                                <p class="toolbar-label">Filters</p>
+                                <div class="report-sidebar-copy">Use any combination of filters to narrow the gallery.</div>
+                            </div>
+                            <label class="field admin-location-field">
+                                <span>Locations</span>
+                                <div id="location-ids" class="sidebar-checklist"></div>
+                            </label>
+                            <div class="toolbar-fields">
+                                <label class="field">
+                                    <span>Date From</span>
+                                    <input type="date" id="date-from" name="date_from">
+                                </label>
+                                <label class="field">
+                                    <span>Date To</span>
+                                    <input type="date" id="date-to" name="date_to">
+                                </label>
+                                <label class="field">
+                                    <span>Customer ID</span>
+                                    <input type="text" id="customer-id" name="customer_id" placeholder="optional">
+                                </label>
+                                <label class="field">
+                                    <span>LINE User ID</span>
+                                    <input type="text" id="user-id" name="user_id" placeholder="optional">
+                                </label>
+                            </div>
+                            <div class="toolbar-actions">
+                                <button class="ghost-button" id="reset-filters" type="button">Clear</button>
+                                <button class="primary-button" type="submit">Load Reports</button>
+                            </div>
+                        </form>
                     </aside>
+
+                    <section class="report-content">
+                        <div class="report-content-head">
+                            <div>
+                                <p class="toolbar-label">Recent reports</p>
+                                <div id="admin-status">Loading reports...</div>
+                            </div>
+                        </div>
+                        <div class="report-layout">
+                            <section class="report-feed">
+                                <div id="report-grid" class="report-grid report-photo-grid"></div>
+                                <div class="report-feed-actions">
+                                    <button class="ghost-button hidden" id="load-older-reports" type="button">Load Older</button>
+                                </div>
+                            </section>
+                            <aside id="report-drawer" class="report-drawer is-empty">
+                                <div class="drawer-empty">
+                                    <p class="toolbar-label">Preview</p>
+                                    <h2>Select a report</h2>
+                                    <p>Pick any photo to inspect the visit details.</p>
+                                </div>
+                            </aside>
+                        </div>
+                    </section>
                 </div>
             </section>
         </section>

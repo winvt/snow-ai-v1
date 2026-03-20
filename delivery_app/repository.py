@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import and_, delete, func, or_, select
 
 from delivery_app.auth import LineProfile
 from delivery_app.db import DeliveryCustomer, DeliveryLocation, DeliveryUser, DeliveryUserLocationAccess, VisitReport
@@ -251,7 +251,7 @@ def create_visit_report(db_session, **kwargs) -> VisitReport:
     return report
 
 
-def list_reports(
+def list_reports_page(
     db_session,
     *,
     date_from: Optional[datetime],
@@ -259,8 +259,11 @@ def list_reports(
     location_ids: Optional[List[str]],
     customer_id: Optional[str],
     user_id: Optional[str],
-) -> List[Dict]:
-    """Return admin gallery rows."""
+    before_received_at: Optional[datetime] = None,
+    before_id: Optional[str] = None,
+    limit: int = 60,
+) -> Dict:
+    """Return a paginated slice of admin gallery rows."""
     stmt = (
         select(
             VisitReport,
@@ -271,7 +274,7 @@ def list_reports(
         .join(DeliveryCustomer, VisitReport.customer_id == DeliveryCustomer.customer_id)
         .join(DeliveryLocation, VisitReport.location_id == DeliveryLocation.id)
         .join(DeliveryUser, VisitReport.line_user_id == DeliveryUser.line_user_id)
-        .order_by(VisitReport.received_at_server.desc())
+        .order_by(VisitReport.received_at_server.desc(), VisitReport.id.desc())
     )
     if date_from:
         stmt = stmt.where(VisitReport.received_at_server >= date_from)
@@ -283,9 +286,24 @@ def list_reports(
         stmt = stmt.where(VisitReport.customer_id == customer_id)
     if user_id:
         stmt = stmt.where(VisitReport.line_user_id == user_id)
+    if before_received_at:
+        if before_id:
+            stmt = stmt.where(
+                or_(
+                    VisitReport.received_at_server < before_received_at,
+                    and_(
+                        VisitReport.received_at_server == before_received_at,
+                        VisitReport.id < before_id,
+                    ),
+                )
+            )
+        else:
+            stmt = stmt.where(VisitReport.received_at_server < before_received_at)
 
-    rows = db_session.execute(stmt.limit(500)).all()
-    return [
+    rows = db_session.execute(stmt.limit(limit + 1)).all()
+    has_more = len(rows) > limit
+    visible_rows = rows[:limit]
+    reports = [
         {
             "id": report.id,
             "clientSubmissionId": report.client_submission_id,
@@ -302,8 +320,20 @@ def list_reports(
             "capturedAtClient": report.captured_at_client.isoformat() if report.captured_at_client else None,
             "receivedAtServer": report.received_at_server.isoformat() if report.received_at_server else None,
         }
-        for report, customer_name, location_name, user_name in rows
+        for report, customer_name, location_name, user_name in visible_rows
     ]
+    next_cursor = None
+    if has_more and visible_rows:
+        last_report = visible_rows[-1][0]
+        next_cursor = {
+            "beforeReceivedAt": last_report.received_at_server.isoformat() if last_report.received_at_server else None,
+            "beforeId": last_report.id,
+        }
+    return {
+        "reports": reports,
+        "hasMore": has_more,
+        "nextCursor": next_cursor,
+    }
 
 
 def count_reports(db_session) -> int:

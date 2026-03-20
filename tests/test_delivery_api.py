@@ -1,4 +1,5 @@
 import base64
+from datetime import datetime, timedelta
 from io import BytesIO
 import tempfile
 import unittest
@@ -10,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from delivery_app.auth import LineProfile
 from delivery_app.config import DeliverySettings
-from delivery_app.db import DeliveryCustomer, DeliveryLocation, create_db_engine, create_session_factory, init_db
+from delivery_app.db import DeliveryCustomer, DeliveryLocation, VisitReport, create_db_engine, create_session_factory, init_db
 from delivery_app.main import create_app
 from delivery_app.photo_metadata import build_variant_object_key
 from delivery_app.repository import count_reports
@@ -318,6 +319,60 @@ class DeliveryApiTests(unittest.TestCase):
         )
         self.assertEqual(single_location.status_code, 200)
         self.assertEqual([row["locationId"] for row in single_location.json()["reports"]], ["loc_2"])
+
+    def test_admin_reports_can_paginate_older_results(self):
+        self._login()
+        session = self.session_factory()
+        try:
+            base_time = datetime(2026, 3, 10, 0, 0, 0)
+            reports = [
+                VisitReport(
+                    client_submission_id=f"submission-{index}",
+                    line_user_id="line-user-1",
+                    customer_id="cust_1",
+                    location_id="loc_1",
+                    photo_object_key=f"reports/test/{index}.jpg",
+                    photo_url=f"https://delivery.example.com/api/photos/reports/test/{index}.jpg",
+                    latitude=13.75,
+                    longitude=100.50,
+                    accuracy_m=5.0,
+                    captured_at_client=base_time - timedelta(minutes=index),
+                    received_at_server=base_time - timedelta(minutes=index),
+                )
+                for index in range(65)
+            ]
+            session.add_all(reports)
+            session.commit()
+        finally:
+            session.close()
+
+        credentials = base64.b64encode(b"admin:admin-pass").decode("utf-8")
+        first_page = self.client.get(
+            "/admin/reports",
+            headers={"Authorization": f"Basic {credentials}"},
+        )
+        self.assertEqual(first_page.status_code, 200)
+        first_payload = first_page.json()
+        self.assertEqual(len(first_payload["reports"]), 60)
+        self.assertTrue(first_payload["hasMore"])
+        self.assertIsNotNone(first_payload["nextCursor"])
+
+        second_page = self.client.get(
+            "/admin/reports",
+            headers={"Authorization": f"Basic {credentials}"},
+            params={
+                "before_received_at": first_payload["nextCursor"]["beforeReceivedAt"],
+                "before_id": first_payload["nextCursor"]["beforeId"],
+            },
+        )
+        self.assertEqual(second_page.status_code, 200)
+        second_payload = second_page.json()
+        self.assertEqual(len(second_payload["reports"]), 5)
+        self.assertFalse(second_payload["hasMore"])
+
+        first_ids = {report["id"] for report in first_payload["reports"]}
+        second_ids = {report["id"] for report in second_payload["reports"]}
+        self.assertTrue(first_ids.isdisjoint(second_ids))
 
     def test_admin_access_users_excludes_guest_and_includes_last_login(self):
         guest_session = self.client.get("/api/session")

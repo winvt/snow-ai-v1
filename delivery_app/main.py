@@ -33,7 +33,7 @@ from delivery_app.repository import (
     list_customers,
     list_delivery_users_with_access,
     list_locations,
-    list_reports,
+    list_reports_page,
     set_user_location_access,
     upsert_delivery_user,
     user_can_access_location,
@@ -441,21 +441,26 @@ def create_app(
         location_ids: Optional[List[str]] = Query(None),
         customer_id: Optional[str] = None,
         user_id: Optional[str] = None,
+        before_received_at: Optional[str] = None,
+        before_id: Optional[str] = None,
+        limit: int = Query(60, ge=1, le=120),
         _: bool = Depends(require_admin),
         db: Session = Depends(get_db),
     ):
         parsed_from = parse_iso_datetime(f"{date_from}T00:00:00") if date_from else None
         parsed_to = parse_iso_datetime(f"{date_to}T23:59:59") if date_to else None
-        return {
-            "reports": list_reports(
-                db,
-                date_from=parsed_from,
-                date_to=parsed_to,
-                location_ids=location_ids,
-                customer_id=customer_id,
-                user_id=user_id,
-            )
-        }
+        parsed_before = parse_iso_datetime(before_received_at) if before_received_at else None
+        return list_reports_page(
+            db,
+            date_from=parsed_from,
+            date_to=parsed_to,
+            location_ids=location_ids,
+            customer_id=customer_id,
+            user_id=user_id,
+            before_received_at=parsed_before,
+            before_id=before_id,
+            limit=limit,
+        )
 
     @app.get("/admin/locations")
     def admin_locations(_: bool = Depends(require_admin), db: Session = Depends(get_db)):

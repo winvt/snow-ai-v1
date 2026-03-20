@@ -3,6 +3,7 @@ const reportDrawer = document.getElementById("report-drawer");
 const adminStatus = document.getElementById("admin-status");
 const filterForm = document.getElementById("admin-filters");
 const resetFiltersButton = document.getElementById("reset-filters");
+const loadOlderReportsButton = document.getElementById("load-older-reports");
 const locationCheckboxGrid = document.getElementById("location-ids");
 const usersGrid = document.getElementById("users-grid");
 const usersStatus = document.getElementById("users-status");
@@ -18,6 +19,8 @@ const state = {
   reports: [],
   users: [],
   selectedReportId: null,
+  reportCursor: null,
+  hasMoreReports: false,
 };
 
 const bangkokFormatter = new Intl.DateTimeFormat("en-GB", {
@@ -88,7 +91,7 @@ function getSelectedLocationIds() {
 function buildLocationChip(location, selectedIds = []) {
   const checked = selectedIds.includes(location.id) ? "checked" : "";
   return `
-    <label class="choice-chip">
+    <label class="sidebar-check">
       <input type="checkbox" value="${escapeHtml(location.id)}" ${checked}>
       <span>${escapeHtml(location.name)}</span>
     </label>
@@ -235,6 +238,16 @@ function renderReports(reports) {
 
   syncSelectedReportCard();
   renderReportDrawer(getSelectedReport());
+}
+
+function appendReports(reports) {
+  if (!reports.length) {
+    return;
+  }
+
+  const existingIds = new Set(state.reports.map((report) => report.id));
+  const merged = state.reports.concat(reports.filter((report) => !existingIds.has(report.id)));
+  renderReports(merged);
 }
 
 function buildUserLocationChips(user) {
@@ -456,9 +469,10 @@ async function loadUsers() {
 }
 
 async function loadReports(event) {
-  if (event) {
-    event.preventDefault();
-  }
+  return requestReports({ reset: true, event });
+}
+
+function buildReportParams() {
   const formData = new FormData(filterForm);
   const params = new URLSearchParams();
   for (const [key, value] of formData.entries()) {
@@ -468,23 +482,66 @@ async function loadReports(event) {
     }
   }
   getSelectedLocationIds().forEach((locationId) => params.append("location_ids", locationId));
-  adminStatus.textContent = "Loading reports...";
+  return params;
+}
+
+function syncLoadOlderButton() {
+  loadOlderReportsButton.classList.toggle("hidden", !state.hasMoreReports);
+  loadOlderReportsButton.disabled = !state.hasMoreReports;
+}
+
+async function requestReports({ reset, event } = {}) {
+  if (event) {
+    event.preventDefault();
+  }
+
+  const params = buildReportParams();
+  if (!reset && state.reportCursor?.beforeReceivedAt) {
+    params.append("before_received_at", state.reportCursor.beforeReceivedAt);
+    params.append("before_id", state.reportCursor.beforeId);
+  }
+  adminStatus.textContent = reset ? "Loading reports..." : "Loading older reports...";
+  if (!reset) {
+    loadOlderReportsButton.disabled = true;
+    loadOlderReportsButton.textContent = "Loading...";
+  }
   const response = await fetch(`/admin/reports?${params.toString()}`, { credentials: "include" });
   const payload = await response.json();
   if (!response.ok) {
     adminStatus.textContent = payload.detail || "Failed to load reports.";
+    if (!reset) {
+      loadOlderReportsButton.textContent = "Load Older";
+      syncLoadOlderButton();
+    }
     return;
   }
-  renderReports(payload.reports);
+  state.reportCursor = payload.nextCursor || null;
+  state.hasMoreReports = Boolean(payload.hasMore);
+  if (reset) {
+    renderReports(payload.reports);
+  } else {
+    appendReports(payload.reports);
+  }
+  syncLoadOlderButton();
+  if (!reset) {
+    loadOlderReportsButton.textContent = "Load Older";
+  }
 }
 
 filterForm.addEventListener("submit", loadReports);
+loadOlderReportsButton.addEventListener("click", () => {
+  requestReports({ reset: false }).catch((error) => {
+    adminStatus.textContent = error.message || "Failed to load older reports.";
+    loadOlderReportsButton.textContent = "Load Older";
+    syncLoadOlderButton();
+  });
+});
 resetFiltersButton.addEventListener("click", () => {
   filterForm.reset();
   Array.from(locationCheckboxGrid.querySelectorAll('input[type="checkbox"]')).forEach((input) => {
     input.checked = false;
   });
-  loadReports().catch((error) => {
+  requestReports({ reset: true }).catch((error) => {
     adminStatus.textContent = error.message || "Failed to load reports.";
   });
 });
