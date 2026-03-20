@@ -21,6 +21,8 @@ downloads/
 eggs/
 .eggs/
 lib/
+!delivery_admin/lib/
+!delivery_admin/lib/**
 lib64/
 parts/
 sdist/
