@@ -21,6 +21,22 @@
             <button class="admin-tab" type="button" data-tab="users">Users</button>
         </nav>
 
+        <section class="system-strip {% if not system_status.database.persistent %}is-warning{% endif %}">
+            <div class="system-card">
+                <p class="toolbar-label">Report database</p>
+                <strong>{{ system_status.database.label }}</strong>
+                <p>{{ system_status.database.detail }}</p>
+                {% if system_status.database.warning %}
+                    <p class="system-warning">{{ system_status.database.warning }}</p>
+                {% endif %}
+            </div>
+            <div class="system-card">
+                <p class="toolbar-label">Photo storage</p>
+                <strong>{{ system_status.photoStorage.label }}</strong>
+                <p>{{ system_status.photoStorage.detail }}</p>
+            </div>
+        </section>
+
         <section id="admin-tab-reports" class="admin-tab-panel">
             <section class="panel report-workspace">
                 <div class="report-shell">

@@ -103,6 +103,46 @@ def build_default_storage(settings: DeliverySettings):
     return NullStorage()
 
 
+def describe_database_backend(database_url: str) -> dict:
+    """Return a safe summary of the active report metadata database."""
+    if database_url.startswith("sqlite"):
+        return {
+            "backend": "sqlite",
+            "label": "SQLite fallback",
+            "persistent": False,
+            "detail": "Report rows are stored inside the web service filesystem.",
+            "warning": "Deploys can wipe old reports unless DELIVERY_DATABASE_URL points to Render Postgres.",
+        }
+    return {
+        "backend": "postgres",
+        "label": "Postgres",
+        "persistent": True,
+        "detail": "Report rows are stored in the shared delivery database.",
+        "warning": "",
+    }
+
+
+def describe_photo_storage(storage) -> dict:
+    """Return a safe summary of the active photo storage backend."""
+    if isinstance(storage, S3Storage):
+        return {
+            "backend": "s3",
+            "label": "R2 / S3",
+            "detail": "Photos are stored in object storage.",
+        }
+    if isinstance(storage, NullStorage):
+        return {
+            "backend": "disabled",
+            "label": "Disabled",
+            "detail": "Photo storage is not configured.",
+        }
+    return {
+        "backend": "custom",
+        "label": "Custom",
+        "detail": "Photos are stored through a custom backend.",
+    }
+
+
 def create_app(
     settings: Optional[DeliverySettings] = None,
     *,
@@ -120,6 +160,15 @@ def create_app(
     storage = storage or build_default_storage(settings)
     line_verifier = line_verifier or LineVerifier(settings.line_channel_id)
     session_manager = SessionManager(settings.line_channel_secret)
+    system_status = {
+        "database": describe_database_backend(settings.delivery_database_url),
+        "photoStorage": describe_photo_storage(storage),
+    }
+    if not system_status["database"]["persistent"]:
+        print(
+            "WARNING: Delivery app is using SQLite fallback. "
+            "Set DELIVERY_DATABASE_URL to Render Postgres for persistent reports."
+        )
 
     app = FastAPI(title="Snow AI Delivery Photo App")
     app.state.settings = settings
@@ -127,6 +176,7 @@ def create_app(
     app.state.storage = storage
     app.state.line_verifier = line_verifier
     app.state.session_manager = session_manager
+    app.state.system_status = system_status
     app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 
     def get_db():
@@ -216,8 +266,13 @@ def create_app(
             "admin.html",
             {
                 "request": request,
+                "system_status": app.state.system_status,
             },
         )
+
+    @app.get("/admin/system")
+    def admin_system(_: bool = Depends(require_admin)):
+        return app.state.system_status
 
     @app.post("/internal/sync/customers")
     def internal_sync_customers(
