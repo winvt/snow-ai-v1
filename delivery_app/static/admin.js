@@ -1,18 +1,25 @@
 const reportGrid = document.getElementById("report-grid");
+const reportDrawer = document.getElementById("report-drawer");
 const adminStatus = document.getElementById("admin-status");
 const filterForm = document.getElementById("admin-filters");
+const resetFiltersButton = document.getElementById("reset-filters");
 const locationCheckboxGrid = document.getElementById("location-ids");
 const usersGrid = document.getElementById("users-grid");
 const usersStatus = document.getElementById("users-status");
+const userSearchInput = document.getElementById("user-search");
 const adminTabs = Array.from(document.querySelectorAll(".admin-tab"));
 const adminPanels = {
   reports: document.getElementById("admin-tab-reports"),
   users: document.getElementById("admin-tab-users"),
 };
+
 const state = {
   locations: [],
+  reports: [],
   users: [],
+  selectedReportId: null,
 };
+
 const bangkokFormatter = new Intl.DateTimeFormat("en-GB", {
   timeZone: "Asia/Bangkok",
   hour: "2-digit",
@@ -22,6 +29,15 @@ const bangkokFormatter = new Intl.DateTimeFormat("en-GB", {
   year: "numeric",
   hour12: false,
 });
+
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
 
 function formatBangkokDate(value) {
   if (!value) {
@@ -37,16 +53,46 @@ function formatBangkokDate(value) {
   return `${parts.hour}:${parts.minute} ${parts.day}/${parts.month}/${parts.year}`;
 }
 
+function normalizeNumber(value) {
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
 function formatCoordinate(value) {
-  return Number.isFinite(value) ? value.toFixed(5) : "-";
+  const numeric = normalizeNumber(value);
+  return numeric === null ? "-" : numeric.toFixed(5);
+}
+
+function formatAccuracy(value) {
+  const numeric = normalizeNumber(value);
+  return numeric === null ? "-" : `${Math.round(numeric)} m`;
 }
 
 function buildMapUrl(latitude, longitude) {
-  return `https://www.google.com/maps?q=${latitude},${longitude}`;
+  const lat = normalizeNumber(latitude);
+  const lng = normalizeNumber(longitude);
+  if (lat === null || lng === null) {
+    return null;
+  }
+  return `https://www.google.com/maps?q=${lat},${lng}`;
+}
+
+function buildVariantUrl(photoUrl, variant) {
+  return `${photoUrl}${photoUrl.includes("?") ? "&" : "?"}variant=${variant}`;
 }
 
 function getSelectedLocationIds() {
   return Array.from(locationCheckboxGrid.querySelectorAll('input[type="checkbox"]:checked')).map((input) => input.value);
+}
+
+function buildLocationChip(location, selectedIds = []) {
+  const checked = selectedIds.includes(location.id) ? "checked" : "";
+  return `
+    <label class="choice-chip">
+      <input type="checkbox" value="${escapeHtml(location.id)}" ${checked}>
+      <span>${escapeHtml(location.name)}</span>
+    </label>
+  `;
 }
 
 function setActiveTab(tabName) {
@@ -59,125 +105,291 @@ function setActiveTab(tabName) {
 }
 
 function populateLocations(locations) {
-  locationCheckboxGrid.innerHTML = "";
-  locations.forEach((location) => {
-    const label = document.createElement("label");
-    label.className = "checkbox-card";
-    label.innerHTML = `
-      <input type="checkbox" value="${location.id}">
-      <span>${location.name}</span>
-    `;
-    locationCheckboxGrid.appendChild(label);
+  locationCheckboxGrid.innerHTML = locations.map((location) => buildLocationChip(location)).join("");
+}
+
+function getSelectedReport() {
+  return state.reports.find((report) => report.id === state.selectedReportId) || null;
+}
+
+function syncSelectedReportCard() {
+  const selectedId = state.selectedReportId;
+  Array.from(reportGrid.querySelectorAll(".report-card")).forEach((card) => {
+    card.classList.toggle("is-active", Number(card.dataset.reportId) === selectedId);
   });
 }
 
-function buildUserLocationCheckboxes(user) {
+function renderReportDrawer(report) {
+  if (!report) {
+    reportDrawer.classList.add("is-empty");
+    reportDrawer.innerHTML = `
+      <div class="drawer-empty">
+        <p class="toolbar-label">Preview</p>
+        <h2>Select a report</h2>
+        <p>Pick any photo to inspect the visit details.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const mapUrl = buildMapUrl(report.latitude, report.longitude);
+  const displayUrl = buildVariantUrl(report.photoUrl, "display");
+  reportDrawer.classList.remove("is-empty");
+  reportDrawer.innerHTML = `
+    <div class="drawer-head">
+      <div>
+        <p class="toolbar-label">Visit detail</p>
+        <h2>${escapeHtml(report.customerName)}</h2>
+      </div>
+      <span class="drawer-location">${escapeHtml(report.locationName)}</span>
+    </div>
+    <a class="drawer-photo-link" href="${escapeHtml(report.photoUrl)}" target="_blank" rel="noreferrer">
+      <img class="drawer-photo" src="${escapeHtml(displayUrl)}" alt="Visit report photo">
+    </a>
+    <div class="drawer-actions">
+      ${mapUrl ? `<a class="secondary-button drawer-button" href="${escapeHtml(mapUrl)}" target="_blank" rel="noreferrer">Map</a>` : ""}
+      <a class="ghost-button drawer-button" href="${escapeHtml(report.photoUrl)}" target="_blank" rel="noreferrer">Original</a>
+    </div>
+    <dl class="drawer-meta">
+      <div>
+        <dt>User</dt>
+        <dd>${escapeHtml(report.userName)}</dd>
+      </div>
+      <div>
+        <dt>Location</dt>
+        <dd>${escapeHtml(report.locationName)}</dd>
+      </div>
+      <div>
+        <dt>Taken</dt>
+        <dd>${formatBangkokDate(report.capturedAtClient)}</dd>
+      </div>
+      <div>
+        <dt>Saved</dt>
+        <dd>${formatBangkokDate(report.receivedAtServer)}</dd>
+      </div>
+      <div>
+        <dt>Lat</dt>
+        <dd>${formatCoordinate(report.latitude)}</dd>
+      </div>
+      <div>
+        <dt>Lng</dt>
+        <dd>${formatCoordinate(report.longitude)}</dd>
+      </div>
+      <div>
+        <dt>Acc</dt>
+        <dd>${formatAccuracy(report.accuracyM)}</dd>
+      </div>
+      <div>
+        <dt>LINE ID</dt>
+        <dd>${escapeHtml(report.lineUserId)}</dd>
+      </div>
+    </dl>
+  `;
+}
+
+function renderReports(reports) {
+  state.reports = reports;
+  reportGrid.innerHTML = "";
+
+  if (!reports.length) {
+    state.selectedReportId = null;
+    adminStatus.textContent = "No reports found for the current filters.";
+    renderReportDrawer(null);
+    return;
+  }
+
+  adminStatus.textContent = `${reports.length} report(s) loaded.`;
+  if (!reports.some((report) => report.id === state.selectedReportId)) {
+    state.selectedReportId = reports[0].id;
+  }
+
+  reports.forEach((report) => {
+    const card = document.createElement("article");
+    card.className = "report-card";
+    card.dataset.reportId = String(report.id);
+    card.innerHTML = `
+      <button class="report-card-button" type="button">
+        <div class="report-thumb-wrap">
+          <img
+            src="${escapeHtml(buildVariantUrl(report.photoUrl, "thumb"))}"
+            alt="Visit report photo"
+            loading="lazy"
+            decoding="async"
+          >
+          <span class="report-card-location">${escapeHtml(report.locationName)}</span>
+        </div>
+        <div class="report-card-copy">
+          <h3>${escapeHtml(report.customerName)}</h3>
+          <p class="report-card-user">${escapeHtml(report.userName)}</p>
+          <p class="report-card-time">${formatBangkokDate(report.capturedAtClient)}</p>
+        </div>
+      </button>
+    `;
+    card.querySelector(".report-card-button").addEventListener("click", () => {
+      state.selectedReportId = report.id;
+      syncSelectedReportCard();
+      renderReportDrawer(report);
+    });
+    reportGrid.appendChild(card);
+  });
+
+  syncSelectedReportCard();
+  renderReportDrawer(getSelectedReport());
+}
+
+function buildUserLocationChips(user) {
   return state.locations
     .map((location) => {
       const checked = user.allowedLocationIds.includes(location.id) ? "checked" : "";
       return `
-        <label class="checkbox-card">
-          <input type="checkbox" value="${location.id}" ${checked}>
-          <span>${location.name}</span>
+        <label class="choice-chip">
+          <input type="checkbox" value="${escapeHtml(location.id)}" ${checked}>
+          <span>${escapeHtml(location.name)}</span>
         </label>
       `;
     })
     .join("");
 }
 
-function renderReports(reports) {
-  reportGrid.innerHTML = "";
-  if (!reports.length) {
-    adminStatus.textContent = "No reports found for the current filters.";
-    return;
-  }
-  adminStatus.textContent = `${reports.length} report(s) loaded.`;
-  reports.forEach((report) => {
-    const card = document.createElement("article");
-    card.className = "report-card";
-    const accuracy = Number.isFinite(report.accuracyM) ? `${Math.round(report.accuracyM)} m` : "-";
-    const thumbUrl = `${report.photoUrl}${report.photoUrl.includes("?") ? "&" : "?"}variant=thumb`;
-    card.innerHTML = `
-      <a class="report-photo-link" href="${report.photoUrl}" target="_blank" rel="noreferrer">
-        <img src="${thumbUrl}" alt="Visit report photo" loading="lazy" decoding="async">
-      </a>
-      <h3>${report.customerName}</h3>
-      <p>${report.locationName}</p>
-      <p>By ${report.userName}</p>
-      <div class="report-meta">
-        <p><strong>Taken</strong> ${formatBangkokDate(report.capturedAtClient)}</p>
-        <p><strong>Saved</strong> ${formatBangkokDate(report.receivedAtServer)}</p>
-        <p><strong>Lat</strong> ${formatCoordinate(report.latitude)}</p>
-        <p><strong>Lng</strong> ${formatCoordinate(report.longitude)}</p>
-        <p><strong>Acc</strong> ${accuracy}</p>
-      </div>
-      <a class="map-link" href="${buildMapUrl(report.latitude, report.longitude)}" target="_blank" rel="noreferrer">Map</a>
-    `;
-    reportGrid.appendChild(card);
-  });
+function buildUserAccessMode(user) {
+  return `
+    <div class="segment-control" role="radiogroup" aria-label="Location access">
+      <label class="segment-option">
+        <input type="radio" name="access-${escapeHtml(user.lineUserId)}" value="all" ${user.accessMode === "all" ? "checked" : ""}>
+        <span>All locations</span>
+      </label>
+      <label class="segment-option">
+        <input type="radio" name="access-${escapeHtml(user.lineUserId)}" value="assigned" ${user.accessMode === "assigned" ? "checked" : ""}>
+        <span>Selected locations</span>
+      </label>
+    </div>
+  `;
 }
 
-function updateUserCardState(card, accessMode) {
+function getUserCardAccessMode(card) {
+  return card.querySelector('input[type="radio"]:checked')?.value || "all";
+}
+
+function getUserCardSelectedLocationIds(card) {
+  return Array.from(card.querySelectorAll('.user-location-checkboxes input[type="checkbox"]:checked'))
+    .map((input) => input.value)
+    .sort();
+}
+
+function isUserCardDirty(card) {
+  const originalMode = card.dataset.originalMode || "all";
+  const originalIds = (card.dataset.originalLocationIds || "").split(",").filter(Boolean);
+  const currentMode = getUserCardAccessMode(card);
+  const currentIds = currentMode === "assigned" ? getUserCardSelectedLocationIds(card) : [];
+  return originalMode !== currentMode || originalIds.join(",") !== currentIds.join(",");
+}
+
+function syncUserCardState(card) {
+  const accessMode = getUserCardAccessMode(card);
   const locationField = card.querySelector(".user-location-field");
-  const inputs = Array.from(card.querySelectorAll('.user-location-checkboxes input[type="checkbox"]'));
-  const disabled = accessMode !== "assigned";
-  locationField.classList.toggle("is-disabled", disabled);
-  inputs.forEach((input) => {
-    input.disabled = disabled;
+  const locationInputs = Array.from(card.querySelectorAll('.user-location-checkboxes input[type="checkbox"]'));
+  const accessBadge = card.querySelector(".access-badge");
+  const saveState = card.querySelector(".save-state");
+  const saveButton = card.querySelector(".user-save-button");
+  const isAssigned = accessMode === "assigned";
+
+  locationField.classList.toggle("is-disabled", !isAssigned);
+  locationInputs.forEach((input) => {
+    input.disabled = !isAssigned;
   });
+
+  accessBadge.textContent = isAssigned ? "Selected locations" : "All locations";
+  accessBadge.classList.toggle("is-assigned", isAssigned);
+  accessBadge.classList.toggle("is-all", !isAssigned);
+
+  const dirty = isUserCardDirty(card);
+  saveState.textContent = dirty ? "Unsaved changes" : "Saved";
+  saveState.classList.toggle("is-dirty", dirty);
+  saveButton.disabled = !dirty;
 }
 
 function renderUsers(users) {
+  const query = userSearchInput.value.trim().toLowerCase();
+  const visibleUsers = users.filter((user) => {
+    if (!query) {
+      return true;
+    }
+    return (
+      user.displayName.toLowerCase().includes(query) ||
+      user.lineUserId.toLowerCase().includes(query)
+    );
+  });
+
   usersGrid.innerHTML = "";
   if (!users.length) {
     usersStatus.textContent = "No logged-in users yet.";
     return;
   }
 
-  usersStatus.textContent = `${users.length} user(s) loaded.`;
-  users.forEach((user) => {
+  usersStatus.textContent = query
+    ? `${visibleUsers.length} of ${users.length} user(s)`
+    : `${users.length} user(s) loaded.`;
+
+  if (!visibleUsers.length) {
+    usersGrid.innerHTML = '<div class="empty-state">No users match this search.</div>';
+    return;
+  }
+
+  visibleUsers.forEach((user) => {
     const card = document.createElement("article");
     card.className = "user-card";
     card.dataset.lineUserId = user.lineUserId;
+    card.dataset.originalMode = user.accessMode;
+    card.dataset.originalLocationIds = user.allowedLocationIds.slice().sort().join(",");
     card.innerHTML = `
-      <div class="user-card-head">
-        <div>
-          <h3>${user.displayName}</h3>
-          <p class="user-subline">${user.lineUserId}</p>
+      <div class="user-card-main">
+        <div class="user-identity">
+          <div class="user-title-row">
+            <h3>${escapeHtml(user.displayName)}</h3>
+            <span class="user-status">${escapeHtml(user.status)}</span>
+          </div>
+          <p class="user-subline">${escapeHtml(user.lineUserId)}</p>
+          <p class="user-subline">Last login ${formatBangkokDate(user.lastLoginAt)}</p>
         </div>
-        <span class="user-status">${user.status}</span>
+        <span class="access-badge ${user.accessMode === "assigned" ? "is-assigned" : "is-all"}">
+          ${user.accessMode === "assigned" ? "Selected locations" : "All locations"}
+        </span>
       </div>
-      <p class="user-subline">Last login ${formatBangkokDate(user.lastLoginAt)}</p>
-      <label class="field">
-        <span>Access</span>
-        <select class="user-access-mode">
-          <option value="all" ${user.accessMode === "all" ? "selected" : ""}>All locations</option>
-          <option value="assigned" ${user.accessMode === "assigned" ? "selected" : ""}>Selected locations</option>
-        </select>
-      </label>
-      <label class="field user-location-field ${user.accessMode === "assigned" ? "" : "is-disabled"}">
-        <span>Locations</span>
-        <div class="checkbox-grid user-location-checkboxes">
-          ${buildUserLocationCheckboxes(user)}
-        </div>
-      </label>
-      <button class="primary-button user-save-button" type="button">Save</button>
+      <div class="user-access-shell">
+        ${buildUserAccessMode(user)}
+        <label class="field user-location-field">
+          <span>Locations</span>
+          <div class="chip-filter-grid user-location-checkboxes">
+            ${buildUserLocationChips(user)}
+          </div>
+        </label>
+      </div>
+      <div class="user-actions-row">
+        <span class="save-state">Saved</span>
+        <button class="primary-button user-save-button" type="button" disabled>Save</button>
+      </div>
     `;
 
-    const accessModeSelect = card.querySelector(".user-access-mode");
-    updateUserCardState(card, user.accessMode);
-    accessModeSelect.addEventListener("change", (event) => {
-      updateUserCardState(card, event.target.value);
+    const modeInputs = Array.from(card.querySelectorAll('.segment-control input[type="radio"]'));
+    const locationInputs = Array.from(card.querySelectorAll('.user-location-checkboxes input[type="checkbox"]'));
+    const saveButton = card.querySelector(".user-save-button");
+
+    modeInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        syncUserCardState(card);
+      });
+    });
+    locationInputs.forEach((input) => {
+      input.addEventListener("change", () => {
+        syncUserCardState(card);
+      });
     });
 
-    card.querySelector(".user-save-button").addEventListener("click", async () => {
-      const selectedMode = accessModeSelect.value;
-      const selectedLocationIds = Array.from(
-        card.querySelectorAll('.user-location-checkboxes input[type="checkbox"]:checked')
-      ).map((input) => input.value);
-      const button = card.querySelector(".user-save-button");
-      button.disabled = true;
-      button.textContent = "Saving...";
+    saveButton.addEventListener("click", async () => {
+      const selectedMode = getUserCardAccessMode(card);
+      const selectedLocationIds = selectedMode === "assigned" ? getUserCardSelectedLocationIds(card) : [];
+      saveButton.disabled = true;
+      saveButton.textContent = "Saving...";
       try {
         const response = await fetch(`/admin/access/users/${encodeURIComponent(user.lineUserId)}/locations`, {
           method: "PUT",
@@ -185,24 +397,36 @@ function renderUsers(users) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             access_mode: selectedMode,
-            location_ids: selectedMode === "assigned" ? selectedLocationIds : [],
+            location_ids: selectedLocationIds,
           }),
         });
         const payload = await response.json();
         if (!response.ok) {
           throw new Error(payload.detail || "Failed to save user access.");
         }
+
+        card.dataset.originalMode = payload.accessMode;
+        card.dataset.originalLocationIds = payload.allowedLocationIds.slice().sort().join(",");
+        const userIndex = state.users.findIndex((candidate) => candidate.lineUserId === user.lineUserId);
+        if (userIndex >= 0) {
+          state.users[userIndex] = {
+            ...state.users[userIndex],
+            accessMode: payload.accessMode,
+            allowedLocationIds: payload.allowedLocationIds,
+          };
+        }
         usersStatus.textContent = `Saved ${user.displayName}.`;
-        await loadUsers();
+        syncUserCardState(card);
       } catch (error) {
         usersStatus.textContent = error.message || "Failed to save user access.";
       } finally {
-        button.disabled = false;
-        button.textContent = "Save";
+        saveButton.textContent = "Save";
+        syncUserCardState(card);
       }
     });
 
     usersGrid.appendChild(card);
+    syncUserCardState(card);
   });
 }
 
@@ -214,6 +438,9 @@ async function loadLocations() {
   }
   state.locations = payload.locations;
   populateLocations(payload.locations);
+  if (state.users.length) {
+    renderUsers(state.users);
+  }
 }
 
 async function loadUsers() {
@@ -233,8 +460,13 @@ async function loadReports(event) {
     event.preventDefault();
   }
   const formData = new FormData(filterForm);
-  formData.delete("location_ids");
-  const params = new URLSearchParams(formData);
+  const params = new URLSearchParams();
+  for (const [key, value] of formData.entries()) {
+    const text = String(value).trim();
+    if (key !== "location_ids" && text) {
+      params.append(key, text);
+    }
+  }
   getSelectedLocationIds().forEach((locationId) => params.append("location_ids", locationId));
   adminStatus.textContent = "Loading reports...";
   const response = await fetch(`/admin/reports?${params.toString()}`, { credentials: "include" });
@@ -247,6 +479,20 @@ async function loadReports(event) {
 }
 
 filterForm.addEventListener("submit", loadReports);
+resetFiltersButton.addEventListener("click", () => {
+  filterForm.reset();
+  Array.from(locationCheckboxGrid.querySelectorAll('input[type="checkbox"]')).forEach((input) => {
+    input.checked = false;
+  });
+  loadReports().catch((error) => {
+    adminStatus.textContent = error.message || "Failed to load reports.";
+  });
+});
+
+userSearchInput.addEventListener("input", () => {
+  renderUsers(state.users);
+});
+
 adminTabs.forEach((button) => {
   button.addEventListener("click", () => {
     setActiveTab(button.dataset.tab);
@@ -258,7 +504,6 @@ adminTabs.forEach((button) => {
   });
 });
 
-Promise.all([loadLocations(), loadReports()])
-  .catch((error) => {
-    adminStatus.textContent = error.message || "Failed to load admin data.";
-  });
+Promise.all([loadLocations(), loadReports()]).catch((error) => {
+  adminStatus.textContent = error.message || "Failed to load admin data.";
+});
