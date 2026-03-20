@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { ReactNode, useEffect, useState } from "react";
 
-import { LogoutButton } from "@/components/logout-button";
-import type { AdminSystemStatus } from "@/lib/types";
+import { LogoutButton } from "./logout-button";
+import type { AdminSystemStatus } from "../lib/types";
 
 type AdminShellProps = {
   activeTab: "reports" | "users";

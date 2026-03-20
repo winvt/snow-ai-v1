@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { proxyBinaryResponse, requestDelivery } from "@/lib/delivery-api";
-import { isAdminAuthenticated } from "@/lib/session";
+import { proxyBinaryResponse, requestDelivery } from "../../../../lib/delivery-api";
+import { isAdminAuthenticated } from "../../../../lib/session";
 
 type RouteContext = {
   params: {

@@ -1,8 +1,8 @@
 import { timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 
-import { getAdminPassword } from "@/lib/config";
-import { createSessionToken, setSessionCookie } from "@/lib/session";
+import { getAdminPassword } from "../../../../lib/config";
+import { createSessionToken, setSessionCookie } from "../../../../lib/session";
 
 function safeEqual(left: string, right: string): boolean {
   const leftBuffer = Buffer.from(left);

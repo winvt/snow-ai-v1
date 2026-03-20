@@ -3,8 +3,8 @@
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 
-import { buildMapUrl, buildPhotoProxyUrl, formatAccuracy, formatBangkokDate, formatCoordinate } from "@/lib/format";
-import type { DeliveryLocation, DeliveryReport, ReportsCursor, ReportsResponse } from "@/lib/types";
+import { buildMapUrl, buildPhotoProxyUrl, formatAccuracy, formatBangkokDate, formatCoordinate } from "../lib/format";
+import type { DeliveryLocation, DeliveryReport, ReportsCursor, ReportsResponse } from "../lib/types";
 
 type FilterState = {
   dateFrom: string;

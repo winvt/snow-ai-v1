@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { proxyJsonResponse, requestDelivery } from "@/lib/delivery-api";
-import { isAdminAuthenticated } from "@/lib/session";
+import { proxyJsonResponse, requestDelivery } from "../../../../lib/delivery-api";
+import { isAdminAuthenticated } from "../../../../lib/session";
 
 export async function GET(request: NextRequest) {
   if (!isAdminAuthenticated(request.cookies)) {

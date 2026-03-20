@@ -2,8 +2,8 @@
 
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
 
-import { formatBangkokDate } from "@/lib/format";
-import type { DeliveryLocation, DeliveryUserAccess } from "@/lib/types";
+import { formatBangkokDate } from "../lib/format";
+import type { DeliveryLocation, DeliveryUserAccess } from "../lib/types";
 
 type DraftUser = DeliveryUserAccess & {
   draftAccessMode: "all" | "assigned";

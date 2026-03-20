@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { isAdminAuthenticated } from "@/lib/session";
+import { isAdminAuthenticated } from "../lib/session";
 
 export const dynamic = "force-dynamic";
 

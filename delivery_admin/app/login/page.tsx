@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 
-import { LoginForm } from "@/components/login-form";
-import { redirectIfAuthenticated } from "@/lib/session";
+import { LoginForm } from "../../components/login-form";
+import { redirectIfAuthenticated } from "../../lib/session";
 
 export const dynamic = "force-dynamic";
 
