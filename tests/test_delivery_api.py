@@ -12,6 +12,7 @@ from delivery_app.auth import LineProfile
 from delivery_app.config import DeliverySettings
 from delivery_app.db import DeliveryCustomer, DeliveryLocation, create_db_engine, create_session_factory, init_db
 from delivery_app.main import create_app
+from delivery_app.photo_metadata import build_variant_object_key
 from delivery_app.repository import count_reports
 from delivery_app.storage import InMemoryStorage
 
@@ -90,8 +91,8 @@ class DeliveryApiTests(unittest.TestCase):
         response = self.client.post("/api/session", json={"id_token": "valid-token"})
         self.assertEqual(response.status_code, 200)
 
-    def _build_test_jpeg(self, color="red"):
-        image = Image.new("RGB", (16, 16), color)
+    def _build_test_jpeg(self, color="red", size=(16, 16)):
+        image = Image.new("RGB", size, color)
         output = BytesIO()
         image.save(output, format="JPEG")
         return output.getvalue()
@@ -139,6 +140,7 @@ class DeliveryApiTests(unittest.TestCase):
         )
         self.assertEqual(duplicate_response.status_code, 200)
         self.assertTrue(duplicate_response.json()["duplicate"])
+        self.assertEqual(len(self.storage.objects), 3)
 
         session = self.session_factory()
         try:
@@ -347,13 +349,17 @@ class DeliveryApiTests(unittest.TestCase):
                 "accuracy_m": "8.5",
                 "captured_at_client": "2026-03-10T02:03:04Z",
             },
-            files={"photo": ("shop.jpg", self._build_test_jpeg("purple"), "image/jpeg")},
+            files={"photo": ("shop.jpg", self._build_test_jpeg("purple", size=(2400, 1800)), "image/jpeg")},
         )
         self.assertEqual(upload_response.status_code, 200)
 
-        stored_object = next(iter(self.storage.objects.values()))
-        stored_payload = stored_object["payload"]
-        image = Image.open(BytesIO(stored_payload))
+        original_key = [key for key in self.storage.objects.keys() if "__display" not in key and "__thumb" not in key][0]
+
+        original_payload = self.storage.objects[original_key]["payload"]
+        display_payload = self.storage.objects[build_variant_object_key(original_key, "display")]["payload"]
+        thumb_payload = self.storage.objects[build_variant_object_key(original_key, "thumb")]["payload"]
+
+        image = Image.open(BytesIO(original_payload))
         exif = image.getexif()
         gps = exif.get_ifd(ExifTags.IFD.GPSInfo)
 
@@ -365,6 +371,9 @@ class DeliveryApiTests(unittest.TestCase):
             tuple(round(float(value), 4) for value in gps[ExifTags.GPS.GPSLatitude]),
             (13.0, 45.0, 22.68),
         )
+        self.assertEqual(image.size, (2400, 1800))
+        self.assertEqual(Image.open(BytesIO(display_payload)).size, (1600, 1200))
+        self.assertEqual(Image.open(BytesIO(thumb_payload)).size, (640, 480))
 
     @patch("delivery_app.main.sync_delivery_customers_from_loyverse")
     def test_internal_customer_sync_requires_secret_and_runs(self, mock_sync):

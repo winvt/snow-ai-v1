@@ -96,8 +96,11 @@ function renderReports(reports) {
     const card = document.createElement("article");
     card.className = "report-card";
     const accuracy = Number.isFinite(report.accuracyM) ? `${Math.round(report.accuracyM)} m` : "-";
+    const thumbUrl = `${report.photoUrl}${report.photoUrl.includes("?") ? "&" : "?"}variant=thumb`;
     card.innerHTML = `
-      <img src="${report.photoUrl}" alt="Visit report photo">
+      <a class="report-photo-link" href="${report.photoUrl}" target="_blank" rel="noreferrer">
+        <img src="${thumbUrl}" alt="Visit report photo" loading="lazy" decoding="async">
+      </a>
       <h3>${report.customerName}</h3>
       <p>${report.locationName}</p>
       <p>By ${report.userName}</p>

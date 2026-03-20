@@ -21,7 +21,7 @@ from delivery_app.config import DeliverySettings, load_settings
 from delivery_app.db import create_db_engine, create_session_factory, init_db
 from delivery_app.loyverse_sync import sync_delivery_customers_from_loyverse
 from delivery_app.metadata import bootstrap_seed_metadata_if_empty
-from delivery_app.photo_metadata import embed_exif_metadata
+from delivery_app.photo_metadata import build_photo_variants, build_variant_object_key
 from delivery_app.repository import (
     create_visit_report,
     GUEST_USER_ID,
@@ -76,10 +76,11 @@ def build_photo_key(customer_id: str, filename: str) -> str:
     )
 
 
-def build_photo_url(settings: DeliverySettings, object_key: str) -> str:
+def build_photo_url(settings: DeliverySettings, object_key: str, *, variant: str = "original") -> str:
     """Build the admin-view image route for a stored object."""
     base = settings.app_base_url or ""
-    return f"{base}{settings.photo_route_prefix}/{object_key}"
+    suffix = "" if variant == "original" else f"?variant={variant}"
+    return f"{base}{settings.photo_route_prefix}/{object_key}{suffix}"
 
 
 def build_default_storage(settings: DeliverySettings):
@@ -366,7 +367,7 @@ def create_app(
         if len(payload) > settings.max_upload_bytes:
             raise HTTPException(status_code=413, detail="Photo exceeds size limit")
         captured_at = parse_iso_datetime(captured_at_client)
-        payload = embed_exif_metadata(
+        photo_variants = build_photo_variants(
             payload=payload,
             filename=photo.filename,
             content_type=photo.content_type,
@@ -378,7 +379,12 @@ def create_app(
 
         object_key = build_photo_key(customer_id, photo.filename)
         try:
-            app.state.storage.upload_bytes(object_key=object_key, payload=payload, content_type=photo.content_type)
+            for variant_name, variant in photo_variants.items():
+                app.state.storage.upload_bytes(
+                    object_key=build_variant_object_key(object_key, variant_name),
+                    payload=variant.payload,
+                    content_type=variant.content_type,
+                )
         except RuntimeError as exc:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -407,9 +413,26 @@ def create_app(
         }
 
     @app.get("/api/photos/{object_key:path}")
-    def api_photo(object_key: str, _: bool = Depends(require_admin)):
-        stored = app.state.storage.read_bytes(object_key)
-        return StreamingResponse(stored.content, media_type=stored.content_type)
+    def api_photo(
+        object_key: str,
+        variant: str = Query("original"),
+        _: bool = Depends(require_admin),
+    ):
+        if variant not in {"original", "display", "thumb"}:
+            raise HTTPException(status_code=400, detail="Unknown photo variant")
+
+        keys_to_try = [build_variant_object_key(object_key, variant)]
+        if variant != "original":
+            keys_to_try.append(object_key)
+
+        for candidate_key in keys_to_try:
+            try:
+                stored = app.state.storage.read_bytes(candidate_key)
+                return StreamingResponse(stored.content, media_type=stored.content_type)
+            except Exception:
+                continue
+
+        raise HTTPException(status_code=404, detail="Photo not found")
 
     @app.get("/admin/reports")
     def admin_reports(
