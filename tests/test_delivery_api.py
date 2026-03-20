@@ -1,9 +1,11 @@
 import base64
+from io import BytesIO
 import tempfile
 import unittest
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from PIL import Image, ExifTags
 from sqlalchemy.orm import Session
 
 from delivery_app.auth import LineProfile
@@ -88,6 +90,12 @@ class DeliveryApiTests(unittest.TestCase):
         response = self.client.post("/api/session", json={"id_token": "valid-token"})
         self.assertEqual(response.status_code, 200)
 
+    def _build_test_jpeg(self, color="red"):
+        image = Image.new("RGB", (16, 16), color)
+        output = BytesIO()
+        image.save(output, format="JPEG")
+        return output.getvalue()
+
     def test_login_location_customer_and_report_flow(self):
         self._login()
 
@@ -113,7 +121,7 @@ class DeliveryApiTests(unittest.TestCase):
                 "accuracy_m": "8",
                 "captured_at_client": "2026-03-10T02:03:04Z",
             },
-            files={"photo": ("shop.jpg", b"fake-image-bytes", "image/jpeg")},
+            files={"photo": ("shop.jpg", self._build_test_jpeg(), "image/jpeg")},
         )
         self.assertEqual(upload_response.status_code, 200)
         self.assertFalse(upload_response.json()["duplicate"])
@@ -127,7 +135,7 @@ class DeliveryApiTests(unittest.TestCase):
                 "longitude": "100.5018",
                 "captured_at_client": "2026-03-10T02:03:04Z",
             },
-            files={"photo": ("shop.jpg", b"fake-image-bytes", "image/jpeg")},
+            files={"photo": ("shop.jpg", self._build_test_jpeg(), "image/jpeg")},
         )
         self.assertEqual(duplicate_response.status_code, 200)
         self.assertTrue(duplicate_response.json()["duplicate"])
@@ -208,7 +216,7 @@ class DeliveryApiTests(unittest.TestCase):
                 "longitude": "100.5018",
                 "captured_at_client": "2026-03-10T02:03:04Z",
             },
-            files={"photo": ("shop.jpg", b"fake-image-bytes", "image/jpeg")},
+            files={"photo": ("shop.jpg", self._build_test_jpeg(), "image/jpeg")},
         )
         self.assertEqual(blocked_upload.status_code, 403)
 
@@ -246,7 +254,7 @@ class DeliveryApiTests(unittest.TestCase):
                 "longitude": "100.5018",
                 "captured_at_client": "2026-03-10T02:03:04Z",
             },
-            files={"photo": ("shop.jpg", b"fake-image-bytes", "image/jpeg")},
+            files={"photo": ("shop.jpg", self._build_test_jpeg(), "image/jpeg")},
         )
 
         unauthenticated = self.client.get("/admin/reports")
@@ -278,7 +286,7 @@ class DeliveryApiTests(unittest.TestCase):
                 "longitude": "100.5018",
                 "captured_at_client": "2026-03-10T02:03:04Z",
             },
-            files={"photo": ("shop-a.jpg", b"fake-image-bytes", "image/jpeg")},
+            files={"photo": ("shop-a.jpg", self._build_test_jpeg("blue"), "image/jpeg")},
         )
         self.client.post(
             "/api/reports",
@@ -289,7 +297,7 @@ class DeliveryApiTests(unittest.TestCase):
                 "longitude": "100.6018",
                 "captured_at_client": "2026-03-10T03:03:04Z",
             },
-            files={"photo": ("shop-b.jpg", b"fake-image-bytes", "image/jpeg")},
+            files={"photo": ("shop-b.jpg", self._build_test_jpeg("green"), "image/jpeg")},
         )
 
         credentials = base64.b64encode(b"admin:admin-pass").decode("utf-8")
@@ -326,6 +334,37 @@ class DeliveryApiTests(unittest.TestCase):
         self.assertEqual(users[0]["lineUserId"], "line-user-1")
         self.assertIsNotNone(users[0]["lastLoginAt"])
         self.assertNotIn("guest-preview", [user["lineUserId"] for user in users])
+
+    def test_uploaded_jpeg_contains_exif_gps_and_capture_time(self):
+        self._login()
+        upload_response = self.client.post(
+            "/api/reports",
+            data={
+                "client_submission_id": "submission-exif",
+                "customer_id": "cust_1",
+                "latitude": "13.7563",
+                "longitude": "100.5018",
+                "accuracy_m": "8.5",
+                "captured_at_client": "2026-03-10T02:03:04Z",
+            },
+            files={"photo": ("shop.jpg", self._build_test_jpeg("purple"), "image/jpeg")},
+        )
+        self.assertEqual(upload_response.status_code, 200)
+
+        stored_object = next(iter(self.storage.objects.values()))
+        stored_payload = stored_object["payload"]
+        image = Image.open(BytesIO(stored_payload))
+        exif = image.getexif()
+        gps = exif.get_ifd(ExifTags.IFD.GPSInfo)
+
+        self.assertEqual(exif.get(ExifTags.Base.DateTimeOriginal), "2026:03:10 02:03:04")
+        self.assertEqual(gps[ExifTags.GPS.GPSLatitudeRef], "N")
+        self.assertEqual(gps[ExifTags.GPS.GPSLongitudeRef], "E")
+        self.assertAlmostEqual(float(gps[ExifTags.GPS.GPSHPositioningError]), 8.5, places=2)
+        self.assertEqual(
+            tuple(round(float(value), 4) for value in gps[ExifTags.GPS.GPSLatitude]),
+            (13.0, 45.0, 22.68),
+        )
 
     @patch("delivery_app.main.sync_delivery_customers_from_loyverse")
     def test_internal_customer_sync_requires_secret_and_runs(self, mock_sync):

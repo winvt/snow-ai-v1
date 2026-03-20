@@ -21,6 +21,7 @@ from delivery_app.config import DeliverySettings, load_settings
 from delivery_app.db import create_db_engine, create_session_factory, init_db
 from delivery_app.loyverse_sync import sync_delivery_customers_from_loyverse
 from delivery_app.metadata import bootstrap_seed_metadata_if_empty
+from delivery_app.photo_metadata import embed_exif_metadata
 from delivery_app.repository import (
     create_visit_report,
     GUEST_USER_ID,
@@ -364,6 +365,16 @@ def create_app(
             raise HTTPException(status_code=400, detail="Photo file is empty")
         if len(payload) > settings.max_upload_bytes:
             raise HTTPException(status_code=413, detail="Photo exceeds size limit")
+        captured_at = parse_iso_datetime(captured_at_client)
+        payload = embed_exif_metadata(
+            payload=payload,
+            filename=photo.filename,
+            content_type=photo.content_type,
+            latitude=latitude,
+            longitude=longitude,
+            accuracy_m=accuracy_m,
+            captured_at_client=captured_at,
+        )
 
         object_key = build_photo_key(customer_id, photo.filename)
         try:
@@ -385,7 +396,7 @@ def create_app(
             latitude=latitude,
             longitude=longitude,
             accuracy_m=accuracy_m,
-            captured_at_client=parse_iso_datetime(captured_at_client),
+            captured_at_client=captured_at,
             received_at_server=datetime.utcnow(),
         )
         return {
