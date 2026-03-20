@@ -66,7 +66,28 @@ services:
         value: https://snow-ai-delivery.onrender.com
       - key: ADMIN_PASSWORD
         value: REPLACE_WITH_ADMIN_PASSWORD
+      - key: ADMIN_INTERNAL_API_TOKEN
+        value: REPLACE_WITH_ADMIN_INTERNAL_API_TOKEN
       - key: PYTHONUNBUFFERED
+        value: 1
+
+  - type: web
+    name: snow-ai-delivery-admin
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: cd delivery_admin && npm install && npm run build
+    startCommand: cd delivery_admin && npm run start
+    envVars:
+      - key: DELIVERY_API_BASE_URL
+        value: https://snow-ai-delivery.onrender.com
+      - key: ADMIN_PASSWORD
+        value: REPLACE_WITH_ADMIN_PASSWORD
+      - key: ADMIN_SESSION_SECRET
+        generateValue: true
+      - key: ADMIN_INTERNAL_API_TOKEN
+        value: REPLACE_WITH_ADMIN_INTERNAL_API_TOKEN
+      - key: NEXT_TELEMETRY_DISABLED
         value: 1
 
   - type: cron

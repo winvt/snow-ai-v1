@@ -18,6 +18,7 @@ class DeliverySettings:
     s3_region: str
     app_base_url: str
     admin_password: str
+    admin_internal_api_token: str
     sync_secret: str
     source_sqlite_path: str
     session_cookie_name: str = "delivery_session"
@@ -50,6 +51,7 @@ def load_settings() -> DeliverySettings:
         s3_region=os.getenv("S3_REGION", "auto"),
         app_base_url=os.getenv("APP_BASE_URL", "").rstrip("/"),
         admin_password=os.getenv("ADMIN_PASSWORD", "change-me"),
+        admin_internal_api_token=os.getenv("ADMIN_INTERNAL_API_TOKEN", "").strip(),
         sync_secret=os.getenv("DELIVERY_SYNC_SECRET", "").strip(),
         source_sqlite_path=os.getenv("SOURCE_SQLITE_PATH", os.getenv("DATABASE_PATH", "loyverse_data.db")),
         allow_guest_mode=_parse_bool(os.getenv("DELIVERY_ALLOW_GUEST_MODE"), True),

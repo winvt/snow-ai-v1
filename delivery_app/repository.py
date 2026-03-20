@@ -313,6 +313,7 @@ def list_reports_page(
             "customerName": customer_name,
             "locationId": report.location_id,
             "locationName": location_name,
+            "photoObjectKey": report.photo_object_key,
             "photoUrl": report.photo_url,
             "latitude": report.latitude,
             "longitude": report.longitude,

@@ -66,3 +66,6 @@ htmlcov/
 # Streamlit
 .streamlit/
 
+# Node / Next.js
+node_modules/
+.next/

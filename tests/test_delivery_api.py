@@ -46,6 +46,7 @@ class DeliveryApiTests(unittest.TestCase):
             s3_region="auto",
             app_base_url="https://delivery.example.com",
             admin_password="admin-pass",
+            admin_internal_api_token="internal-token",
             sync_secret="sync-secret",
             source_sqlite_path="loyverse_data.db",
             bootstrap_seed_metadata=False,
@@ -177,6 +178,7 @@ class DeliveryApiTests(unittest.TestCase):
             s3_region="auto",
             app_base_url="https://delivery.example.com",
             admin_password="admin-pass",
+            admin_internal_api_token="internal-token",
             sync_secret="sync-secret",
             source_sqlite_path="loyverse_data.db",
             bootstrap_seed_metadata=False,
@@ -277,6 +279,45 @@ class DeliveryApiTests(unittest.TestCase):
         )
         self.assertEqual(access_users.status_code, 200)
         self.assertGreaterEqual(len(access_users.json()["users"]), 1)
+
+    def test_admin_api_requires_bearer_token_and_returns_photo_object_key(self):
+        self._login()
+        self.client.post(
+            "/api/reports",
+            data={
+                "client_submission_id": "submission-admin-api",
+                "customer_id": "cust_1",
+                "latitude": "13.7563",
+                "longitude": "100.5018",
+                "captured_at_client": "2026-03-10T02:03:04Z",
+            },
+            files={"photo": ("shop.jpg", self._build_test_jpeg(), "image/jpeg")},
+        )
+
+        unauthenticated = self.client.get("/admin-api/reports")
+        self.assertEqual(unauthenticated.status_code, 401)
+
+        authenticated = self.client.get(
+            "/admin-api/reports",
+            headers={"Authorization": "Bearer internal-token"},
+        )
+        self.assertEqual(authenticated.status_code, 200)
+        payload = authenticated.json()
+        self.assertEqual(len(payload["reports"]), 1)
+        self.assertEqual(payload["reports"][0]["photoObjectKey"].startswith("reports/"), True)
+
+        system_response = self.client.get(
+            "/admin-api/system",
+            headers={"Authorization": "Bearer internal-token"},
+        )
+        self.assertEqual(system_response.status_code, 200)
+
+        locations_response = self.client.get(
+            "/admin-api/locations",
+            headers={"Authorization": "Bearer internal-token"},
+        )
+        self.assertEqual(locations_response.status_code, 200)
+        self.assertEqual(len(locations_response.json()["locations"]), 2)
 
     def test_admin_reports_can_filter_multiple_locations(self):
         self._login()

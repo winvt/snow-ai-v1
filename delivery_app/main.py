@@ -5,12 +5,13 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import os
 from pathlib import Path
+import secrets
 from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile, status
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBasic, HTTPBasicCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -44,6 +45,7 @@ from delivery_app.storage import NullStorage, S3Storage
 BASE_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 basic_auth = HTTPBasic(auto_error=False)
+bearer_auth = HTTPBearer(auto_error=False)
 
 
 class SessionCreateRequest(BaseModel):
@@ -237,6 +239,25 @@ def create_app(
             )
         return True
 
+    def require_admin_api(credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_auth)):
+        expected_token = settings.admin_internal_api_token.strip()
+        if not expected_token:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Admin API token is not configured",
+            )
+        if credentials is None or credentials.scheme.lower() != "bearer":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Admin API authentication required",
+            )
+        if not secrets.compare_digest(credentials.credentials.strip(), expected_token):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid admin API token",
+            )
+        return True
+
     def require_sync_secret(request: Request):
         expected_secret = settings.sync_secret.strip()
         if not expected_secret:
@@ -272,6 +293,10 @@ def create_app(
 
     @app.get("/admin/system")
     def admin_system(_: bool = Depends(require_admin)):
+        return app.state.system_status
+
+    @app.get("/admin-api/system")
+    def admin_api_system(_: bool = Depends(require_admin_api)):
         return app.state.system_status
 
     @app.post("/internal/sync/customers")
@@ -489,6 +514,28 @@ def create_app(
 
         raise HTTPException(status_code=404, detail="Photo not found")
 
+    @app.get("/admin-api/photos/{object_key:path}")
+    def admin_api_photo(
+        object_key: str,
+        variant: str = Query("original"),
+        _: bool = Depends(require_admin_api),
+    ):
+        if variant not in {"original", "display", "thumb"}:
+            raise HTTPException(status_code=400, detail="Unknown photo variant")
+
+        keys_to_try = [build_variant_object_key(object_key, variant)]
+        if variant != "original":
+            keys_to_try.append(object_key)
+
+        for candidate_key in keys_to_try:
+            try:
+                stored = app.state.storage.read_bytes(candidate_key)
+                return StreamingResponse(stored.content, media_type=stored.content_type)
+            except Exception:
+                continue
+
+        raise HTTPException(status_code=404, detail="Photo not found")
+
     @app.get("/admin/reports")
     def admin_reports(
         date_from: Optional[str] = None,
@@ -500,6 +547,34 @@ def create_app(
         before_id: Optional[str] = None,
         limit: int = Query(60, ge=1, le=120),
         _: bool = Depends(require_admin),
+        db: Session = Depends(get_db),
+        ):
+        parsed_from = parse_iso_datetime(f"{date_from}T00:00:00") if date_from else None
+        parsed_to = parse_iso_datetime(f"{date_to}T23:59:59") if date_to else None
+        parsed_before = parse_iso_datetime(before_received_at) if before_received_at else None
+        return list_reports_page(
+            db,
+            date_from=parsed_from,
+            date_to=parsed_to,
+            location_ids=location_ids,
+            customer_id=customer_id,
+            user_id=user_id,
+            before_received_at=parsed_before,
+            before_id=before_id,
+            limit=limit,
+        )
+
+    @app.get("/admin-api/reports")
+    def admin_api_reports(
+        date_from: Optional[str] = None,
+        date_to: Optional[str] = None,
+        location_ids: Optional[List[str]] = Query(None),
+        customer_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        before_received_at: Optional[str] = None,
+        before_id: Optional[str] = None,
+        limit: int = Query(60, ge=1, le=120),
+        _: bool = Depends(require_admin_api),
         db: Session = Depends(get_db),
     ):
         parsed_from = parse_iso_datetime(f"{date_from}T00:00:00") if date_from else None
@@ -521,8 +596,16 @@ def create_app(
     def admin_locations(_: bool = Depends(require_admin), db: Session = Depends(get_db)):
         return {"locations": list_locations(db)}
 
+    @app.get("/admin-api/locations")
+    def admin_api_locations(_: bool = Depends(require_admin_api), db: Session = Depends(get_db)):
+        return {"locations": list_locations(db)}
+
     @app.get("/admin/access/users")
     def admin_access_users(_: bool = Depends(require_admin), db: Session = Depends(get_db)):
+        return {"users": list_delivery_users_with_access(db)}
+
+    @app.get("/admin-api/access/users")
+    def admin_api_access_users(_: bool = Depends(require_admin_api), db: Session = Depends(get_db)):
         return {"users": list_delivery_users_with_access(db)}
 
     @app.put("/admin/access/users/{line_user_id}/locations")
@@ -530,6 +613,24 @@ def create_app(
         line_user_id: str,
         payload: UserLocationAccessUpdateRequest,
         _: bool = Depends(require_admin),
+        db: Session = Depends(get_db),
+    ):
+        try:
+            updated = set_user_location_access(
+                db,
+                line_user_id=line_user_id,
+                access_mode=payload.access_mode,
+                location_ids=payload.location_ids,
+            )
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        return updated
+
+    @app.put("/admin-api/access/users/{line_user_id}/locations")
+    def admin_api_set_user_access(
+        line_user_id: str,
+        payload: UserLocationAccessUpdateRequest,
+        _: bool = Depends(require_admin_api),
         db: Session = Depends(get_db),
     ):
         try:
