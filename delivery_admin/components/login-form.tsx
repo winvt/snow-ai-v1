@@ -3,6 +3,9 @@
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
 export function LoginForm() {
   const router = useRouter();
   const [password, setPassword] = useState("");
@@ -37,10 +40,10 @@ export function LoginForm() {
   }
 
   return (
-    <form className="login-form" onSubmit={handleSubmit}>
-      <label className="field">
-        <span>Password</span>
-        <input
+    <form className="space-y-4" onSubmit={handleSubmit}>
+      <label className="grid gap-2">
+        <span className="field-label">Password</span>
+        <Input
           autoFocus
           type="password"
           autoComplete="current-password"
@@ -49,10 +52,10 @@ export function LoginForm() {
           placeholder="Enter admin password"
         />
       </label>
-      {error ? <p className="form-error">{error}</p> : null}
-      <button className="primary-button wide-button" type="submit" disabled={pending}>
+      {error ? <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">{error}</p> : null}
+      <Button className="w-full" type="submit" disabled={pending}>
         {pending ? "Signing in..." : "Enter Admin"}
-      </button>
+      </Button>
     </form>
   );
 }

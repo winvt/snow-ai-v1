@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+import { LogOut } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+
 export function LogoutButton() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -20,8 +24,9 @@ export function LogoutButton() {
   }
 
   return (
-    <button className="logout-button" type="button" onClick={handleLogout} disabled={pending}>
+    <Button className="w-full justify-start gap-2" type="button" variant="ghost" onClick={handleLogout} disabled={pending}>
+      <LogOut className="size-4" />
       {pending ? "Signing out..." : "Sign out"}
-    </button>
+    </Button>
   );
 }
